@@ -311,7 +311,7 @@
           <div class="section-head users-head">
             <div>
               <h2>Správa účtů</h2>
-              <p>Admin zakládá ručně další účty a může jim resetovat heslo.</p>
+              <p>Admin zakládá ručně další účty, může je upravit a resetovat jim heslo.</p>
             </div>
             <div class="records-header-meta">
               <span id="usersCount" class="records-count">0 účtů</span>
@@ -342,20 +342,37 @@
               <p id="usersMessage" class="form-message" aria-live="polite"></p>
             </form>
 
-            <div class="table-scroll users-table-scroll" role="region" aria-label="Tabulka účtů" tabindex="0">
+            <div class="users-table-wrap">
+              <div class="users-toolbar">
+                <p id="usersSelectedCount" class="users-selected-count">0 vybraných</p>
+                <div class="users-bulk-actions">
+                  <button type="button" id="bulkActivateUsers" class="icon-button secondary" disabled>
+                    Aktivovat vybrané
+                  </button>
+                  <button type="button" id="bulkDeactivateUsers" class="icon-button secondary" disabled>
+                    Deaktivovat vybrané
+                  </button>
+                </div>
+              </div>
+
+              <div class="table-scroll users-table-scroll" role="region" aria-label="Tabulka účtů" tabindex="0">
               <table class="records-table users-table">
                 <thead>
                   <tr>
+                    <th class="col-select">
+                      <input id="usersSelectAll" type="checkbox" aria-label="Vybrat všechny uživatele" />
+                    </th>
                     <th class="col-title">Email</th>
                     <th class="col-type">Role</th>
                     <th class="col-status">Aktivní</th>
                     <th class="col-created">Vytvořeno</th>
                     <th class="col-updated">Aktualizováno</th>
-                    <th class="col-actions">Reset hesla</th>
+                    <th class="col-actions">Akce</th>
                   </tr>
                 </thead>
                 <tbody id="usersTableBody"></tbody>
               </table>
+              </div>
             </div>
           </div>
         </section>
@@ -440,6 +457,57 @@
         </form>
       </div>
     </aside>
+
+    <div id="userEditModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-user-modal></div>
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="userEditTitle">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Úprava uživatele</p>
+            <h2 id="userEditTitle">Upravit účet</h2>
+          </div>
+          <button class="icon-button modal-close" type="button" data-close-user-modal>Zavřít</button>
+        </div>
+
+        <form id="userEditForm" class="modal-form">
+          <label>
+            Email
+            <input name="email" type="email" required />
+          </label>
+
+          <div class="two-col">
+            <label>
+              Role
+              <select name="role" required>
+                <option value="user">Uživatel</option>
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+
+            <label>
+              Aktivní
+              <select name="is_active" required>
+                <option value="1">Ano</option>
+                <option value="0">Ne</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            Nové heslo
+            <input name="new_password" type="password" minlength="8" placeholder="Volitelné, min. 8 znaků" />
+          </label>
+
+          <p class="form-hint">Vyplň heslo jen tehdy, když ho chceš současně změnit. Ponechání prázdného pole heslo nemění.</p>
+
+          <div class="modal-actions">
+            <button type="button" class="icon-button secondary" data-close-user-modal>Zrušit</button>
+            <button type="submit" class="primary">Uložit změny</button>
+          </div>
+          <p id="userEditMessage" class="form-message" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
 
     <div id="editModal" class="modal hidden" aria-hidden="true">
       <div class="modal-backdrop" data-close-modal></div>

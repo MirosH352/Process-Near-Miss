@@ -528,6 +528,109 @@ def create_user(email: str, password: str, role: str = "user") -> dict:
     return user_to_dict(row)
 
 
+def update_user(user_id: int, data: dict, actor_user_id: int | None = None) -> dict:
+    allowed_fields: dict[str, object] = {}
+    current_row: sqlite3.Row | None = None
+
+    if actor_user_id is not None and actor_user_id == user_id:
+        with connect() as conn:
+            current_row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        if current_row is None:
+            raise LookupError("Uživatel nebyl nalezen.")
+
+    if "email" in data:
+        normalized_email = validate_email(data["email"])
+        existing = get_user_by_email(normalized_email)
+        if existing is not None and existing["id"] != user_id:
+            raise ValueError("Uživatel s tímto emailem už existuje.")
+        allowed_fields["email"] = normalized_email
+
+    if "role" in data:
+        normalized_role = str(data["role"] or "user")
+        if normalized_role not in USER_ROLES:
+            raise ValueError("Neplatná role.")
+        allowed_fields["role"] = normalized_role
+
+    if "is_active" in data:
+        raw_active = data["is_active"]
+        if isinstance(raw_active, bool):
+            allowed_fields["is_active"] = int(raw_active)
+        elif isinstance(raw_active, (int, float)):
+            allowed_fields["is_active"] = 1 if int(raw_active) else 0
+        elif isinstance(raw_active, str):
+            allowed_fields["is_active"] = 1 if raw_active.strip().lower() in {"1", "true", "yes", "on"} else 0
+        else:
+            raise ValueError("Neplatný stav účtu.")
+
+    if "new_password" in data or "password" in data:
+        password_value = str(data.get("new_password", data.get("password", "")) or "").strip()
+        if password_value:
+            allowed_fields["password_hash"] = hash_password(validate_password(password_value))
+
+    if not allowed_fields:
+        raise ValueError("Není co aktualizovat.")
+
+    if current_row is not None:
+        next_role = str(allowed_fields.get("role", current_row["role"]))
+        next_active = int(allowed_fields.get("is_active", current_row["is_active"]))
+        if current_row["role"] == "admin" and next_role != "admin":
+            raise ValueError("Nemůžeš si odebrat vlastní admin práva.")
+        if next_active == 0:
+            raise ValueError("Nemůžeš deaktivovat svůj vlastní účet.")
+
+    allowed_fields["updated_at"] = now_iso()
+    columns = ", ".join(f"{key} = ?" for key in allowed_fields)
+    values = list(allowed_fields.values()) + [user_id]
+
+    with connect() as conn:
+        try:
+            cursor = conn.execute(
+                f"UPDATE users SET {columns} WHERE id = ?",
+                values,
+            )
+        except sqlite3.IntegrityError as exc:
+            raise ValueError("Uživatel s tímto emailem už existuje.") from exc
+        if cursor.rowcount == 0:
+            raise LookupError("Uživatel nebyl nalezen.")
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    return user_to_dict(row)
+
+
+def bulk_update_users_active(user_ids: list[int], is_active: bool, actor_user_id: int | None = None) -> int:
+    unique_ids = []
+    seen = set()
+    for user_id in user_ids:
+        if not isinstance(user_id, int):
+            raise ValueError("Neplatné ID uživatele.")
+        if user_id <= 0:
+            raise ValueError("Neplatné ID uživatele.")
+        if user_id in seen:
+            continue
+        seen.add(user_id)
+        unique_ids.append(user_id)
+
+    if not unique_ids:
+        raise ValueError("Vyber alespoň jednoho uživatele.")
+
+    if actor_user_id is not None and not is_active and actor_user_id in seen:
+        raise ValueError("Nemůžeš deaktivovat svůj vlastní účet.")
+
+    placeholders = ", ".join(["?"] * len(unique_ids))
+    updated_at = now_iso()
+
+    with connect() as conn:
+        rows = conn.execute(f"SELECT id FROM users WHERE id IN ({placeholders})", unique_ids).fetchall()
+        found_ids = {int(row["id"]) for row in rows}
+        if len(found_ids) != len(seen):
+            raise LookupError("Jeden nebo více uživatelů nebyl nalezen.")
+        conn.execute(
+            f"UPDATE users SET is_active = ?, updated_at = ? WHERE id IN ({placeholders})",
+            [1 if is_active else 0, updated_at, *unique_ids],
+        )
+
+    return len(unique_ids)
+
+
 def list_users() -> list[dict]:
     with connect() as conn:
         rows = conn.execute("SELECT * FROM users ORDER BY created_at ASC, id ASC").fetchall()
@@ -759,17 +862,6 @@ def change_password(user_id: int, current_password: str, new_password: str) -> N
         )
 
 
-def admin_reset_password(target_user_id: int, new_password: str) -> None:
-    new_password = validate_password(new_password)
-    with connect() as conn:
-        cursor = conn.execute(
-            "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
-            (hash_password(new_password), now_iso(), target_user_id),
-        )
-        if cursor.rowcount == 0:
-            raise LookupError("Uživatel nebyl nalezen.")
-
-
 class AppHandler(BaseHTTPRequestHandler):
     server_version = "NearMissTracker/1.0"
 
@@ -898,21 +990,19 @@ class AppHandler(BaseHTTPRequestHandler):
                 json_response(self, {"error": str(exc)}, HTTPStatus.BAD_REQUEST)
             return
 
-        users_prefix = "/api/users/"
-        reset_suffix = "/reset-password"
-        if path.startswith(users_prefix) and path.endswith(reset_suffix):
+        if path.startswith(users_prefix):
             user = require_admin(self)
             if user is None:
                 return
             try:
-                target_user_id = int(path[len(users_prefix) : -len(reset_suffix)])
+                target_user_id = int(path[len(users_prefix) :])
             except ValueError:
                 json_response(self, {"error": "Neplatné ID."}, HTTPStatus.BAD_REQUEST)
                 return
             try:
                 data = read_json(self)
-                admin_reset_password(target_user_id, data.get("new_password", ""))
-                json_response(self, {"ok": True})
+                item = update_user(target_user_id, data)
+                json_response(self, item)
             except ValueError as exc:
                 json_response(self, {"error": str(exc)}, HTTPStatus.BAD_REQUEST)
             except LookupError as exc:
@@ -923,6 +1013,49 @@ class AppHandler(BaseHTTPRequestHandler):
 
     def do_PATCH(self) -> None:
         path = urlparse(self.path).path
+        users_prefix = "/api/users/"
+        if path.startswith(users_prefix):
+            bulk_suffix = "bulk-status"
+            if path == f"{users_prefix}{bulk_suffix}":
+                user = require_admin(self)
+                if user is None:
+                    return
+                try:
+                    data = read_json(self)
+                    raw_ids = data.get("user_ids", [])
+                    if not isinstance(raw_ids, list):
+                        raise ValueError("Seznam uživatelů je neplatný.")
+                    is_active = data.get("is_active")
+                    if not isinstance(is_active, bool):
+                        raise ValueError("Neplatný stav účtu.")
+                    user_ids = [int(value) for value in raw_ids]
+                    updated = bulk_update_users_active(user_ids, is_active, user["id"])
+                    json_response(self, {"updated": updated})
+                except ValueError as exc:
+                    json_response(self, {"error": str(exc)}, HTTPStatus.BAD_REQUEST)
+                except LookupError as exc:
+                    json_response(self, {"error": str(exc)}, HTTPStatus.NOT_FOUND)
+                return
+
+            user = require_admin(self)
+            if user is None:
+                return
+            try:
+                target_user_id = int(path[len(users_prefix) :])
+            except ValueError:
+                json_response(self, {"error": "Neplatné ID."}, HTTPStatus.BAD_REQUEST)
+                return
+
+            try:
+                data = read_json(self)
+                item = update_user(target_user_id, data, user["id"])
+                json_response(self, item)
+            except ValueError as exc:
+                json_response(self, {"error": str(exc)}, HTTPStatus.BAD_REQUEST)
+            except LookupError as exc:
+                json_response(self, {"error": str(exc)}, HTTPStatus.NOT_FOUND)
+            return
+
         prefix = "/api/entries/"
         if not path.startswith(prefix):
             self.send_error(HTTPStatus.NOT_FOUND, "Not found")

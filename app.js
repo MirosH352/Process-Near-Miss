@@ -47,6 +47,8 @@ const state = {
   appSection: "records",
   draggingEntryId: null,
   editingId: null,
+  editingUserId: null,
+  selectedUserIds: new Set(),
   detailItem: null,
   confirmResolver: null,
 };
@@ -66,6 +68,13 @@ const usersMessageEl = document.getElementById("usersMessage");
 const usersTableBody = document.getElementById("usersTableBody");
 const usersCountEl = document.getElementById("usersCount");
 const usersSection = document.getElementById("usersSection");
+const userEditModal = document.getElementById("userEditModal");
+const userEditForm = document.getElementById("userEditForm");
+const userEditMessageEl = document.getElementById("userEditMessage");
+const usersSelectAllEl = document.getElementById("usersSelectAll");
+const usersSelectedCountEl = document.getElementById("usersSelectedCount");
+const bulkActivateUsersButton = document.getElementById("bulkActivateUsers");
+const bulkDeactivateUsersButton = document.getElementById("bulkDeactivateUsers");
 const form = document.getElementById("entryForm");
 const createDrawer = document.getElementById("createDrawer");
 const openDrawerButton = document.getElementById("openEntryDrawer");
@@ -201,10 +210,11 @@ function resetSearch() {
 
 function syncBodyLock() {
   const editOpen = !editModal.classList.contains("hidden");
+  const userEditOpen = !userEditModal.classList.contains("hidden");
   const confirmOpen = !confirmModal.classList.contains("hidden");
   const detailOpen = !detailModal.classList.contains("hidden");
   const drawerOpen = !createDrawer.classList.contains("hidden");
-  document.body.classList.toggle("modal-open", editOpen || confirmOpen || detailOpen || drawerOpen);
+  document.body.classList.toggle("modal-open", editOpen || userEditOpen || confirmOpen || detailOpen || drawerOpen);
 }
 
 function setMessage(text, kind = "info") {
@@ -232,9 +242,52 @@ function setUsersMessage(text, kind = "info") {
   usersMessageEl.dataset.kind = kind;
 }
 
+function setUserEditMessage(text, kind = "info") {
+  userEditMessageEl.textContent = text;
+  userEditMessageEl.dataset.kind = kind;
+}
+
 function setPasswordMessage(text, kind = "info") {
   passwordMessageEl.textContent = text;
   passwordMessageEl.dataset.kind = kind;
+}
+
+function getSelectedUserIds() {
+  return state.users.filter((user) => state.selectedUserIds.has(user.id)).map((user) => user.id);
+}
+
+function syncUserSelectionUI() {
+  const selectedIds = getSelectedUserIds();
+  const selectedCount = selectedIds.length;
+  const totalCount = state.users.length;
+
+  if (usersSelectedCountEl) {
+    usersSelectedCountEl.textContent = `${selectedCount} vybraných`;
+  }
+  if (usersSelectAllEl) {
+    usersSelectAllEl.checked = totalCount > 0 && selectedCount === totalCount;
+    usersSelectAllEl.indeterminate = selectedCount > 0 && selectedCount < totalCount;
+  }
+  if (bulkActivateUsersButton) {
+    bulkActivateUsersButton.disabled = selectedCount === 0;
+  }
+  if (bulkDeactivateUsersButton) {
+    bulkDeactivateUsersButton.disabled = selectedCount === 0;
+  }
+}
+
+function clearUserSelection() {
+  state.selectedUserIds = new Set();
+  syncUserSelectionUI();
+}
+
+function setUserSelection(userId, selected) {
+  if (selected) {
+    state.selectedUserIds.add(userId);
+  } else {
+    state.selectedUserIds.delete(userId);
+  }
+  syncUserSelectionUI();
 }
 
 function showToast(message, kind = "info") {
@@ -438,6 +491,30 @@ function openEditModal(item) {
   window.setTimeout(() => editForm.elements.title.focus(), 0);
 }
 
+function closeUserEditModal() {
+  state.editingUserId = null;
+  userEditModal.classList.add("hidden");
+  userEditModal.setAttribute("aria-hidden", "true");
+  userEditForm.reset();
+  setUserEditMessage("");
+  syncBodyLock();
+}
+
+function openUserEditModal(user) {
+  state.editingUserId = user.id;
+  userEditForm.elements.email.value = user.email;
+  userEditForm.elements.role.value = user.role;
+  userEditForm.elements.is_active.value = user.is_active ? "1" : "0";
+  if (userEditForm.elements.new_password) {
+    userEditForm.elements.new_password.value = "";
+  }
+  userEditModal.classList.remove("hidden");
+  userEditModal.setAttribute("aria-hidden", "false");
+  setUserEditMessage("");
+  syncBodyLock();
+  window.setTimeout(() => userEditForm.elements.email.focus(), 0);
+}
+
 function closeDetailModal() {
   state.detailItem = null;
   detailModal.classList.add("hidden");
@@ -500,7 +577,10 @@ function handleSessionExpired() {
   state.user = null;
   state.items = [];
   state.users = [];
+  clearUserSelection();
   state.appSection = "records";
+  closeEditModal();
+  closeUserEditModal();
   resetSearch();
   currentUserEmailEl.textContent = "-";
   setPasswordMessage("");
@@ -611,53 +691,44 @@ function renderUsers() {
   usersTableBody.innerHTML = "";
   usersCountEl.textContent = formatUserCount(state.users.length);
   if (state.users.length === 0) {
+    syncUserSelectionUI();
     return;
   }
 
   for (const user of state.users) {
     const row = document.createElement("tr");
     row.innerHTML = `
+      <td class="col-select">
+        <input class="user-select-checkbox" type="checkbox" aria-label="Vybrat uživatele ${user.email}" ${state.selectedUserIds.has(user.id) ? "checked" : ""} />
+      </td>
       <td class="col-title"><strong>${user.email}</strong></td>
       <td class="col-type"><span class="badge type-badge">${user.role_label || user.role}</span></td>
       <td class="col-status"><span class="badge ${user.is_active ? "status-resolved" : "status-closed"}">${user.is_active ? "Ano" : "Ne"}</span></td>
       <td class="col-created">${formatDate(user.created_at)}</td>
       <td class="col-updated">${formatDate(user.updated_at)}</td>
       <td class="col-actions">
-        <div class="user-reset">
-          <input class="user-reset-input" type="password" minlength="8" placeholder="Nové heslo" aria-label="Nové heslo pro ${user.email}" />
-          <button type="button" class="icon-button secondary user-reset-button" data-user-id="${user.id}">
-            Reset
+        <div class="user-actions">
+          <button type="button" class="icon-button secondary user-edit-button" data-user-id="${user.id}">
+            Upravit
           </button>
         </div>
       </td>
     `;
-    const resetButton = row.querySelector(".user-reset-button");
-    const resetInput = row.querySelector(".user-reset-input");
-    resetButton.addEventListener("click", async () => {
-      const newPassword = resetInput.value.trim();
-      if (!newPassword) {
-        setUsersMessage("Zadej nové heslo pro reset.", "error");
-        return;
-      }
+    const selectCheckbox = row.querySelector(".user-select-checkbox");
+    const editButton = row.querySelector(".user-edit-button");
 
-      try {
-        resetButton.disabled = true;
-        await apiProtected(`/api/users/${user.id}/reset-password`, {
-          method: "POST",
-          body: JSON.stringify({ new_password: newPassword }),
-        });
-        resetInput.value = "";
-        setUsersMessage(`Heslo pro ${user.email} bylo resetováno.`, "success");
-      } catch (error) {
-        if (error.status !== 401) {
-          setUsersMessage(error.message, "error");
-        }
-      } finally {
-        resetButton.disabled = false;
-      }
+    selectCheckbox.addEventListener("change", () => {
+      setUserSelection(user.id, selectCheckbox.checked);
     });
+
+    editButton.addEventListener("click", () => {
+      openUserEditModal(user);
+    });
+
     usersTableBody.appendChild(row);
   }
+
+  syncUserSelectionUI();
 }
 
 function render() {
@@ -1197,6 +1268,12 @@ editModal.addEventListener("click", (event) => {
   }
 });
 
+userEditModal.addEventListener("click", (event) => {
+  if (event.target.matches("[data-close-user-modal]")) {
+    closeUserEditModal();
+  }
+});
+
 confirmModal.addEventListener("click", (event) => {
   if (event.target.matches("[data-confirm-cancel]")) {
     closeConfirm(false);
@@ -1206,6 +1283,93 @@ confirmModal.addEventListener("click", (event) => {
 detailModal.addEventListener("click", (event) => {
   if (event.target.matches("[data-close-detail]")) {
     closeDetailModal();
+  }
+});
+
+
+usersSelectAllEl?.addEventListener("change", () => {
+  state.selectedUserIds = new Set(usersSelectAllEl.checked ? state.users.map((user) => user.id) : []);
+  renderUsers();
+});
+
+async function runBulkUserStatusChange(isActive) {
+  const selectedIds = getSelectedUserIds();
+  if (selectedIds.length === 0) {
+    setUsersMessage("Vyber alespoň jednoho uživatele.", "error");
+    return;
+  }
+
+  const actionLabel = isActive ? "aktivovat" : "deaktivovat";
+  const confirmed = await askConfirmation(
+    `Opravdu ${actionLabel} ${selectedIds.length} vybraných uživatelů?`,
+    "Potvrdit"
+  );
+  if (!confirmed) return;
+
+  try {
+    bulkActivateUsersButton.disabled = true;
+    bulkDeactivateUsersButton.disabled = true;
+    await apiProtected("/api/users/bulk-status", {
+      method: "PATCH",
+      body: JSON.stringify({ user_ids: selectedIds, is_active: isActive }),
+    });
+    clearUserSelection();
+    await loadUsers();
+    renderUsers();
+    setUsersMessage(`Stav ${selectedIds.length} uživatelů byl upraven.`, "success");
+  } catch (error) {
+    if (error.status !== 401) {
+      setUsersMessage(error.message, "error");
+    }
+  } finally {
+    syncUserSelectionUI();
+  }
+}
+
+bulkActivateUsersButton?.addEventListener("click", () => {
+  runBulkUserStatusChange(true);
+});
+
+bulkDeactivateUsersButton?.addEventListener("click", () => {
+  runBulkUserStatusChange(false);
+});
+
+userEditForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!state.editingUserId) {
+    setUserEditMessage("Nebyl vybrán žádný uživatel k úpravě.", "error");
+    return;
+  }
+
+  const formData = new FormData(userEditForm);
+  const payload = Object.fromEntries(formData.entries());
+  payload.is_active = payload.is_active === "1";
+  payload.new_password = String(payload.new_password || "").trim();
+
+  try {
+    const confirmed = await askConfirmation(
+      `Uložit změny pro uživatele "${String(payload.email || "").trim()}"?`,
+      "Uložit"
+    );
+    if (!confirmed) return;
+
+    const submitButton = userEditForm.querySelector("button[type='submit']");
+    submitButton.disabled = true;
+    await apiProtected(`/api/users/${state.editingUserId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+    await loadUsers();
+    closeUserEditModal();
+    renderUsers();
+    setUsersMessage("Účet byl upraven.", "success");
+  } catch (error) {
+    if (error.status !== 401) {
+      setUserEditMessage(error.message, "error");
+    }
+  } finally {
+    userEditForm.querySelector("button[type='submit']").disabled = false;
   }
 });
 
@@ -1226,6 +1390,8 @@ document.addEventListener("keydown", (event) => {
       closeConfirm(false);
     } else if (!detailModal.classList.contains("hidden")) {
       closeDetailModal();
+    } else if (!userEditModal.classList.contains("hidden")) {
+      closeUserEditModal();
     } else if (!editModal.classList.contains("hidden")) {
       closeEditModal();
     } else if (!createDrawer.classList.contains("hidden")) {

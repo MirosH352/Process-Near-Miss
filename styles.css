@@ -936,6 +936,12 @@ button:focus-visible {
   gap: 1rem;
 }
 
+.users-table-wrap {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
 .users-form {
   display: grid;
   gap: 0.9rem;
@@ -950,20 +956,42 @@ button:focus-visible {
   min-width: 0;
 }
 
-.user-reset {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.5rem;
+.users-toolbar {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.user-reset-input {
-  min-height: 38px;
-  padding: 0.55rem 0.75rem;
+.users-selected-count {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.92rem;
+  font-weight: 600;
 }
 
-.user-reset-button {
-  min-width: 90px;
+.users-bulk-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.user-actions {
+  display: grid;
+  gap: 0.6rem;
+  align-items: start;
+}
+
+.user-actions .icon-button {
+  justify-content: center;
+}
+
+.form-hint {
+  margin: -0.35rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.45;
 }
 
 .records-head {
@@ -1004,6 +1032,10 @@ button:focus-visible {
 
 .records-table .col-title {
   width: 320px;
+}
+
+.records-table .col-select {
+  width: 52px;
 }
 
 .records-table .col-type {
@@ -1553,8 +1585,7 @@ button:focus-visible {
   .records-table {
     min-width: 1080px;
   }
-
-  .user-reset {
-    grid-template-columns: 1fr;
+  .user-actions {
+    gap: 0.5rem;
   }
 }
