@@ -958,7 +958,7 @@ button:focus-visible {
 
 .users-toolbar {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 1rem;
 }
@@ -979,6 +979,10 @@ button:focus-visible {
 }
 
 .users-bulk-actions .icon-button {
+  width: auto;
+  min-width: 0;
+  height: 2.65rem;
+  padding: 0 0.95rem;
   white-space: nowrap;
 }
 
@@ -1516,6 +1520,10 @@ button:focus-visible {
   .users-bulk-actions {
     justify-self: start;
     flex-wrap: wrap;
+  }
+
+  .users-bulk-actions .icon-button {
+    width: auto;
   }
 
   .detail-metadata,
