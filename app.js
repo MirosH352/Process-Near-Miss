@@ -873,6 +873,9 @@ function columnTemplate(status, items) {
         method: "PATCH",
         body: JSON.stringify({ status }),
       });
+      dragged.status = status;
+      dragged.updated_at = new Date().toISOString();
+      render();
       await loadAppData();
       setMessage(`Stav přesunut do "${STATUS_META[status].label}".`, "success");
     } catch (error) {
@@ -915,6 +918,9 @@ function columnTemplate(status, items) {
         method: "PATCH",
         body: JSON.stringify({ status }),
       });
+      dragged.status = status;
+      dragged.updated_at = new Date().toISOString();
+      render();
       await loadAppData();
       setMessage(`Stav přesunut do "${STATUS_META[status].label}".`, "success");
     } catch (error) {
