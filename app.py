@@ -980,7 +980,7 @@ class AppHandler(BaseHTTPRequestHandler):
 
 def main() -> None:
     init_db()
-    host = os.environ.get("HOST", "127.0.0.1")
+    host = os.environ.get("HOST", "0.0.0.0")
     port = int(os.environ.get("PORT", "8000"))
     server = ThreadingHTTPServer((host, port), AppHandler)
     print(f"Near miss tracker běží na http://{host}:{port}")
