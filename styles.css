@@ -957,11 +957,10 @@ button:focus-visible {
 }
 
 .users-toolbar {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto 1fr;
   align-items: center;
   gap: 1rem;
-  flex-wrap: wrap;
 }
 
 .users-selected-count {
@@ -973,8 +972,14 @@ button:focus-visible {
 
 .users-bulk-actions {
   display: flex;
+  justify-self: end;
   gap: 0.6rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.users-bulk-actions .icon-button {
+  white-space: nowrap;
 }
 
 .user-actions {
@@ -1501,6 +1506,16 @@ button:focus-visible {
 
   .toolbar-filters {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .users-toolbar {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .users-bulk-actions {
+    justify-self: start;
+    flex-wrap: wrap;
   }
 
   .detail-metadata,
