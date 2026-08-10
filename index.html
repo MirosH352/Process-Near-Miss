@@ -75,6 +75,16 @@
     </section>
 
     <main id="appView" class="shell app-shell hidden">
+      <div class="app-content">
+      <div class="app-topbar">
+        <div class="session-bar">
+          <div>
+            <span class="toolbar-label">Přihlášený účet</span>
+            <strong id="currentUserEmail">-</strong>
+          </div>
+          <button type="button" class="secondary logout-button" id="logoutButton">Odhlásit</button>
+        </div>
+      </div>
       <header class="dashboard-header card">
         <div class="dashboard-intro">
           <p class="eyebrow">Týmová bezpečnost a kvalita</p>
@@ -87,14 +97,6 @@
               <span class="button-icon" data-icon="plus"></span>
               <span>Nový záznam</span>
             </button>
-          </div>
-
-          <div class="session-bar">
-            <div>
-              <span class="toolbar-label">Přihlášený účet</span>
-              <strong id="currentUserEmail">-</strong>
-            </div>
-            <button type="button" class="secondary logout-button" id="logoutButton">Odhlásit</button>
           </div>
 
           <div class="app-tabs" role="tablist" aria-label="Přepínač hlavních sekcí">
@@ -357,6 +359,7 @@
             </div>
           </div>
         </section>
+      </div>
       </div>
     </main>
 

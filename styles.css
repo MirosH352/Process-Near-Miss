@@ -109,7 +109,7 @@ h3 {
 }
 
 .shell {
-  width: min(1360px, calc(100vw - 2rem));
+  width: 100%;
   margin: 0 auto;
   padding: 1.5rem 0 2.5rem;
   position: relative;
@@ -119,6 +119,19 @@ h3 {
 .app-shell {
   display: grid;
   gap: 1rem;
+}
+
+.app-content {
+  width: min(1440px, calc(100vw - 2rem));
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+}
+
+.app-topbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .auth-shell {
@@ -351,16 +364,17 @@ h3 {
   gap: 0.85rem;
   padding: 1rem;
   border-radius: 14px;
-  border: 1px solid var(--color-border);
   background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
   min-height: 92px;
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 
 .kpi-card:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-hover);
-  border-color: #d8e1ec;
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.08);
+  border-color: rgba(194, 205, 220, 0.95);
 }
 
 .kpi-icon {
@@ -727,12 +741,14 @@ button:focus-visible {
 }
 
 .kanban-empty {
-  padding: 0.95rem;
-  border-radius: 12px;
-  border: 1px dashed #d6deea;
-  color: var(--color-text-secondary);
-  background: #fff;
-  text-align: center;
+  padding: 0.75rem 0.85rem;
+  border-radius: 10px;
+  border: 0;
+  background: rgba(248, 250, 252, 0.9);
+  color: #94a3b8;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  text-align: left;
 }
 
 .entry {
@@ -831,9 +847,10 @@ button:focus-visible {
 
 .entry-title {
   margin-bottom: 0;
-  font-size: 1rem;
-  font-weight: 700;
-  line-height: 1.35;
+  color: #0f172a;
+  font-size: 1.08rem;
+  font-weight: 800;
+  line-height: 1.28;
 }
 
 .entry-description {
@@ -846,9 +863,10 @@ button:focus-visible {
 
 .entry-footer {
   display: flex;
-  align-items: end;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  margin-top: auto;
 }
 
 .timestamps {
@@ -856,7 +874,25 @@ button:focus-visible {
   gap: 0.2rem;
   color: var(--color-text-secondary);
   font-size: 0.8rem;
-  text-align: right;
+  text-align: left;
+}
+
+.entry-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.entry-actions .icon-button {
+  width: 2rem;
+  height: 2rem;
+}
+
+.entry-actions .icon-button svg {
+  width: 0.95rem;
+  height: 0.95rem;
 }
 
 .entry-footer label {

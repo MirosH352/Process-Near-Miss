@@ -744,11 +744,13 @@ function bindRecordOpen(container, item) {
   });
 }
 
-function cardTemplate(item) {
+function cardTemplate(item, columnStatus = item.status) {
   const article = document.createElement("article");
   article.className = `entry status-${item.status}`;
   article.draggable = true;
   article.dataset.id = item.id;
+
+  const statusBadge = item.status === columnStatus ? "" : `<span class="badge status-badge status-${item.status}">${STATUS_META[item.status].label}</span>`;
 
   article.innerHTML = `
     <div class="entry-top">
@@ -756,14 +758,9 @@ function cardTemplate(item) {
         <div class="badges">
           <span class="badge type-badge">${TYPE_LABELS[item.entry_type]}</span>
           <span class="badge priority-badge priority-${item.severity}">Priorita ${SEVERITY_LABELS[item.severity]}</span>
-          <span class="badge status-badge status-${item.status}">${STATUS_META[item.status].label}</span>
+          ${statusBadge}
         </div>
         <h3 class="entry-title"></h3>
-      </div>
-      <div class="entry-actions">
-        <button class="icon-button secondary move-button" type="button" title="Přesunout záznam" aria-label="Přesunout záznam" data-icon="move"></button>
-        <button class="icon-button secondary edit-button" type="button" title="Upravit záznam" aria-label="Upravit záznam" data-icon="edit"></button>
-        <button class="icon-button danger delete-button" type="button" title="Smazat záznam" aria-label="Smazat záznam" data-icon="trash"></button>
       </div>
     </div>
     <p class="entry-description"></p>
@@ -771,6 +768,11 @@ function cardTemplate(item) {
       <div class="timestamps">
         <span class="created-at"></span>
         <span class="updated-at"></span>
+      </div>
+      <div class="entry-actions">
+        <button class="icon-button secondary move-button" type="button" title="Přesunout záznam" aria-label="Přesunout záznam" data-icon="move"></button>
+        <button class="icon-button secondary edit-button" type="button" title="Upravit záznam" aria-label="Upravit záznam" data-icon="edit"></button>
+        <button class="icon-button danger delete-button" type="button" title="Smazat záznam" aria-label="Smazat záznam" data-icon="trash"></button>
       </div>
     </div>
   `;
@@ -801,7 +803,6 @@ function cardTemplate(item) {
 
   return article;
 }
-
 function tableRowTemplate(item) {
   const row = document.createElement("tr");
   row.className = `record-row status-${item.status}`;
@@ -933,7 +934,7 @@ function columnTemplate(status, items) {
   column.addEventListener("drop", handleDrop);
 
   for (const item of items) {
-    dropzone.appendChild(cardTemplate(item));
+    dropzone.appendChild(cardTemplate(item, status));
   }
 
   if (items.length === 0) {
