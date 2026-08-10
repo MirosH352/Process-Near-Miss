@@ -434,6 +434,7 @@ def user_to_dict(row: sqlite3.Row) -> dict:
 
 
 def row_to_dict(row: sqlite3.Row) -> dict:
+    created_by_email = row["created_by_email"] if "created_by_email" in row.keys() else None
     return {
         "id": row["id"],
         "title": row["title"],
@@ -445,8 +446,8 @@ def row_to_dict(row: sqlite3.Row) -> dict:
         "status": row["status"],
         "status_label": STATUS_LABELS[row["status"]],
         "created_by_user_id": row["created_by_user_id"],
-        "created_by_email": row["created_by_email"],
-        "created_by_label": row["created_by_email"] or "Systém",
+        "created_by_email": created_by_email,
+        "created_by_label": created_by_email or "Systém",
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
     }
@@ -811,7 +812,15 @@ def update_entry(entry_id: int, data: dict) -> dict:
         )
         if cursor.rowcount == 0:
             raise LookupError("Záznam nebyl nalezen.")
-        row = conn.execute("SELECT * FROM entries WHERE id = ?", (entry_id,)).fetchone()
+        row = conn.execute(
+            """
+            SELECT e.*, u.email AS created_by_email
+            FROM entries e
+            LEFT JOIN users u ON u.id = e.created_by_user_id
+            WHERE e.id = ?
+            """,
+            (entry_id,),
+        ).fetchone()
     return row_to_dict(row)
 
 

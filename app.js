@@ -943,9 +943,7 @@ async function moveEntryToStatus(entryId, status, sourceLabel = "Stav přesunut"
       method: "PATCH",
       body: JSON.stringify({ status }),
     });
-    window.setTimeout(() => {
-      loadAppData().catch(() => {});
-    }, 500);
+    await loadAppData();
     setMessage(`${sourceLabel} do "${STATUS_META[status].label}".`, "success");
     return true;
   } catch (error) {
