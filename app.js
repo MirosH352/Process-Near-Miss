@@ -44,6 +44,7 @@ const state = {
     direction: "desc",
   },
   viewMode: readViewMode(),
+  appSection: "records",
   editingId: null,
   detailItem: null,
   confirmResolver: null,
@@ -104,6 +105,9 @@ const detailCreatedAtEl = document.getElementById("detailCreatedAt");
 const detailUpdatedAtEl = document.getElementById("detailUpdatedAt");
 const detailHasDescriptionEl = document.getElementById("detailHasDescription");
 const detailEditBtn = document.getElementById("detailEdit");
+const appTabButtons = document.querySelectorAll(".app-tab-button");
+const recordsPanel = document.getElementById("recordsPanel");
+const adminPanel = document.getElementById("adminPanel");
 const viewButtons = document.querySelectorAll(".view-button");
 const sortButtons = document.querySelectorAll(".sort-button");
 
@@ -476,6 +480,7 @@ function handleSessionExpired() {
   state.user = null;
   state.items = [];
   state.users = [];
+  state.appSection = "records";
   currentUserEmailEl.textContent = "-";
   setPasswordMessage("");
   setUsersMessage("");
@@ -501,13 +506,37 @@ function showLoginMode() {
 
 function updateRoleVisibility() {
   const isAdmin = state.user?.role === "admin";
-  usersSection.hidden = !isAdmin;
+  appTabButtons.forEach((button) => {
+    if (button.dataset.appTab === "admin") {
+      button.classList.toggle("hidden", !isAdmin);
+    }
+  });
+  if (!isAdmin && state.appSection === "admin") {
+    state.appSection = "records";
+  }
+  setAppSection(state.appSection);
+}
+
+function setAppSection(section) {
+  state.appSection = section === "admin" && state.user?.role === "admin" ? "admin" : "records";
+  const isAdminSection = state.appSection === "admin";
+
+  recordsPanel.classList.toggle("hidden", isAdminSection);
+  adminPanel.classList.toggle("hidden", !isAdminSection);
+
+  appTabButtons.forEach((button) => {
+    const active = button.dataset.appTab === state.appSection;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-selected", active ? "true" : "false");
+  });
 }
 
 function renderAuthState() {
   authView.classList.toggle("hidden", false);
   appView.classList.toggle("hidden", true);
-  usersSection.hidden = true;
+  state.appSection = "records";
+  recordsPanel.classList.remove("hidden");
+  adminPanel.classList.add("hidden");
   if (state.needsBootstrap) {
     showBootstrapMode();
   } else {
@@ -521,6 +550,7 @@ function enterApp(user) {
   authView.classList.add("hidden");
   appView.classList.remove("hidden");
   updateRoleVisibility();
+  setAppSection(state.appSection);
   updateViewModeUI();
   hydrateIcons();
 }
@@ -612,7 +642,9 @@ function render() {
   updateStats(state.items);
   renderBoard(visibleItems);
   renderTable(visibleItems);
-  renderUsers();
+  if (state.user?.role === "admin") {
+    renderUsers();
+  }
 }
 
 function bindEntryActions(container, item) {
@@ -948,6 +980,20 @@ logoutButton.addEventListener("click", async () => {
   }
   handleSessionExpired();
   setLoginMessage("Odhlášení proběhlo úspěšně.", "success");
+});
+
+appTabButtons.forEach((button) => {
+  button.addEventListener("click", async () => {
+    if (button.classList.contains("hidden")) return;
+    const target = button.dataset.appTab;
+    if (target === "admin" && state.user?.role === "admin" && state.users.length === 0) {
+      await loadUsers();
+    }
+    setAppSection(target);
+    if (target === "admin") {
+      renderUsers();
+    }
+  });
 });
 
 passwordForm.addEventListener("submit", async (event) => {
