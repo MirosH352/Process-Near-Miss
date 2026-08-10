@@ -45,6 +45,7 @@ const state = {
   },
   viewMode: readViewMode(),
   appSection: "records",
+  draggingEntryId: null,
   editingId: null,
   detailItem: null,
   confirmResolver: null,
@@ -771,12 +772,15 @@ function cardTemplate(item) {
   hydrateIcons(article);
 
   article.addEventListener("dragstart", (event) => {
+    state.draggingEntryId = item.id;
     event.dataTransfer.setData("text/plain", item.id);
+    event.dataTransfer.setData("text", item.id);
     event.dataTransfer.effectAllowed = "move";
     article.classList.add("dragging");
   });
 
   article.addEventListener("dragend", () => {
+    state.draggingEntryId = null;
     article.classList.remove("dragging");
   });
 
@@ -849,6 +853,7 @@ function columnTemplate(status, items) {
   const dropzone = column.querySelector(".kanban-dropzone");
   dropzone.addEventListener("dragover", (event) => {
     event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
     dropzone.classList.add("drag-over");
   });
   dropzone.addEventListener("dragleave", () => {
@@ -857,7 +862,7 @@ function columnTemplate(status, items) {
   dropzone.addEventListener("drop", async (event) => {
     event.preventDefault();
     dropzone.classList.remove("drag-over");
-    const id = event.dataTransfer.getData("text/plain");
+    const id = event.dataTransfer.getData("text/plain") || event.dataTransfer.getData("text") || state.draggingEntryId;
     if (!id) return;
 
     const dragged = state.items.find((item) => String(item.id) === String(id));
@@ -879,11 +884,13 @@ function columnTemplate(status, items) {
 
   column.addEventListener("dragover", (event) => {
     event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
     column.classList.add("drag-over");
     dropzone.classList.add("drag-over");
   });
   column.addEventListener("dragenter", (event) => {
     event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
     column.classList.add("drag-over");
     dropzone.classList.add("drag-over");
   });
@@ -897,7 +904,7 @@ function columnTemplate(status, items) {
     event.preventDefault();
     column.classList.remove("drag-over");
     dropzone.classList.remove("drag-over");
-    const id = event.dataTransfer.getData("text/plain");
+    const id = event.dataTransfer.getData("text/plain") || event.dataTransfer.getData("text") || state.draggingEntryId;
     if (!id) return;
 
     const dragged = state.items.find((item) => String(item.id) === String(id));
