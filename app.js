@@ -109,6 +109,7 @@ const detailEditBtn = document.getElementById("detailEdit");
 const appTabButtons = document.querySelectorAll(".app-tab-button");
 const recordsPanel = document.getElementById("recordsPanel");
 const adminPanel = document.getElementById("adminPanel");
+const toastRegion = document.getElementById("toastRegion");
 const viewButtons = document.querySelectorAll(".view-button");
 const sortButtons = document.querySelectorAll(".sort-button");
 
@@ -234,6 +235,17 @@ function setUsersMessage(text, kind = "info") {
 function setPasswordMessage(text, kind = "info") {
   passwordMessageEl.textContent = text;
   passwordMessageEl.dataset.kind = kind;
+}
+
+function showToast(message, kind = "info") {
+  if (!toastRegion || !message) return;
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${kind}`;
+  toast.textContent = message;
+  toastRegion.appendChild(toast);
+  window.setTimeout(() => {
+    toast.remove();
+  }, 2600);
 }
 
 function hydrateIcons(root = document) {
@@ -834,6 +846,38 @@ function tableRowTemplate(item) {
   return row;
 }
 
+async function moveEntryToStatus(entryId, status, sourceLabel = "Stav přesunut") {
+  const dragged = state.items.find((item) => String(item.id) === String(entryId));
+  if (!dragged || dragged.status === status) return false;
+
+  const previousStatus = dragged.status;
+  dragged.status = status;
+  dragged.updated_at = new Date().toISOString();
+  render();
+  showToast(`${dragged.title} přesunuto do ${STATUS_META[status].label}.`, "success");
+
+  try {
+    await apiProtected(`/api/entries/${entryId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    });
+    window.setTimeout(() => {
+      loadAppData().catch(() => {});
+    }, 500);
+    setMessage(`${sourceLabel} do "${STATUS_META[status].label}".`, "success");
+    return true;
+  } catch (error) {
+    dragged.status = previousStatus;
+    dragged.updated_at = new Date().toISOString();
+    render();
+    showToast(error.message || "Přesun se nepodařil.", "error");
+    if (error.status !== 401) {
+      setMessage(error.message, "error");
+    }
+    return false;
+  }
+}
+
 function columnTemplate(status, items) {
   const column = document.createElement("section");
   column.className = `kanban-column status-${status}`;
@@ -851,88 +895,42 @@ function columnTemplate(status, items) {
   `;
 
   const dropzone = column.querySelector(".kanban-dropzone");
-  dropzone.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-    dropzone.classList.add("drag-over");
-  });
-  dropzone.addEventListener("dragleave", () => {
-    dropzone.classList.remove("drag-over");
-  });
-  dropzone.addEventListener("drop", async (event) => {
-    event.preventDefault();
-    dropzone.classList.remove("drag-over");
-    const id = event.dataTransfer.getData("text/plain") || event.dataTransfer.getData("text") || state.draggingEntryId;
-    if (!id) return;
-
-    const dragged = state.items.find((item) => String(item.id) === String(id));
-    if (!dragged || dragged.status === status) return;
-
-    try {
-      await apiProtected(`/api/entries/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status }),
-      });
-      dragged.status = status;
-      dragged.updated_at = new Date().toISOString();
-      render();
-      window.setTimeout(() => {
-        loadAppData().catch(() => {});
-      }, 350);
-      setMessage(`Stav přesunut do "${STATUS_META[status].label}".`, "success");
-    } catch (error) {
-      if (error.status !== 401) {
-        setMessage(error.message, "error");
-      }
-    }
-  });
-
-  column.addEventListener("dragover", (event) => {
+  const activateDrop = (event) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
     column.classList.add("drag-over");
     dropzone.classList.add("drag-over");
-  });
-  column.addEventListener("dragenter", (event) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-    column.classList.add("drag-over");
-    dropzone.classList.add("drag-over");
-  });
-  column.addEventListener("dragleave", (event) => {
-    if (!column.contains(event.relatedTarget)) {
-      column.classList.remove("drag-over");
-      dropzone.classList.remove("drag-over");
-    }
-  });
-  column.addEventListener("drop", async (event) => {
-    event.preventDefault();
+  };
+  const deactivateDrop = () => {
     column.classList.remove("drag-over");
     dropzone.classList.remove("drag-over");
+  };
+
+  const handleDrop = async (event) => {
+    event.preventDefault();
+    deactivateDrop();
     const id = event.dataTransfer.getData("text/plain") || event.dataTransfer.getData("text") || state.draggingEntryId;
     if (!id) return;
+    await moveEntryToStatus(id, status);
+  };
 
-    const dragged = state.items.find((item) => String(item.id) === String(id));
-    if (!dragged || dragged.status === status) return;
-
-    try {
-      await apiProtected(`/api/entries/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status }),
-      });
-      dragged.status = status;
-      dragged.updated_at = new Date().toISOString();
-      render();
-      window.setTimeout(() => {
-        loadAppData().catch(() => {});
-      }, 350);
-      setMessage(`Stav přesunut do "${STATUS_META[status].label}".`, "success");
-    } catch (error) {
-      if (error.status !== 401) {
-        setMessage(error.message, "error");
-      }
+  dropzone.addEventListener("dragover", activateDrop);
+  dropzone.addEventListener("dragenter", activateDrop);
+  dropzone.addEventListener("dragleave", (event) => {
+    if (!dropzone.contains(event.relatedTarget)) {
+      deactivateDrop();
     }
   });
+  dropzone.addEventListener("drop", handleDrop);
+
+  column.addEventListener("dragover", activateDrop);
+  column.addEventListener("dragenter", activateDrop);
+  column.addEventListener("dragleave", (event) => {
+    if (!column.contains(event.relatedTarget)) {
+      deactivateDrop();
+    }
+  });
+  column.addEventListener("drop", handleDrop);
 
   for (const item of items) {
     dropzone.appendChild(cardTemplate(item));
