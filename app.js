@@ -190,6 +190,13 @@ function writeViewMode(viewMode) {
   }
 }
 
+function resetSearch() {
+  state.search = "";
+  if (searchInput) {
+    searchInput.value = "";
+  }
+}
+
 function syncBodyLock() {
   const editOpen = !editModal.classList.contains("hidden");
   const confirmOpen = !confirmModal.classList.contains("hidden");
@@ -481,6 +488,7 @@ function handleSessionExpired() {
   state.items = [];
   state.users = [];
   state.appSection = "records";
+  resetSearch();
   currentUserEmailEl.textContent = "-";
   setPasswordMessage("");
   setUsersMessage("");
@@ -535,6 +543,7 @@ function renderAuthState() {
   authView.classList.toggle("hidden", false);
   appView.classList.toggle("hidden", true);
   state.appSection = "records";
+  resetSearch();
   recordsPanel.classList.remove("hidden");
   adminPanel.classList.add("hidden");
   if (state.needsBootstrap) {
@@ -549,6 +558,7 @@ function enterApp(user) {
   currentUserEmailEl.textContent = user.email;
   authView.classList.add("hidden");
   appView.classList.remove("hidden");
+  resetSearch();
   updateRoleVisibility();
   setAppSection(state.appSection);
   updateViewModeUI();
@@ -940,6 +950,7 @@ bootstrapForm.addEventListener("submit", async (event) => {
       body: JSON.stringify(payload),
     });
     state.needsBootstrap = false;
+    resetSearch();
     enterApp(response.user);
     await loadAppData();
     setBootstrapMessage("");
@@ -962,6 +973,7 @@ loginForm.addEventListener("submit", async (event) => {
       method: "POST",
       body: JSON.stringify(payload),
     });
+    resetSearch();
     enterApp(response.user);
     await loadAppData();
     setLoginMessage("");
