@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Evidence chyb a Near Miss</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="backdrop backdrop-one"></div>
+    <div class="backdrop backdrop-two"></div>
+
+    <section id="authView" class="auth-shell">
+      <div class="auth-card card">
+        <div class="auth-copy">
+          <p class="eyebrow">Týmová bezpečnost a kvalita</p>
+          <h1>Evidence chyb a Near Miss se serverovým přihlášením</h1>
+          <p class="lead">
+            Prototyp je připravený na backend se SQLite databází a přístupem přes email a heslo.
+            První administrátor se zakládá ručně při prvním spuštění.
+          </p>
+          <div class="auth-points" aria-label="Hlavní vlastnosti">
+            <span>Serverové session</span>
+            <span>SQLite databáze</span>
+            <span>Ruční zakládání adminů</span>
+          </div>
+        </div>
+
+        <div class="auth-panels">
+          <form id="bootstrapForm" class="auth-form hidden">
+            <p class="eyebrow">První spuštění</p>
+            <h2>Vytvořit prvního administrátora</h2>
+            <p class="auth-hint">Tento účet použiješ pro přihlášení i správu dalších adminů.</p>
+
+            <label>
+              Email
+              <input name="email" type="email" placeholder="admin@firma.cz" required />
+            </label>
+
+            <label>
+              Heslo
+              <input name="password" type="password" minlength="8" required />
+            </label>
+
+            <button type="submit" class="primary">Vytvořit a přihlásit</button>
+            <p id="bootstrapMessage" class="form-message" aria-live="polite"></p>
+          </form>
+
+          <form id="loginForm" class="auth-form hidden">
+            <p class="eyebrow">Přihlášení</p>
+            <h2>Přihlásit se do aplikace</h2>
+            <p class="auth-hint">Použij email a heslo administrátorského účtu.</p>
+
+            <label>
+              Email
+              <input name="email" type="email" placeholder="admin@firma.cz" required />
+            </label>
+
+            <label>
+              Heslo
+              <input name="password" type="password" required />
+            </label>
+
+            <button type="submit" class="primary">Přihlásit se</button>
+            <p id="loginMessage" class="form-message" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <main id="appView" class="shell app-shell hidden">
+      <header class="dashboard-header card">
+        <div class="dashboard-intro">
+          <p class="eyebrow">Týmová bezpečnost a kvalita</p>
+          <div class="header-title-row">
+            <div>
+              <h1>Evidence chyb a Near Miss</h1>
+              <p class="lead">Správa kvalitativních incidentů s přihlášením přes email a heslo</p>
+            </div>
+            <button type="button" class="primary header-action" id="openEntryDrawer">
+              <span class="button-icon" data-icon="plus"></span>
+              <span>Nový záznam</span>
+            </button>
+          </div>
+
+          <div class="session-bar">
+            <div>
+              <span class="toolbar-label">Přihlášený účet</span>
+              <strong id="currentUserEmail">-</strong>
+            </div>
+            <button type="button" class="secondary logout-button" id="logoutButton">Odhlásit</button>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <article class="kpi-card kpi-primary">
+            <span class="kpi-icon" data-icon="dashboard"></span>
+            <div>
+              <span id="totalCount" class="kpi-value">0</span>
+              <span class="kpi-label">Celkem záznamů</span>
+            </div>
+          </article>
+          <article class="kpi-card kpi-warning">
+            <span class="kpi-icon" data-icon="alert"></span>
+            <div>
+              <span id="openCount" class="kpi-value">0</span>
+              <span class="kpi-label">Otevřené</span>
+            </div>
+          </article>
+          <article class="kpi-card kpi-success">
+            <span class="kpi-icon" data-icon="check"></span>
+            <div>
+              <span id="resolvedCount" class="kpi-value">0</span>
+              <span class="kpi-label">Uzavřené</span>
+            </div>
+          </article>
+          <article class="kpi-card kpi-danger">
+            <span class="kpi-icon" data-icon="alert"></span>
+            <div>
+              <span id="criticalCount" class="kpi-value">0</span>
+              <span class="kpi-label">Kritické</span>
+            </div>
+          </article>
+        </div>
+      </header>
+
+      <section class="card dashboard-card records-toolbar" aria-label="Filtry a přepínač zobrazení">
+        <div class="toolbar-left">
+          <label class="toolbar-search">
+            <span class="toolbar-label">Vyhledávání</span>
+            <div class="search-field search-field-wide">
+              <span class="search-icon" data-icon="search"></span>
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="Hledat podle názvu, ID, typu, priority nebo stavu..."
+              />
+            </div>
+          </label>
+
+          <div class="toolbar-filters">
+            <label class="toolbar-select">
+              <span class="toolbar-label">Stav</span>
+              <select id="statusFilter">
+                <option value="all">Všechny</option>
+                <option value="new">Nový</option>
+                <option value="in_progress">V řešení</option>
+                <option value="resolved">Vyřešené</option>
+                <option value="closed">Uzavřené</option>
+              </select>
+            </label>
+
+            <label class="toolbar-select">
+              <span class="toolbar-label">Priorita</span>
+              <select id="priorityFilter">
+                <option value="all">Všechny</option>
+                <option value="critical">Kritická</option>
+                <option value="high">Vysoká</option>
+                <option value="medium">Střední</option>
+                <option value="low">Nízká</option>
+              </select>
+            </label>
+
+            <label class="toolbar-select">
+              <span class="toolbar-label">Typ</span>
+              <select id="typeFilter">
+                <option value="all">Všechny</option>
+                <option value="bug">Chyba</option>
+                <option value="near_miss">Near Miss</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="toolbar-right">
+          <div class="toolbar-result">
+            <span class="toolbar-label">Výsledky</span>
+            <strong id="recordsToolbarCount">0 výsledků</strong>
+          </div>
+
+          <div class="view-switch" role="tablist" aria-label="Přepínač zobrazení">
+            <button type="button" class="view-button" data-view="split">Rozdělené</button>
+            <button type="button" class="view-button" data-view="kanban">Kanban</button>
+            <button type="button" class="view-button" data-view="table">Tabulka</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card dashboard-card board-card">
+        <div class="section-head board-head">
+          <div>
+            <h2>Stavový kanban</h2>
+            <p>Každý sloupec zůstává viditelný i bez záznamů. Karty lze přesouvat pomocí drag-and-drop.</p>
+          </div>
+        </div>
+
+        <div id="emptyState" class="board-empty-note">
+          Zatím nejsou evidovány žádné záznamy. Vytvoř první chybu nebo Near Miss událost.
+        </div>
+
+        <div id="board" class="kanban-board"></div>
+      </section>
+
+      <section id="recordsSection" class="card dashboard-card records-card">
+        <div class="section-head records-head">
+          <div>
+            <h2>Všechny záznamy</h2>
+            <p>Kompletní přehled všech evidovaných chyb a Near Miss událostí.</p>
+          </div>
+          <div class="records-header-meta">
+            <span id="recordsCount" class="records-count">0 záznamů</span>
+          </div>
+        </div>
+
+        <div class="table-scroll" role="region" aria-label="Tabulka všech záznamů" tabindex="0">
+          <table class="records-table">
+            <thead>
+              <tr>
+                <th class="col-id">ID</th>
+                <th class="col-title">
+                  <button type="button" class="sort-button" data-sort-key="title">
+                    <span>Název</span>
+                    <span class="sort-indicator" aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th class="col-type">Typ</th>
+                <th class="col-priority">
+                  <button type="button" class="sort-button" data-sort-key="severity">
+                    <span>Priorita</span>
+                    <span class="sort-indicator" aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th class="col-status">
+                  <button type="button" class="sort-button" data-sort-key="status">
+                    <span>Stav</span>
+                    <span class="sort-indicator" aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th class="col-created-by">Vytvořil</th>
+                <th class="col-created">
+                  <button type="button" class="sort-button" data-sort-key="created_at">
+                    <span>Vytvořeno</span>
+                    <span class="sort-indicator" aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th class="col-updated">
+                  <button type="button" class="sort-button" data-sort-key="updated_at">
+                    <span>Aktualizováno</span>
+                    <span class="sort-indicator" aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th class="col-actions">Akce</th>
+              </tr>
+            </thead>
+            <tbody id="recordsTableBody"></tbody>
+          </table>
+        </div>
+
+        <div id="tableEmptyState" class="records-empty hidden">
+          Pro zadané filtry nebyly nalezeny žádné záznamy.
+        </div>
+      </section>
+
+      <section class="card dashboard-card password-card">
+        <div class="section-head">
+          <h2>Změna hesla</h2>
+          <p>Každý přihlášený uživatel si může změnit své vlastní heslo.</p>
+        </div>
+
+        <form id="passwordForm" class="password-form">
+          <label>
+            Současné heslo
+            <input name="current_password" type="password" minlength="8" required />
+          </label>
+
+          <label>
+            Nové heslo
+            <input name="new_password" type="password" minlength="8" required />
+          </label>
+
+          <button type="submit" class="primary">Změnit heslo</button>
+          <p id="passwordMessage" class="form-message" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section id="usersSection" class="card dashboard-card users-card">
+        <div class="section-head users-head">
+          <div>
+            <h2>Správa účtů</h2>
+            <p>Admin zakládá ručně další účty a může jim resetovat heslo.</p>
+          </div>
+          <div class="records-header-meta">
+            <span id="usersCount" class="records-count">0 účtů</span>
+          </div>
+        </div>
+
+        <div class="users-layout">
+          <form id="userForm" class="users-form">
+            <label>
+              Email nového účtu
+              <input name="email" type="email" placeholder="nova-admin@firma.cz" required />
+            </label>
+
+            <label>
+              Role
+              <select name="role">
+                <option value="user" selected>Uživatel</option>
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+
+            <label>
+              Heslo
+              <input name="password" type="password" minlength="8" required />
+            </label>
+
+            <button type="submit" class="primary">Vytvořit účet</button>
+            <p id="usersMessage" class="form-message" aria-live="polite"></p>
+          </form>
+
+          <div class="table-scroll users-table-scroll" role="region" aria-label="Tabulka účtů" tabindex="0">
+            <table class="records-table users-table">
+              <thead>
+                <tr>
+                  <th class="col-title">Email</th>
+                  <th class="col-type">Role</th>
+                  <th class="col-status">Aktivní</th>
+                  <th class="col-created">Vytvořeno</th>
+                  <th class="col-updated">Aktualizováno</th>
+                  <th class="col-actions">Reset hesla</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside id="createDrawer" class="drawer hidden" aria-hidden="true">
+      <div class="drawer-backdrop" data-close-entry-drawer></div>
+      <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="createTitle">
+        <div class="drawer-head">
+          <div>
+            <p class="eyebrow">Nový záznam</p>
+            <h2 id="createTitle">Přidat záznam</h2>
+          </div>
+          <button class="icon-button secondary drawer-close" type="button" data-close-entry-drawer>
+            Zavřít
+          </button>
+        </div>
+
+        <form id="entryForm" class="drawer-form">
+          <label>
+            Název
+            <input
+              name="title"
+              type="text"
+              placeholder="Např. Chybějící kontrola vstupu"
+              required
+            />
+          </label>
+
+          <label>
+            Popis
+            <textarea
+              name="description"
+              rows="4"
+              placeholder="Co se stalo, kde a jaký byl dopad?"
+            ></textarea>
+          </label>
+
+          <div class="field-grid">
+            <label>
+              Typ
+              <select name="entry_type">
+                <option value="bug">Chyba</option>
+                <option value="near_miss">Near Miss</option>
+              </select>
+            </label>
+
+            <label>
+              Priorita
+              <select name="severity">
+                <option value="low">Nízká</option>
+                <option value="medium" selected>Střední</option>
+                <option value="high">Vysoká</option>
+                <option value="critical">Kritická</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            Stav
+            <select name="status">
+              <option value="new" selected>Nový</option>
+              <option value="in_progress">V řešení</option>
+              <option value="resolved">Vyřešeno</option>
+              <option value="closed">Uzavřeno</option>
+            </select>
+          </label>
+
+          <button type="submit" class="primary">
+            <span class="button-icon" data-icon="plus"></span>
+            <span>Přidat záznam</span>
+          </button>
+          <p id="formMessage" class="form-message" aria-live="polite"></p>
+        </form>
+      </div>
+    </aside>
+
+    <div id="editModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-modal></div>
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Úprava záznamu</p>
+            <h2 id="editTitle">Upravit záznam</h2>
+          </div>
+          <button class="icon-button modal-close" type="button" data-close-modal>Zavřít</button>
+        </div>
+
+        <form id="editForm" class="modal-form">
+          <label>
+            Název
+            <input name="title" type="text" required />
+          </label>
+
+          <label>
+            Popis
+            <textarea name="description" rows="4"></textarea>
+          </label>
+
+          <div class="two-col">
+            <label>
+              Typ
+              <select name="entry_type">
+                <option value="bug">Chyba</option>
+                <option value="near_miss">Near Miss</option>
+              </select>
+            </label>
+
+            <label>
+              Priorita
+              <select name="severity">
+                <option value="low">Nízká</option>
+                <option value="medium">Střední</option>
+                <option value="high">Vysoká</option>
+                <option value="critical">Kritická</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            Stav
+            <select name="status">
+              <option value="new">Nový</option>
+              <option value="in_progress">V řešení</option>
+              <option value="resolved">Vyřešeno</option>
+              <option value="closed">Uzavřeno</option>
+            </select>
+          </label>
+
+          <div class="modal-actions">
+            <button type="button" class="icon-button secondary" data-close-modal>Zrušit</button>
+            <button type="submit" class="primary">Uložit změny</button>
+          </div>
+          <p id="editMessage" class="form-message" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+
+    <div id="confirmModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-confirm-cancel></div>
+      <div class="modal-panel modal-panel-small" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Potvrzení</p>
+            <h2 id="confirmTitle">Opravdu pokračovat?</h2>
+          </div>
+        </div>
+
+        <p id="confirmText" class="confirm-text"></p>
+
+        <div class="modal-actions">
+          <button type="button" class="icon-button secondary" data-confirm-cancel>Zrušit</button>
+          <button type="button" class="primary" id="confirmAccept">Potvrdit</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="detailModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-detail></div>
+      <div class="modal-panel modal-panel-detail" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Detail záznamu</p>
+            <h2 id="detailTitle">Název záznamu</h2>
+            <p id="detailSubtitle" class="detail-subtitle"></p>
+          </div>
+          <button class="icon-button modal-close" type="button" data-close-detail>Zavřít</button>
+        </div>
+
+        <div class="detail-badges" id="detailBadges"></div>
+
+        <div class="detail-metadata">
+          <article class="detail-stat">
+            <span class="detail-stat-label">ID</span>
+            <strong id="detailId">-</strong>
+          </article>
+          <article class="detail-stat">
+            <span class="detail-stat-label">Typ</span>
+            <strong id="detailType">-</strong>
+          </article>
+          <article class="detail-stat">
+            <span class="detail-stat-label">Priorita</span>
+            <strong id="detailPriority">-</strong>
+          </article>
+          <article class="detail-stat">
+            <span class="detail-stat-label">Stav</span>
+            <strong id="detailStatus">-</strong>
+          </article>
+        </div>
+
+        <section class="detail-section">
+          <div class="section-head detail-section-head">
+            <h3>Popis</h3>
+            <p>Stručný přehled záznamu pro rychlé načítání detailu.</p>
+          </div>
+          <p id="detailDescription" class="detail-description"></p>
+        </section>
+
+        <div class="detail-meta-grid">
+          <article class="detail-info">
+            <span class="detail-info-label">Vytvořeno</span>
+            <strong id="detailCreatedAt">-</strong>
+          </article>
+          <article class="detail-info">
+            <span class="detail-info-label">Poslední úprava</span>
+            <strong id="detailUpdatedAt">-</strong>
+          </article>
+          <article class="detail-info">
+            <span class="detail-info-label">Popis</span>
+            <strong id="detailHasDescription">-</strong>
+          </article>
+        </div>
+
+        <div class="modal-actions detail-actions">
+          <button type="button" class="icon-button secondary" id="detailEdit">Upravit</button>
+          <button type="button" class="primary" data-close-detail>Zavřít detail</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>

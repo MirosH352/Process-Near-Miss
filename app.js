@@ -1,0 +1,1177 @@
+const VIEW_MODE_KEY = "near-miss-tracker.viewMode";
+
+const STATUS_OPTIONS = [
+  ["new", "Nový"],
+  ["in_progress", "V řešení"],
+  ["resolved", "Vyřešeno"],
+  ["closed", "Uzavřeno"],
+];
+
+const STATUS_META = {
+  new: { label: "Nový", hint: "Nové záznamy, které čekají na zpracování." },
+  in_progress: { label: "V řešení", hint: "Záznamy, na kterých se právě pracuje." },
+  resolved: { label: "Vyřešeno", hint: "Případy uzavřené, ale stále dohledatelné." },
+  closed: { label: "Uzavřeno", hint: "Uzavřené položky bez další akce." },
+};
+
+const TYPE_LABELS = {
+  bug: "Chyba",
+  near_miss: "Near Miss",
+};
+
+const SEVERITY_LABELS = {
+  low: "Nízká",
+  medium: "Střední",
+  high: "Vysoká",
+  critical: "Kritická",
+};
+
+const PLURAL_RULES = new Intl.PluralRules("cs-CZ");
+
+const state = {
+  user: null,
+  needsBootstrap: false,
+  items: [],
+  users: [],
+  search: "",
+  filters: {
+    status: "all",
+    priority: "all",
+    type: "all",
+  },
+  sort: {
+    key: "created_at",
+    direction: "desc",
+  },
+  viewMode: readViewMode(),
+  editingId: null,
+  detailItem: null,
+  confirmResolver: null,
+};
+
+const authView = document.getElementById("authView");
+const appView = document.getElementById("appView");
+const bootstrapForm = document.getElementById("bootstrapForm");
+const loginForm = document.getElementById("loginForm");
+const bootstrapMessageEl = document.getElementById("bootstrapMessage");
+const loginMessageEl = document.getElementById("loginMessage");
+const currentUserEmailEl = document.getElementById("currentUserEmail");
+const logoutButton = document.getElementById("logoutButton");
+const passwordForm = document.getElementById("passwordForm");
+const passwordMessageEl = document.getElementById("passwordMessage");
+const userForm = document.getElementById("userForm");
+const usersMessageEl = document.getElementById("usersMessage");
+const usersTableBody = document.getElementById("usersTableBody");
+const usersCountEl = document.getElementById("usersCount");
+const usersSection = document.getElementById("usersSection");
+const form = document.getElementById("entryForm");
+const createDrawer = document.getElementById("createDrawer");
+const openDrawerButton = document.getElementById("openEntryDrawer");
+const drawerCloseButtons = document.querySelectorAll("[data-close-entry-drawer]");
+const boardCard = document.querySelector(".board-card");
+const recordsSection = document.getElementById("recordsSection");
+const boardEl = document.getElementById("board");
+const emptyStateEl = document.getElementById("emptyState");
+const tableEmptyStateEl = document.getElementById("tableEmptyState");
+const messageEl = document.getElementById("formMessage");
+const searchInput = document.getElementById("searchInput");
+const statusFilterEl = document.getElementById("statusFilter");
+const priorityFilterEl = document.getElementById("priorityFilter");
+const typeFilterEl = document.getElementById("typeFilter");
+const recordsToolbarCountEl = document.getElementById("recordsToolbarCount");
+const recordsCountEl = document.getElementById("recordsCount");
+const totalCountEl = document.getElementById("totalCount");
+const openCountEl = document.getElementById("openCount");
+const resolvedCountEl = document.getElementById("resolvedCount");
+const criticalCountEl = document.getElementById("criticalCount");
+const recordsTableBody = document.getElementById("recordsTableBody");
+const editModal = document.getElementById("editModal");
+const editForm = document.getElementById("editForm");
+const editMessageEl = document.getElementById("editMessage");
+const confirmModal = document.getElementById("confirmModal");
+const confirmTextEl = document.getElementById("confirmText");
+const confirmAcceptBtn = document.getElementById("confirmAccept");
+const detailModal = document.getElementById("detailModal");
+const detailTitleEl = document.getElementById("detailTitle");
+const detailSubtitleEl = document.getElementById("detailSubtitle");
+const detailBadgesEl = document.getElementById("detailBadges");
+const detailIdEl = document.getElementById("detailId");
+const detailTypeEl = document.getElementById("detailType");
+const detailPriorityEl = document.getElementById("detailPriority");
+const detailStatusEl = document.getElementById("detailStatus");
+const detailDescriptionEl = document.getElementById("detailDescription");
+const detailCreatedAtEl = document.getElementById("detailCreatedAt");
+const detailUpdatedAtEl = document.getElementById("detailUpdatedAt");
+const detailHasDescriptionEl = document.getElementById("detailHasDescription");
+const detailEditBtn = document.getElementById("detailEdit");
+const viewButtons = document.querySelectorAll(".view-button");
+const sortButtons = document.querySelectorAll(".sort-button");
+
+const ICONS = {
+  dashboard:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>',
+  alert:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a1.5 1.5 0 0 0 1.29 2.25h17.78A1.5 1.5 0 0 0 22.18 18L13.71 3.86a1.5 1.5 0 0 0-2.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+  check:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/></svg>',
+  search:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  edit:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 2 4 4-11 11H7v-4L18 2Z"/><path d="m14 6 4 4"/></svg>',
+  trash:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4.5A1.5 1.5 0 0 1 9.5 3h5A1.5 1.5 0 0 1 16 4.5V6"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v5"/><path d="M14 11v5"/></svg>',
+  move:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"/><path d="m8 7 4-4 4 4"/><path d="m8 17 4 4 4-4"/></svg>',
+  plus:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>',
+};
+
+function api(path, options = {}) {
+  const hasBody = options.body !== undefined && options.body !== null;
+  return fetch(path, {
+    credentials: "same-origin",
+    headers: {
+      ...(hasBody ? { "Content-Type": "application/json" } : {}),
+      ...(options.headers || {}),
+    },
+    ...options,
+  }).then(async (response) => {
+    const text = await response.text();
+    const payload = text ? JSON.parse(text) : null;
+
+    if (!response.ok) {
+      const error = new Error(payload?.error || `Chyba HTTP ${response.status}`);
+      error.status = response.status;
+      error.payload = payload;
+      throw error;
+    }
+
+    return payload;
+  });
+}
+
+async function apiProtected(path, options = {}) {
+  try {
+    return await api(path, options);
+  } catch (error) {
+    if (error.status === 401) {
+      handleSessionExpired();
+    }
+    throw error;
+  }
+}
+
+function formatDate(value) {
+  const date = new Date(value);
+  return new Intl.DateTimeFormat("cs-CZ", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function readViewMode() {
+  try {
+    const value = localStorage.getItem(VIEW_MODE_KEY);
+    return ["split", "kanban", "table"].includes(value) ? value : "split";
+  } catch {
+    return "split";
+  }
+}
+
+function writeViewMode(viewMode) {
+  try {
+    localStorage.setItem(VIEW_MODE_KEY, viewMode);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function syncBodyLock() {
+  const editOpen = !editModal.classList.contains("hidden");
+  const confirmOpen = !confirmModal.classList.contains("hidden");
+  const detailOpen = !detailModal.classList.contains("hidden");
+  const drawerOpen = !createDrawer.classList.contains("hidden");
+  document.body.classList.toggle("modal-open", editOpen || confirmOpen || detailOpen || drawerOpen);
+}
+
+function setMessage(text, kind = "info") {
+  messageEl.textContent = text;
+  messageEl.dataset.kind = kind;
+}
+
+function setEditMessage(text, kind = "info") {
+  editMessageEl.textContent = text;
+  editMessageEl.dataset.kind = kind;
+}
+
+function setLoginMessage(text, kind = "info") {
+  loginMessageEl.textContent = text;
+  loginMessageEl.dataset.kind = kind;
+}
+
+function setBootstrapMessage(text, kind = "info") {
+  bootstrapMessageEl.textContent = text;
+  bootstrapMessageEl.dataset.kind = kind;
+}
+
+function setUsersMessage(text, kind = "info") {
+  usersMessageEl.textContent = text;
+  usersMessageEl.dataset.kind = kind;
+}
+
+function setPasswordMessage(text, kind = "info") {
+  passwordMessageEl.textContent = text;
+  passwordMessageEl.dataset.kind = kind;
+}
+
+function hydrateIcons(root = document) {
+  root.querySelectorAll("[data-icon]").forEach((node) => {
+    const icon = node.getAttribute("data-icon");
+    node.innerHTML = ICONS[icon] || "";
+  });
+}
+
+function shortId(id) {
+  return String(id).slice(0, 8);
+}
+
+function priorityRank(severity) {
+  return {
+    low: 1,
+    medium: 2,
+    high: 3,
+    critical: 4,
+  }[severity] || 0;
+}
+
+function statusRank(status) {
+  return STATUS_OPTIONS.findIndex(([value]) => value === status) + 1 || 0;
+}
+
+function matchesSearch(item, query) {
+  if (!query) return true;
+  const haystack = [
+    item.id,
+    item.title,
+    item.description,
+    item.created_by_label,
+    TYPE_LABELS[item.entry_type],
+    SEVERITY_LABELS[item.severity],
+    STATUS_META[item.status]?.label,
+  ]
+    .join(" ")
+    .toLowerCase();
+  return haystack.includes(query);
+}
+
+function matchesFilters(item) {
+  if (state.filters.status !== "all" && item.status !== state.filters.status) return false;
+  if (state.filters.priority !== "all" && item.severity !== state.filters.priority) return false;
+  if (state.filters.type !== "all" && item.entry_type !== state.filters.type) return false;
+  return true;
+}
+
+function getVisibleItems() {
+  const query = state.search.trim().toLowerCase();
+  return state.items.filter((item) => matchesSearch(item, query) && matchesFilters(item));
+}
+
+function compareItems(a, b, key) {
+  if (key === "title") return a.title.localeCompare(b.title, "cs-CZ");
+  if (key === "severity") return priorityRank(a.severity) - priorityRank(b.severity);
+  if (key === "status") return statusRank(a.status) - statusRank(b.status);
+  if (key === "created_at" || key === "updated_at") {
+    return new Date(a[key]).getTime() - new Date(b[key]).getTime();
+  }
+  return 0;
+}
+
+function sortVisibleItems(items) {
+  const factor = state.sort.direction === "asc" ? 1 : -1;
+  return [...items].sort((a, b) => factor * compareItems(a, b, state.sort.key));
+}
+
+function formatCountLabel(count, forms) {
+  const form = PLURAL_RULES.select(count);
+  if (form === "one") return forms.one.replace("{count}", String(count));
+  if (form === "few") return forms.few.replace("{count}", String(count));
+  return forms.many.replace("{count}", String(count));
+}
+
+function formatResultsCount(count) {
+  return formatCountLabel(count, {
+    one: "{count} výsledek",
+    few: "{count} výsledky",
+    many: "{count} výsledků",
+  });
+}
+
+function formatRecordCount(count) {
+  return formatCountLabel(count, {
+    one: "{count} záznam",
+    few: "{count} záznamy",
+    many: "{count} záznamů",
+  });
+}
+
+function formatUserCount(count) {
+  return formatCountLabel(count, {
+    one: "{count} účet",
+    few: "{count} účty",
+    many: "{count} účtů",
+  });
+}
+
+function computeStats(items) {
+  const total = items.length;
+  const open = items.filter((item) => ["new", "in_progress"].includes(item.status)).length;
+  const resolved = items.filter((item) => ["resolved", "closed"].includes(item.status)).length;
+  const critical = items.filter((item) => item.severity === "critical").length;
+  return { total, open, resolved, critical };
+}
+
+function updateStats(items) {
+  const stats = computeStats(items);
+  totalCountEl.textContent = stats.total;
+  openCountEl.textContent = stats.open;
+  resolvedCountEl.textContent = stats.resolved;
+  criticalCountEl.textContent = stats.critical;
+}
+
+function setViewMode(viewMode) {
+  state.viewMode = viewMode;
+  writeViewMode(viewMode);
+  updateViewModeUI();
+}
+
+function updateViewModeUI() {
+  viewButtons.forEach((button) => {
+    const active = button.dataset.view === state.viewMode;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+
+  const showBoard = state.viewMode !== "table";
+  const showTable = state.viewMode !== "kanban";
+  boardCard.hidden = !showBoard;
+  recordsSection.hidden = !showTable;
+}
+
+function updateSortIndicators() {
+  sortButtons.forEach((button) => {
+    const active = button.dataset.sortKey === state.sort.key;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-sort", active ? (state.sort.direction === "asc" ? "ascending" : "descending") : "none");
+    const indicator = button.querySelector(".sort-indicator");
+    if (!indicator) return;
+    indicator.textContent = active ? (state.sort.direction === "asc" ? "↑" : "↓") : "↕";
+  });
+}
+
+function nextStatus(status) {
+  const index = STATUS_OPTIONS.findIndex(([value]) => value === status);
+  if (index === -1) {
+    return STATUS_OPTIONS[0][0];
+  }
+  return STATUS_OPTIONS[(index + 1) % STATUS_OPTIONS.length][0];
+}
+
+function closeEntryDrawer() {
+  createDrawer.classList.add("hidden");
+  createDrawer.setAttribute("aria-hidden", "true");
+  setMessage("");
+  syncBodyLock();
+}
+
+function openEntryDrawer() {
+  createDrawer.classList.remove("hidden");
+  createDrawer.setAttribute("aria-hidden", "false");
+  setMessage("");
+  syncBodyLock();
+  window.setTimeout(() => form.elements.title.focus(), 0);
+}
+
+function closeEditModal() {
+  state.editingId = null;
+  editModal.classList.add("hidden");
+  editModal.setAttribute("aria-hidden", "true");
+  editForm.reset();
+  setEditMessage("");
+  syncBodyLock();
+}
+
+function openEditModal(item) {
+  state.editingId = item.id;
+  editForm.elements.title.value = item.title;
+  editForm.elements.description.value = item.description || "";
+  editForm.elements.entry_type.value = item.entry_type;
+  editForm.elements.severity.value = item.severity;
+  editForm.elements.status.value = item.status;
+  editModal.classList.remove("hidden");
+  editModal.setAttribute("aria-hidden", "false");
+  setEditMessage("");
+  syncBodyLock();
+  window.setTimeout(() => editForm.elements.title.focus(), 0);
+}
+
+function closeDetailModal() {
+  state.detailItem = null;
+  detailModal.classList.add("hidden");
+  detailModal.setAttribute("aria-hidden", "true");
+  syncBodyLock();
+}
+
+function openDetailModal(item) {
+  state.detailItem = item;
+  detailTitleEl.textContent = item.title;
+  detailSubtitleEl.textContent = `${TYPE_LABELS[item.entry_type]} • ${STATUS_META[item.status].label} • ${item.created_by_label}`;
+  detailIdEl.textContent = item.id;
+  detailTypeEl.textContent = TYPE_LABELS[item.entry_type];
+  detailPriorityEl.textContent = SEVERITY_LABELS[item.severity];
+  detailStatusEl.textContent = STATUS_META[item.status].label;
+  detailDescriptionEl.textContent = item.description || "Bez popisu.";
+  detailCreatedAtEl.textContent = formatDate(item.created_at);
+  detailUpdatedAtEl.textContent = formatDate(item.updated_at);
+  detailHasDescriptionEl.textContent = item.description?.trim() ? "Ano" : "Ne";
+  detailBadgesEl.innerHTML = `
+    <span class="badge type-badge">${TYPE_LABELS[item.entry_type]}</span>
+    <span class="badge priority-badge priority-${item.severity}">Priorita ${SEVERITY_LABELS[item.severity]}</span>
+    <span class="badge status-badge status-${item.status}">${STATUS_META[item.status].label}</span>
+  `;
+  detailModal.classList.remove("hidden");
+  detailModal.setAttribute("aria-hidden", "false");
+  syncBodyLock();
+  window.setTimeout(() => detailEditBtn.focus(), 0);
+}
+
+function openConfirm(message, confirmLabel = "Potvrdit") {
+  confirmTextEl.textContent = message;
+  confirmAcceptBtn.textContent = confirmLabel;
+  confirmModal.classList.remove("hidden");
+  confirmModal.setAttribute("aria-hidden", "false");
+  syncBodyLock();
+
+  return new Promise((resolve) => {
+    state.confirmResolver = resolve;
+  });
+}
+
+function closeConfirm(result) {
+  confirmModal.classList.add("hidden");
+  confirmModal.setAttribute("aria-hidden", "true");
+  confirmTextEl.textContent = "";
+  if (state.confirmResolver) {
+    const resolver = state.confirmResolver;
+    state.confirmResolver = null;
+    resolver(result);
+  }
+  syncBodyLock();
+}
+
+async function askConfirmation(message, confirmLabel = "Potvrdit") {
+  return openConfirm(message, confirmLabel);
+}
+
+function handleSessionExpired() {
+  state.user = null;
+  state.items = [];
+  state.users = [];
+  currentUserEmailEl.textContent = "-";
+  setPasswordMessage("");
+  setUsersMessage("");
+  appView.classList.add("hidden");
+  authView.classList.remove("hidden");
+  showLoginMode();
+  setLoginMessage("Vaše session vypršela. Přihlas se znovu.", "error");
+}
+
+function showBootstrapMode() {
+  bootstrapForm.classList.remove("hidden");
+  loginForm.classList.add("hidden");
+  setBootstrapMessage("");
+  setLoginMessage("");
+}
+
+function showLoginMode() {
+  loginForm.classList.remove("hidden");
+  bootstrapForm.classList.add("hidden");
+  setLoginMessage("");
+  setBootstrapMessage("");
+}
+
+function updateRoleVisibility() {
+  const isAdmin = state.user?.role === "admin";
+  usersSection.hidden = !isAdmin;
+}
+
+function renderAuthState() {
+  authView.classList.toggle("hidden", false);
+  appView.classList.toggle("hidden", true);
+  usersSection.hidden = true;
+  if (state.needsBootstrap) {
+    showBootstrapMode();
+  } else {
+    showLoginMode();
+  }
+}
+
+function enterApp(user) {
+  state.user = user;
+  currentUserEmailEl.textContent = user.email;
+  authView.classList.add("hidden");
+  appView.classList.remove("hidden");
+  updateRoleVisibility();
+  updateViewModeUI();
+  hydrateIcons();
+}
+
+function renderBoard(visibleItems) {
+  boardEl.innerHTML = "";
+  emptyStateEl.hidden = visibleItems.length > 0;
+
+  for (const [status] of STATUS_OPTIONS) {
+    const items = visibleItems.filter((item) => item.status === status);
+    boardEl.appendChild(columnTemplate(status, items));
+  }
+
+  hydrateIcons(boardEl);
+}
+
+function renderTable(visibleItems) {
+  const sorted = sortVisibleItems(visibleItems);
+  recordsTableBody.innerHTML = "";
+  tableEmptyStateEl.hidden = sorted.length > 0;
+  recordsToolbarCountEl.textContent = formatResultsCount(sorted.length);
+  recordsCountEl.textContent = formatRecordCount(sorted.length);
+  updateSortIndicators();
+
+  if (sorted.length === 0) {
+    return;
+  }
+
+  for (const item of sorted) {
+    recordsTableBody.appendChild(tableRowTemplate(item));
+  }
+}
+
+function renderUsers() {
+  usersTableBody.innerHTML = "";
+  usersCountEl.textContent = formatUserCount(state.users.length);
+  if (state.users.length === 0) {
+    return;
+  }
+
+  for (const user of state.users) {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td class="col-title"><strong>${user.email}</strong></td>
+      <td class="col-type"><span class="badge type-badge">${user.role_label || user.role}</span></td>
+      <td class="col-status"><span class="badge ${user.is_active ? "status-resolved" : "status-closed"}">${user.is_active ? "Ano" : "Ne"}</span></td>
+      <td class="col-created">${formatDate(user.created_at)}</td>
+      <td class="col-updated">${formatDate(user.updated_at)}</td>
+      <td class="col-actions">
+        <div class="user-reset">
+          <input class="user-reset-input" type="password" minlength="8" placeholder="Nové heslo" aria-label="Nové heslo pro ${user.email}" />
+          <button type="button" class="icon-button secondary user-reset-button" data-user-id="${user.id}">
+            Reset
+          </button>
+        </div>
+      </td>
+    `;
+    const resetButton = row.querySelector(".user-reset-button");
+    const resetInput = row.querySelector(".user-reset-input");
+    resetButton.addEventListener("click", async () => {
+      const newPassword = resetInput.value.trim();
+      if (!newPassword) {
+        setUsersMessage("Zadej nové heslo pro reset.", "error");
+        return;
+      }
+
+      try {
+        resetButton.disabled = true;
+        await apiProtected(`/api/users/${user.id}/reset-password`, {
+          method: "POST",
+          body: JSON.stringify({ new_password: newPassword }),
+        });
+        resetInput.value = "";
+        setUsersMessage(`Heslo pro ${user.email} bylo resetováno.`, "success");
+      } catch (error) {
+        if (error.status !== 401) {
+          setUsersMessage(error.message, "error");
+        }
+      } finally {
+        resetButton.disabled = false;
+      }
+    });
+    usersTableBody.appendChild(row);
+  }
+}
+
+function render() {
+  const visibleItems = getVisibleItems();
+  updateStats(state.items);
+  renderBoard(visibleItems);
+  renderTable(visibleItems);
+  renderUsers();
+}
+
+function bindEntryActions(container, item) {
+  const moveButton = container.querySelector(".move-button");
+  const editButton = container.querySelector(".edit-button");
+  const deleteButton = container.querySelector(".delete-button");
+
+  if (moveButton) {
+    moveButton.addEventListener("click", async () => {
+      try {
+        const status = nextStatus(item.status);
+        await apiProtected(`/api/entries/${item.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ status }),
+        });
+        await loadAppData();
+        setMessage(`Záznam přesunut do stavu "${STATUS_META[status].label}".`, "success");
+      } catch (error) {
+        if (error.status !== 401) {
+          setMessage(error.message, "error");
+        }
+      }
+    });
+  }
+
+  if (editButton) {
+    editButton.addEventListener("click", () => {
+      openEditModal(item);
+    });
+  }
+
+  if (deleteButton) {
+    deleteButton.addEventListener("click", async () => {
+      const confirmed = await askConfirmation(
+        `Opravdu smazat záznam "${item.title}"? Tuto akci nelze vrátit zpět.`,
+        "Smazat"
+      );
+      if (!confirmed) return;
+
+      try {
+        await apiProtected(`/api/entries/${item.id}`, { method: "DELETE" });
+        if (state.editingId === item.id) closeEditModal();
+        await loadAppData();
+        setMessage("Záznam byl smazán.", "success");
+      } catch (error) {
+        if (error.status !== 401) {
+          setMessage(error.message, "error");
+        }
+      }
+    });
+  }
+}
+
+function bindRecordOpen(container, item) {
+  container.classList.add("record-openable");
+  container.tabIndex = 0;
+  container.setAttribute("role", "button");
+  container.setAttribute("aria-label", `Zobrazit detail záznamu ${item.title}`);
+  container.title = "Kliknutím otevřete detail";
+
+  const openDetail = () => openDetailModal(item);
+
+  container.addEventListener("click", (event) => {
+    if (event.target.closest("button, a, input, select, textarea, label")) return;
+    openDetail();
+  });
+
+  container.addEventListener("keydown", (event) => {
+    if (event.target !== container) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openDetail();
+    }
+  });
+}
+
+function cardTemplate(item) {
+  const article = document.createElement("article");
+  article.className = `entry status-${item.status}`;
+  article.draggable = true;
+  article.dataset.id = item.id;
+
+  article.innerHTML = `
+    <div class="entry-top">
+      <div class="entry-title-wrap">
+        <div class="badges">
+          <span class="badge type-badge">${TYPE_LABELS[item.entry_type]}</span>
+          <span class="badge priority-badge priority-${item.severity}">Priorita ${SEVERITY_LABELS[item.severity]}</span>
+          <span class="badge status-badge status-${item.status}">${STATUS_META[item.status].label}</span>
+        </div>
+        <h3 class="entry-title"></h3>
+      </div>
+      <div class="entry-actions">
+        <button class="icon-button secondary move-button" type="button" title="Přesunout záznam" aria-label="Přesunout záznam" data-icon="move"></button>
+        <button class="icon-button secondary edit-button" type="button" title="Upravit záznam" aria-label="Upravit záznam" data-icon="edit"></button>
+        <button class="icon-button danger delete-button" type="button" title="Smazat záznam" aria-label="Smazat záznam" data-icon="trash"></button>
+      </div>
+    </div>
+    <p class="entry-description"></p>
+    <div class="entry-footer">
+      <div class="timestamps">
+        <span class="created-at"></span>
+        <span class="updated-at"></span>
+      </div>
+    </div>
+  `;
+
+  article.querySelector(".entry-title").textContent = item.title;
+  article.querySelector(".entry-description").textContent = item.description || "Bez popisu.";
+  article.querySelector(".entry-title").title = item.title;
+  article.querySelector(".entry-description").title = item.description || "Bez popisu.";
+  article.querySelector(".created-at").textContent = `Vytvořeno: ${formatDate(item.created_at)}`;
+  article.querySelector(".updated-at").textContent = `Aktualizováno: ${formatDate(item.updated_at)}`;
+  hydrateIcons(article);
+
+  article.addEventListener("dragstart", (event) => {
+    event.dataTransfer.setData("text/plain", item.id);
+    event.dataTransfer.effectAllowed = "move";
+    article.classList.add("dragging");
+  });
+
+  article.addEventListener("dragend", () => {
+    article.classList.remove("dragging");
+  });
+
+  bindEntryActions(article, item);
+  bindRecordOpen(article, item);
+
+  return article;
+}
+
+function tableRowTemplate(item) {
+  const row = document.createElement("tr");
+  row.className = `record-row status-${item.status}`;
+  row.dataset.id = item.id;
+  row.innerHTML = `
+    <td class="col-id"><span class="record-id"></span></td>
+    <td class="col-title">
+      <div class="record-title-wrap">
+        <strong class="record-title"></strong>
+        <span class="record-description"></span>
+      </div>
+    </td>
+    <td class="col-type"><span class="badge type-badge">${TYPE_LABELS[item.entry_type]}</span></td>
+    <td class="col-priority"><span class="badge priority-badge priority-${item.severity}">Priorita ${SEVERITY_LABELS[item.severity]}</span></td>
+    <td class="col-status"><span class="badge status-badge status-${item.status}">${STATUS_META[item.status].label}</span></td>
+    <td class="col-created-by"><span class="placeholder-value"></span></td>
+    <td class="col-created">${formatDate(item.created_at)}</td>
+    <td class="col-updated">${formatDate(item.updated_at)}</td>
+    <td class="col-actions">
+      <div class="table-actions">
+        <button class="icon-button secondary move-button" type="button" title="Přesunout záznam" aria-label="Přesunout záznam" data-icon="move"></button>
+        <button class="icon-button secondary edit-button" type="button" title="Upravit záznam" aria-label="Upravit záznam" data-icon="edit"></button>
+        <button class="icon-button danger delete-button" type="button" title="Smazat záznam" aria-label="Smazat záznam" data-icon="trash"></button>
+      </div>
+    </td>
+  `;
+  const idEl = row.querySelector(".record-id");
+  const titleEl = row.querySelector(".record-title");
+  const descriptionEl = row.querySelector(".record-description");
+  const createdByEl = row.querySelector(".placeholder-value");
+  idEl.textContent = shortId(item.id);
+  idEl.title = item.id;
+  titleEl.textContent = item.title;
+  titleEl.title = item.title;
+  descriptionEl.textContent = item.description || "Bez popisu.";
+  descriptionEl.title = item.description || "Bez popisu.";
+  createdByEl.textContent = item.created_by_label || "Systém";
+  createdByEl.title = item.created_by_label || "Systém";
+  hydrateIcons(row);
+  bindEntryActions(row, item);
+  bindRecordOpen(row, item);
+  return row;
+}
+
+function columnTemplate(status, items) {
+  const column = document.createElement("section");
+  column.className = `kanban-column status-${status}`;
+  column.dataset.status = status;
+
+  column.innerHTML = `
+    <header class="kanban-column-head">
+      <div>
+        <h3>${STATUS_META[status].label}</h3>
+        <p>${STATUS_META[status].hint}</p>
+      </div>
+      <span class="kanban-count">${items.length}</span>
+    </header>
+    <div class="kanban-dropzone" data-dropzone="${status}"></div>
+  `;
+
+  const dropzone = column.querySelector(".kanban-dropzone");
+  dropzone.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    dropzone.classList.add("drag-over");
+  });
+  dropzone.addEventListener("dragleave", () => {
+    dropzone.classList.remove("drag-over");
+  });
+  dropzone.addEventListener("drop", async (event) => {
+    event.preventDefault();
+    dropzone.classList.remove("drag-over");
+    const id = event.dataTransfer.getData("text/plain");
+    if (!id) return;
+
+    const dragged = state.items.find((item) => String(item.id) === String(id));
+    if (!dragged || dragged.status === status) return;
+
+    try {
+      await apiProtected(`/api/entries/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      await loadAppData();
+      setMessage(`Stav přesunut do "${STATUS_META[status].label}".`, "success");
+    } catch (error) {
+      if (error.status !== 401) {
+        setMessage(error.message, "error");
+      }
+    }
+  });
+
+  for (const item of items) {
+    dropzone.appendChild(cardTemplate(item));
+  }
+
+  if (items.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "kanban-empty";
+    empty.textContent = "V tomto stavu zatím nejsou žádné záznamy.";
+    dropzone.appendChild(empty);
+  }
+
+  return column;
+}
+
+async function loadEntries() {
+  const payload = await apiProtected("/api/entries");
+  state.items = payload.items || [];
+}
+
+async function loadUsers() {
+  const payload = await apiProtected("/api/users");
+  state.users = payload.items || [];
+}
+
+async function loadAppData() {
+  await loadEntries();
+  if (state.user?.role === "admin") {
+    await loadUsers();
+  } else {
+    state.users = [];
+  }
+  render();
+}
+
+async function bootstrapAuth() {
+  const status = await api("/api/bootstrap/status");
+  state.needsBootstrap = Boolean(status.needs_bootstrap);
+
+  if (state.needsBootstrap) {
+    authView.classList.remove("hidden");
+    appView.classList.add("hidden");
+    showBootstrapMode();
+    return;
+  }
+
+  try {
+    const payload = await api("/api/auth/me");
+    enterApp(payload.user);
+    await loadAppData();
+  } catch (error) {
+    if (error.status === 401) {
+      authView.classList.remove("hidden");
+      appView.classList.add("hidden");
+      showLoginMode();
+      return;
+    }
+    throw error;
+  }
+}
+
+bootstrapForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const formData = new FormData(bootstrapForm);
+  const payload = Object.fromEntries(formData.entries());
+
+  try {
+    const submitButton = bootstrapForm.querySelector("button[type='submit']");
+    submitButton.disabled = true;
+    const response = await api("/api/bootstrap/admin", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    state.needsBootstrap = false;
+    enterApp(response.user);
+    await loadAppData();
+    setBootstrapMessage("");
+  } catch (error) {
+    setBootstrapMessage(error.message, "error");
+  } finally {
+    bootstrapForm.querySelector("button[type='submit']").disabled = false;
+  }
+});
+
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const formData = new FormData(loginForm);
+  const payload = Object.fromEntries(formData.entries());
+
+  try {
+    const submitButton = loginForm.querySelector("button[type='submit']");
+    submitButton.disabled = true;
+    const response = await api("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    enterApp(response.user);
+    await loadAppData();
+    setLoginMessage("");
+  } catch (error) {
+    setLoginMessage(error.message, "error");
+  } finally {
+    loginForm.querySelector("button[type='submit']").disabled = false;
+  }
+});
+
+logoutButton.addEventListener("click", async () => {
+  try {
+    await api("/api/auth/logout", { method: "POST" });
+  } catch {
+    // Logout should still clear the UI locally even if the session is already gone.
+  }
+  handleSessionExpired();
+  setLoginMessage("Odhlášení proběhlo úspěšně.", "success");
+});
+
+passwordForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const formData = new FormData(passwordForm);
+  const payload = Object.fromEntries(formData.entries());
+
+  try {
+    const submitButton = passwordForm.querySelector("button[type='submit']");
+    submitButton.disabled = true;
+    await apiProtected("/api/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    passwordForm.reset();
+    setPasswordMessage("Heslo bylo změněno.", "success");
+  } catch (error) {
+    if (error.status !== 401) {
+      setPasswordMessage(error.message, "error");
+    }
+  } finally {
+    passwordForm.querySelector("button[type='submit']").disabled = false;
+  }
+});
+
+userForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const formData = new FormData(userForm);
+  const payload = Object.fromEntries(formData.entries());
+
+  try {
+    const submitButton = userForm.querySelector("button[type='submit']");
+    submitButton.disabled = true;
+    await apiProtected("/api/users", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    userForm.reset();
+    await loadUsers();
+    renderUsers();
+    setUsersMessage("Nový účet byl vytvořen.", "success");
+  } catch (error) {
+    if (error.status !== 401) {
+      setUsersMessage(error.message, "error");
+    }
+  } finally {
+    userForm.querySelector("button[type='submit']").disabled = false;
+  }
+});
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const formData = new FormData(form);
+  const payload = Object.fromEntries(formData.entries());
+
+  try {
+    const confirmed = await askConfirmation(
+      `Uložit nový záznam "${String(payload.title || "").trim()}"?`,
+      "Uložit"
+    );
+    if (!confirmed) return;
+
+    const submitButton = form.querySelector("button[type='submit']");
+    submitButton.disabled = true;
+    await apiProtected("/api/entries", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    form.reset();
+    form.elements.status.value = "new";
+    form.elements.severity.value = "medium";
+    closeEntryDrawer();
+    await loadAppData();
+    setMessage("Záznam byl uložen.", "success");
+  } catch (error) {
+    if (error.status !== 401) {
+      setMessage(error.message, "error");
+    }
+  } finally {
+    form.querySelector("button[type='submit']").disabled = false;
+  }
+});
+
+editForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!state.editingId) {
+    setEditMessage("Nebyl vybrán žádný záznam k úpravě.", "error");
+    return;
+  }
+
+  const formData = new FormData(editForm);
+  const payload = Object.fromEntries(formData.entries());
+
+  try {
+    const confirmed = await askConfirmation(
+      `Uložit změny u záznamu "${String(payload.title || "").trim()}"?`,
+      "Uložit"
+    );
+    if (!confirmed) return;
+
+    const submitButton = editForm.querySelector("button[type='submit']");
+    submitButton.disabled = true;
+    await apiProtected(`/api/entries/${state.editingId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+    await loadAppData();
+    closeEditModal();
+    setMessage("Záznam byl upraven.", "success");
+  } catch (error) {
+    if (error.status !== 401) {
+      setEditMessage(error.message, "error");
+    }
+  } finally {
+    editForm.querySelector("button[type='submit']").disabled = false;
+  }
+});
+
+openDrawerButton?.addEventListener("click", () => {
+  openEntryDrawer();
+});
+
+drawerCloseButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    closeEntryDrawer();
+  });
+});
+
+editModal.addEventListener("click", (event) => {
+  if (event.target.matches("[data-close-modal]")) {
+    closeEditModal();
+  }
+});
+
+confirmModal.addEventListener("click", (event) => {
+  if (event.target.matches("[data-confirm-cancel]")) {
+    closeConfirm(false);
+  }
+});
+
+detailModal.addEventListener("click", (event) => {
+  if (event.target.matches("[data-close-detail]")) {
+    closeDetailModal();
+  }
+});
+
+confirmAcceptBtn.addEventListener("click", () => {
+  closeConfirm(true);
+});
+
+detailEditBtn.addEventListener("click", () => {
+  if (!state.detailItem) return;
+  const item = state.detailItem;
+  closeDetailModal();
+  openEditModal(item);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    if (!confirmModal.classList.contains("hidden")) {
+      closeConfirm(false);
+    } else if (!detailModal.classList.contains("hidden")) {
+      closeDetailModal();
+    } else if (!editModal.classList.contains("hidden")) {
+      closeEditModal();
+    } else if (!createDrawer.classList.contains("hidden")) {
+      closeEntryDrawer();
+    }
+  }
+});
+
+searchInput.addEventListener("input", (event) => {
+  state.search = event.target.value;
+  render();
+});
+
+statusFilterEl.addEventListener("change", (event) => {
+  state.filters.status = event.target.value;
+  render();
+});
+
+priorityFilterEl.addEventListener("change", (event) => {
+  state.filters.priority = event.target.value;
+  render();
+});
+
+typeFilterEl.addEventListener("change", (event) => {
+  state.filters.type = event.target.value;
+  render();
+});
+
+viewButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setViewMode(button.dataset.view);
+  });
+});
+
+sortButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const key = button.dataset.sortKey;
+    if (state.sort.key === key) {
+      state.sort.direction = state.sort.direction === "asc" ? "desc" : "asc";
+    } else {
+      state.sort.key = key;
+      state.sort.direction = key === "title" || key === "status" ? "asc" : "desc";
+    }
+    render();
+  });
+});
+
+async function start() {
+  updateViewModeUI();
+  updateSortIndicators();
+  hydrateIcons();
+  renderAuthState();
+  try {
+    await bootstrapAuth();
+    if (state.user) {
+      render();
+    }
+  } catch (error) {
+    setLoginMessage(error.message, "error");
+  }
+}
+
+start();
