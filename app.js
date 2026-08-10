@@ -877,6 +877,46 @@ function columnTemplate(status, items) {
     }
   });
 
+  column.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    column.classList.add("drag-over");
+    dropzone.classList.add("drag-over");
+  });
+  column.addEventListener("dragenter", (event) => {
+    event.preventDefault();
+    column.classList.add("drag-over");
+    dropzone.classList.add("drag-over");
+  });
+  column.addEventListener("dragleave", (event) => {
+    if (!column.contains(event.relatedTarget)) {
+      column.classList.remove("drag-over");
+      dropzone.classList.remove("drag-over");
+    }
+  });
+  column.addEventListener("drop", async (event) => {
+    event.preventDefault();
+    column.classList.remove("drag-over");
+    dropzone.classList.remove("drag-over");
+    const id = event.dataTransfer.getData("text/plain");
+    if (!id) return;
+
+    const dragged = state.items.find((item) => String(item.id) === String(id));
+    if (!dragged || dragged.status === status) return;
+
+    try {
+      await apiProtected(`/api/entries/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      await loadAppData();
+      setMessage(`Stav přesunut do "${STATUS_META[status].label}".`, "success");
+    } catch (error) {
+      if (error.status !== 401) {
+        setMessage(error.message, "error");
+      }
+    }
+  });
+
   for (const item of items) {
     dropzone.appendChild(cardTemplate(item));
   }
