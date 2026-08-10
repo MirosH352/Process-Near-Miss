@@ -876,7 +876,9 @@ function columnTemplate(status, items) {
       dragged.status = status;
       dragged.updated_at = new Date().toISOString();
       render();
-      await loadAppData();
+      window.setTimeout(() => {
+        loadAppData().catch(() => {});
+      }, 350);
       setMessage(`Stav přesunut do "${STATUS_META[status].label}".`, "success");
     } catch (error) {
       if (error.status !== 401) {
@@ -921,7 +923,9 @@ function columnTemplate(status, items) {
       dragged.status = status;
       dragged.updated_at = new Date().toISOString();
       render();
-      await loadAppData();
+      window.setTimeout(() => {
+        loadAppData().catch(() => {});
+      }, 350);
       setMessage(`Stav přesunut do "${STATUS_META[status].label}".`, "success");
     } catch (error) {
       if (error.status !== 401) {
