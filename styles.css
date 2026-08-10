@@ -983,7 +983,7 @@ button:focus-visible {
 }
 
 .records-table .col-created-by {
-  width: 140px;
+  width: 220px;
 }
 
 .records-table .col-created,
@@ -1081,6 +1081,19 @@ button:focus-visible {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 0.84rem;
   color: var(--color-text-secondary);
+}
+
+.placeholder-value {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.records-table tbody td.col-created,
+.records-table tbody td.col-updated {
+  white-space: nowrap;
 }
 
 .table-actions {
