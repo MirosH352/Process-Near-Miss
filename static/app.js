@@ -137,7 +137,7 @@ function render() {
     node.querySelector(".entry-description").textContent = item.description || "Bez popisu.";
     const meta = node.querySelector(".entry-meta");
     if (meta) {
-      meta.querySelector(".problem-reporter").textContent = `Zadavatel problému: ${formatPerson(item.problem_reporter)}`;
+      meta.querySelector(".problem-reporter").textContent = `Zadavatel: ${formatPerson(item.problem_reporter)}`;
     }
     node.querySelector(".created-at").textContent = `Vytvořeno: ${formatDate(item.created_at)}`;
     node.querySelector(".updated-at").textContent = `Aktualizováno: ${formatDate(item.updated_at)}`;

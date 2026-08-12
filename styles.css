@@ -1034,27 +1034,14 @@ button:focus-visible {
 }
 
 .entry-meta {
-  display: grid;
-  gap: 0.2rem;
-  margin-top: 0.45rem;
-  padding: 0.75rem 0.85rem;
-  border-left: 3px solid rgba(47, 111, 237, 0.32);
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(47, 111, 237, 0.06), rgba(47, 111, 237, 0.02));
-}
-
-.entry-meta-label {
+  margin-top: 0.4rem;
   color: var(--color-text-secondary);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 0.84rem;
+  line-height: 1.4;
 }
 
-.entry-meta-value {
-  color: var(--color-text-primary);
-  font-size: 0.95rem;
-  font-weight: 700;
+.entry-meta-inline {
+  display: inline;
 }
 
 .entry-footer {

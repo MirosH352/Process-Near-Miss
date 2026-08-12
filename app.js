@@ -884,8 +884,7 @@ function cardTemplate(item, columnStatus = item.status) {
     </div>
     <p class="entry-description"></p>
     <div class="entry-meta">
-      <span class="entry-meta-label">Zadavatel problému</span>
-      <strong class="entry-meta-value">${formatPerson(item.problem_reporter)}</strong>
+      <span class="entry-meta-inline">Zadavatel: ${formatPerson(item.problem_reporter)}</span>
     </div>
     <div class="entry-footer">
       <div class="timestamps">
