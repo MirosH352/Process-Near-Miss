@@ -46,6 +46,7 @@ Nejjednodussi kombinace je:
 4. Pridej promenne prostredi:
    - `DATABASE_URL` = connection string ze Supabase
    - `SESSION_SECURE` = `1`
+   - `APP_ORIGIN` = verejny origin aplikace, napr. `https://moje-appka.com`
 
 ### 3. Prvni admin
 
@@ -56,6 +57,7 @@ Po prvnim nasazeni otevri aplikaci a zaloz prvniho admina pres bootstrap formula
 - Render free web service se muze uspavat po neaktivite.
 - Supabase free plan ma limity na zdroje a velikost projektu.
 - Pro produkci je vhodne hlidat bezpecnou hodnotu `SESSION_SECURE` a spravne nastavenou adresu aplikace.
+- Pro produkci je vhodne nastavit i `APP_ORIGIN`, aby backend mohl kontrolovat puvod mutujicich requestu.
 
 ## Kdyz chces jen lokalni vyvoj
 

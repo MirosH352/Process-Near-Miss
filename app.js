@@ -39,6 +39,7 @@ const PLURAL_RULES = new Intl.PluralRules("cs-CZ");
 
 const state = {
   user: null,
+  csrfToken: null,
   needsBootstrap: false,
   items: [],
   users: [],
@@ -161,15 +162,22 @@ const ICONS = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>',
 };
 
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
 function api(path, options = {}) {
   const hasBody = options.body !== undefined && options.body !== null;
+  const method = String(options.method || "GET").toUpperCase();
+  const headers = {
+    ...(hasBody ? { "Content-Type": "application/json" } : {}),
+    ...(options.headers || {}),
+  };
+  if (!SAFE_METHODS.has(method) && state.csrfToken) {
+    headers["X-CSRF-Token"] = state.csrfToken;
+  }
   return fetch(path, {
     credentials: "same-origin",
-    headers: {
-      ...(hasBody ? { "Content-Type": "application/json" } : {}),
-      ...(options.headers || {}),
-    },
     ...options,
+    headers,
   }).then(async (response) => {
     const text = await response.text();
     const payload = text ? JSON.parse(text) : null;
@@ -621,6 +629,7 @@ async function askConfirmation(message, confirmLabel = "Potvrdit") {
 
 function handleSessionExpired() {
   state.user = null;
+  state.csrfToken = null;
   state.items = [];
   state.users = [];
   clearUserSelection();
@@ -692,8 +701,11 @@ function renderAuthState() {
   }
 }
 
-function enterApp(user) {
+function enterApp(user, csrfToken = null) {
   state.user = user;
+  if (csrfToken) {
+    state.csrfToken = csrfToken;
+  }
   currentUserEmailEl.textContent = user.email;
   authView.classList.add("hidden");
   appView.classList.remove("hidden");
@@ -743,25 +755,56 @@ function renderUsers() {
 
   for (const user of state.users) {
     const row = document.createElement("tr");
-    row.innerHTML = `
-      <td class="col-select">
-        <input class="user-select-checkbox" type="checkbox" aria-label="Vybrat uživatele ${user.email}" ${state.selectedUserIds.has(user.id) ? "checked" : ""} />
-      </td>
-      <td class="col-title"><strong>${user.email}</strong></td>
-      <td class="col-type"><span class="badge type-badge">${user.role_label || user.role}</span></td>
-      <td class="col-status"><span class="badge ${user.is_active ? "status-resolved" : "status-closed"}">${user.is_active ? "Ano" : "Ne"}</span></td>
-      <td class="col-created">${formatDate(user.created_at)}</td>
-      <td class="col-updated">${formatDate(user.updated_at)}</td>
-      <td class="col-actions">
-        <div class="user-actions">
-          <button type="button" class="icon-button secondary user-edit-button" data-user-id="${user.id}">
-            Upravit
-          </button>
-        </div>
-      </td>
-    `;
-    const selectCheckbox = row.querySelector(".user-select-checkbox");
-    const editButton = row.querySelector(".user-edit-button");
+    const selectCell = document.createElement("td");
+    selectCell.className = "col-select";
+    const selectCheckbox = document.createElement("input");
+    selectCheckbox.className = "user-select-checkbox";
+    selectCheckbox.type = "checkbox";
+    selectCheckbox.setAttribute("aria-label", `Vybrat uživatele ${user.email}`);
+    selectCheckbox.checked = state.selectedUserIds.has(user.id);
+    selectCell.appendChild(selectCheckbox);
+
+    const emailCell = document.createElement("td");
+    emailCell.className = "col-title";
+    const emailStrong = document.createElement("strong");
+    emailStrong.textContent = user.email;
+    emailCell.appendChild(emailStrong);
+
+    const roleCell = document.createElement("td");
+    roleCell.className = "col-type";
+    const roleBadge = document.createElement("span");
+    roleBadge.className = "badge type-badge";
+    roleBadge.textContent = user.role_label || user.role;
+    roleCell.appendChild(roleBadge);
+
+    const activeCell = document.createElement("td");
+    activeCell.className = "col-status";
+    const activeBadge = document.createElement("span");
+    activeBadge.className = `badge ${user.is_active ? "status-resolved" : "status-closed"}`;
+    activeBadge.textContent = user.is_active ? "Ano" : "Ne";
+    activeCell.appendChild(activeBadge);
+
+    const createdCell = document.createElement("td");
+    createdCell.className = "col-created";
+    createdCell.textContent = formatDate(user.created_at);
+
+    const updatedCell = document.createElement("td");
+    updatedCell.className = "col-updated";
+    updatedCell.textContent = formatDate(user.updated_at);
+
+    const actionsCell = document.createElement("td");
+    actionsCell.className = "col-actions";
+    const actionsWrap = document.createElement("div");
+    actionsWrap.className = "user-actions";
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.className = "icon-button secondary user-edit-button";
+    editButton.dataset.userId = String(user.id);
+    editButton.textContent = "Upravit";
+    actionsWrap.appendChild(editButton);
+    actionsCell.appendChild(actionsWrap);
+
+    row.append(selectCell, emailCell, roleCell, activeCell, createdCell, updatedCell, actionsCell);
 
     selectCheckbox.addEventListener("change", () => {
       setUserSelection(user.id, selectCheckbox.checked);
@@ -1101,7 +1144,7 @@ async function bootstrapAuth() {
 
   try {
     const payload = await api("/api/auth/me");
-    enterApp(payload.user);
+    enterApp(payload.user, payload.csrfToken);
     await loadAppData();
   } catch (error) {
     if (error.status === 401) {
@@ -1128,7 +1171,7 @@ bootstrapForm.addEventListener("submit", async (event) => {
     });
     state.needsBootstrap = false;
     resetSearch();
-    enterApp(response.user);
+    enterApp(response.user, response.csrfToken);
     await loadAppData();
     setBootstrapMessage("");
   } catch (error) {
@@ -1151,7 +1194,7 @@ loginForm.addEventListener("submit", async (event) => {
       body: JSON.stringify(payload),
     });
     resetSearch();
-    enterApp(response.user);
+    enterApp(response.user, response.csrfToken);
     await loadAppData();
     setLoginMessage("");
   } catch (error) {
