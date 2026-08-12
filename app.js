@@ -1,17 +1,17 @@
 const VIEW_MODE_KEY = "near-miss-tracker.viewMode";
 
 const STATUS_OPTIONS = [
-  ["new", "Nový"],
-  ["in_progress", "V řešení"],
-  ["resolved", "Vyřešeno"],
-  ["closed", "Uzavřeno"],
+  ["new", "NovĂ˝"],
+  ["in_progress", "V Ĺ™eĹˇenĂ­"],
+  ["resolved", "VyĹ™eĹˇeno"],
+  ["closed", "UzavĹ™eno"],
 ];
 
 const STATUS_META = {
-  new: { label: "Nový", hint: "Nové záznamy, které čekají na zpracování." },
-  in_progress: { label: "V řešení", hint: "Záznamy, na kterých se právě pracuje." },
-  resolved: { label: "Vyřešeno", hint: "Případy uzavřené, ale stále dohledatelné." },
-  closed: { label: "Uzavřeno", hint: "Uzavřené položky bez další akce." },
+  new: { label: "NovĂ˝", hint: "NovĂ© zĂˇznamy, kterĂ© ÄŤekajĂ­ na zpracovĂˇnĂ­." },
+  in_progress: { label: "V Ĺ™eĹˇenĂ­", hint: "ZĂˇznamy, na kterĂ˝ch se prĂˇvÄ› pracuje." },
+  resolved: { label: "VyĹ™eĹˇeno", hint: "PĹ™Ă­pady uzavĹ™enĂ©, ale stĂˇle dohledatelnĂ©." },
+  closed: { label: "UzavĹ™eno", hint: "UzavĹ™enĂ© poloĹľky bez dalĹˇĂ­ akce." },
 };
 
 const TYPE_LABELS = {
@@ -20,19 +20,19 @@ const TYPE_LABELS = {
 };
 
 const PERSON_OPTIONS = [
-  "Miroslav Hilšer",
+  "Miroslav HilĹˇer",
   "David Hejhal",
   "Andrey Zhilstov",
-  "Tomáš Franc",
+  "TomĂˇĹˇ Franc",
   "Michael Gottwald",
-  "Zelený mužíček",
+  "ZelenĂ˝ muĹľĂ­ÄŤek",
 ];
 
 const SEVERITY_LABELS = {
-  low: "Nízká",
-  medium: "Střední",
-  high: "Vysoká",
-  critical: "Kritická",
+  low: "NĂ­zkĂˇ",
+  medium: "StĹ™ednĂ­",
+  high: "VysokĂˇ",
+  critical: "KritickĂˇ",
 };
 
 const PLURAL_RULES = new Intl.PluralRules("cs-CZ");
@@ -120,7 +120,6 @@ const detailTypeEl = document.getElementById("detailType");
 const detailPriorityEl = document.getElementById("detailPriority");
 const detailStatusEl = document.getElementById("detailStatus");
 const detailProblemReporterEl = document.getElementById("detailProblemReporter");
-const detailCulpritEl = document.getElementById("detailCulprit");
 const detailDescriptionEl = document.getElementById("detailDescription");
 const detailCreatedAtEl = document.getElementById("detailCreatedAt");
 const detailUpdatedAtEl = document.getElementById("detailUpdatedAt");
@@ -206,14 +205,14 @@ function formatDate(value) {
 }
 
 function formatPerson(value) {
-  return value || "Nevyplněno";
+  return value || "NevyplnÄ›no";
 }
 
 function populatePersonSelect(selectEl, value) {
   selectEl.innerHTML = "";
   const emptyOption = document.createElement("option");
   emptyOption.value = "";
-  emptyOption.textContent = "Nevyplněno";
+  emptyOption.textContent = "NevyplnÄ›no";
   selectEl.appendChild(emptyOption);
 
   for (const person of PERSON_OPTIONS) {
@@ -304,7 +303,7 @@ function syncUserSelectionUI() {
   const totalCount = state.users.length;
 
   if (usersSelectedCountEl) {
-    usersSelectedCountEl.textContent = `${selectedCount} vybraných`;
+    usersSelectedCountEl.textContent = `${selectedCount} vybranĂ˝ch`;
   }
   if (usersSelectAllEl) {
     usersSelectAllEl.checked = totalCount > 0 && selectedCount === totalCount;
@@ -421,25 +420,25 @@ function formatCountLabel(count, forms) {
 
 function formatResultsCount(count) {
   return formatCountLabel(count, {
-    one: "{count} výsledek",
-    few: "{count} výsledky",
-    many: "{count} výsledků",
+    one: "{count} vĂ˝sledek",
+    few: "{count} vĂ˝sledky",
+    many: "{count} vĂ˝sledkĹŻ",
   });
 }
 
 function formatRecordCount(count) {
   return formatCountLabel(count, {
-    one: "{count} záznam",
-    few: "{count} záznamy",
-    many: "{count} záznamů",
+    one: "{count} zĂˇznam",
+    few: "{count} zĂˇznamy",
+    many: "{count} zĂˇznamĹŻ",
   });
 }
 
 function formatUserCount(count) {
   return formatCountLabel(count, {
-    one: "{count} účet",
-    few: "{count} účty",
-    many: "{count} účtů",
+    one: "{count} ĂşÄŤet",
+    few: "{count} ĂşÄŤty",
+    many: "{count} ĂşÄŤtĹŻ",
   });
 }
 
@@ -485,7 +484,7 @@ function updateSortIndicators() {
     button.setAttribute("aria-sort", active ? (state.sort.direction === "asc" ? "ascending" : "descending") : "none");
     const indicator = button.querySelector(".sort-indicator");
     if (!indicator) return;
-    indicator.textContent = active ? (state.sort.direction === "asc" ? "↑" : "↓") : "↕";
+    indicator.textContent = active ? (state.sort.direction === "asc" ? "â†‘" : "â†“") : "â†•";
   });
 }
 
@@ -571,13 +570,12 @@ function closeDetailModal() {
 function openDetailModal(item) {
   state.detailItem = item;
   detailTitleEl.textContent = item.title;
-    detailSubtitleEl.textContent = `${TYPE_LABELS[item.entry_type]} • ${STATUS_META[item.status].label} • Zadavatel: ${formatPerson(item.problem_reporter)} • Viník: ${formatPerson(item.culprit)}`;
+  detailSubtitleEl.textContent = `${TYPE_LABELS[item.entry_type]} • ${STATUS_META[item.status].label} • Zadavatel: ${formatPerson(item.problem_reporter)}`;
   detailIdEl.textContent = item.id;
   detailTypeEl.textContent = TYPE_LABELS[item.entry_type];
   detailPriorityEl.textContent = SEVERITY_LABELS[item.severity];
   detailStatusEl.textContent = STATUS_META[item.status].label;
   detailProblemReporterEl.textContent = formatPerson(item.problem_reporter);
-  detailCulpritEl.textContent = formatPerson(item.culprit);
   detailDescriptionEl.textContent = item.description || "Bez popisu.";
   detailCreatedAtEl.textContent = formatDate(item.created_at);
   detailUpdatedAtEl.textContent = formatDate(item.updated_at);
@@ -636,7 +634,7 @@ function handleSessionExpired() {
   appView.classList.add("hidden");
   authView.classList.remove("hidden");
   showLoginMode();
-  setLoginMessage("Vaše session vypršela. Přihlas se znovu.", "error");
+  setLoginMessage("VaĹˇe session vyprĹˇela. PĹ™ihlas se znovu.", "error");
 }
 
 function showBootstrapMode() {
@@ -747,7 +745,7 @@ function renderUsers() {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td class="col-select">
-        <input class="user-select-checkbox" type="checkbox" aria-label="Vybrat uživatele ${user.email}" ${state.selectedUserIds.has(user.id) ? "checked" : ""} />
+        <input class="user-select-checkbox" type="checkbox" aria-label="Vybrat uĹľivatele ${user.email}" ${state.selectedUserIds.has(user.id) ? "checked" : ""} />
       </td>
       <td class="col-title"><strong>${user.email}</strong></td>
       <td class="col-type"><span class="badge type-badge">${user.role_label || user.role}</span></td>
@@ -803,7 +801,7 @@ function bindEntryActions(container, item) {
           body: JSON.stringify({ status }),
         });
         await loadAppData();
-        setMessage(`Záznam přesunut do stavu "${STATUS_META[status].label}".`, "success");
+        setMessage(`ZĂˇznam pĹ™esunut do stavu "${STATUS_META[status].label}".`, "success");
       } catch (error) {
         if (error.status !== 401) {
           setMessage(error.message, "error");
@@ -821,7 +819,7 @@ function bindEntryActions(container, item) {
   if (deleteButton) {
     deleteButton.addEventListener("click", async () => {
       const confirmed = await askConfirmation(
-        `Opravdu smazat záznam "${item.title}"? Tuto akci nelze vrátit zpět.`,
+        `Opravdu smazat zĂˇznam "${item.title}"? Tuto akci nelze vrĂˇtit zpÄ›t.`,
         "Smazat"
       );
       if (!confirmed) return;
@@ -830,7 +828,7 @@ function bindEntryActions(container, item) {
         await apiProtected(`/api/entries/${item.id}`, { method: "DELETE" });
         if (state.editingId === item.id) closeEditModal();
         await loadAppData();
-        setMessage("Záznam byl smazán.", "success");
+        setMessage("ZĂˇznam byl smazĂˇn.", "success");
       } catch (error) {
         if (error.status !== 401) {
           setMessage(error.message, "error");
@@ -844,8 +842,8 @@ function bindRecordOpen(container, item) {
   container.classList.add("record-openable");
   container.tabIndex = 0;
   container.setAttribute("role", "button");
-  container.setAttribute("aria-label", `Zobrazit detail záznamu ${item.title}`);
-  container.title = "Kliknutím otevřete detail";
+  container.setAttribute("aria-label", `Zobrazit detail zĂˇznamu ${item.title}`);
+  container.title = "KliknutĂ­m otevĹ™ete detail";
 
   const openDetail = () => openDetailModal(item);
 
@@ -892,9 +890,9 @@ function cardTemplate(item, columnStatus = item.status) {
         <span class="updated-at"></span>
       </div>
       <div class="entry-actions">
-        <button class="icon-button secondary move-button" type="button" title="Přesunout záznam" aria-label="Přesunout záznam" data-icon="move"></button>
-        <button class="icon-button secondary edit-button" type="button" title="Upravit záznam" aria-label="Upravit záznam" data-icon="edit"></button>
-        <button class="icon-button danger delete-button" type="button" title="Smazat záznam" aria-label="Smazat záznam" data-icon="trash"></button>
+        <button class="icon-button secondary move-button" type="button" title="PĹ™esunout zĂˇznam" aria-label="PĹ™esunout zĂˇznam" data-icon="move"></button>
+        <button class="icon-button secondary edit-button" type="button" title="Upravit zĂˇznam" aria-label="Upravit zĂˇznam" data-icon="edit"></button>
+        <button class="icon-button danger delete-button" type="button" title="Smazat zĂˇznam" aria-label="Smazat zĂˇznam" data-icon="trash"></button>
       </div>
     </div>
   `;
@@ -903,8 +901,8 @@ function cardTemplate(item, columnStatus = item.status) {
   article.querySelector(".entry-description").textContent = item.description || "Bez popisu.";
   article.querySelector(".entry-title").title = item.title;
   article.querySelector(".entry-description").title = item.description || "Bez popisu.";
-  article.querySelector(".created-at").textContent = `Vytvořeno: ${formatDate(item.created_at)}`;
-  article.querySelector(".updated-at").textContent = `Aktualizováno: ${formatDate(item.updated_at)}`;
+  article.querySelector(".created-at").textContent = `VytvoĹ™eno: ${formatDate(item.created_at)}`;
+  article.querySelector(".updated-at").textContent = `AktualizovĂˇno: ${formatDate(item.updated_at)}`;
   hydrateIcons(article);
 
   article.addEventListener("dragstart", (event) => {
@@ -946,9 +944,9 @@ function tableRowTemplate(item) {
     <td class="col-updated">${formatDate(item.updated_at)}</td>
     <td class="col-actions">
       <div class="table-actions">
-        <button class="icon-button secondary move-button" type="button" title="Přesunout záznam" aria-label="Přesunout záznam" data-icon="move"></button>
-        <button class="icon-button secondary edit-button" type="button" title="Upravit záznam" aria-label="Upravit záznam" data-icon="edit"></button>
-        <button class="icon-button danger delete-button" type="button" title="Smazat záznam" aria-label="Smazat záznam" data-icon="trash"></button>
+        <button class="icon-button secondary move-button" type="button" title="PĹ™esunout zĂˇznam" aria-label="PĹ™esunout zĂˇznam" data-icon="move"></button>
+        <button class="icon-button secondary edit-button" type="button" title="Upravit zĂˇznam" aria-label="Upravit zĂˇznam" data-icon="edit"></button>
+        <button class="icon-button danger delete-button" type="button" title="Smazat zĂˇznam" aria-label="Smazat zĂˇznam" data-icon="trash"></button>
       </div>
     </td>
   `;
@@ -963,16 +961,16 @@ function tableRowTemplate(item) {
   titleEl.title = item.title;
   descriptionEl.textContent = item.description || "Bez popisu.";
   descriptionEl.title = item.description || "Bez popisu.";
-  metaEl.textContent = `Zadavatel problému: ${formatPerson(item.problem_reporter)}`;
-  createdByEl.textContent = item.created_by_label || "Systém";
-  createdByEl.title = item.created_by_label || "Systém";
+  metaEl.textContent = `Zadavatel problĂ©mu: ${formatPerson(item.problem_reporter)}`;
+  createdByEl.textContent = item.created_by_label || "SystĂ©m";
+  createdByEl.title = item.created_by_label || "SystĂ©m";
   hydrateIcons(row);
   bindEntryActions(row, item);
   bindRecordOpen(row, item);
   return row;
 }
 
-async function moveEntryToStatus(entryId, status, sourceLabel = "Stav přesunut") {
+async function moveEntryToStatus(entryId, status, sourceLabel = "Stav pĹ™esunut") {
   const dragged = state.items.find((item) => String(item.id) === String(entryId));
   if (!dragged || dragged.status === status) return false;
 
@@ -980,7 +978,7 @@ async function moveEntryToStatus(entryId, status, sourceLabel = "Stav přesunut"
   dragged.status = status;
   dragged.updated_at = new Date().toISOString();
   render();
-  showToast(`${dragged.title} přesunuto do ${STATUS_META[status].label}.`, "success");
+  showToast(`${dragged.title} pĹ™esunuto do ${STATUS_META[status].label}.`, "success");
 
   try {
     await apiProtected(`/api/entries/${entryId}`, {
@@ -994,7 +992,7 @@ async function moveEntryToStatus(entryId, status, sourceLabel = "Stav přesunut"
     dragged.status = previousStatus;
     dragged.updated_at = new Date().toISOString();
     render();
-    showToast(error.message || "Přesun se nepodařil.", "error");
+    showToast(error.message || "PĹ™esun se nepodaĹ™il.", "error");
     if (error.status !== 401) {
       setMessage(error.message, "error");
     }
@@ -1063,7 +1061,7 @@ function columnTemplate(status, items) {
   if (items.length === 0) {
     const empty = document.createElement("div");
     empty.className = "kanban-empty";
-    empty.textContent = "V tomto stavu zatím nejsou žádné záznamy.";
+    empty.textContent = "V tomto stavu zatĂ­m nejsou ĹľĂˇdnĂ© zĂˇznamy.";
     dropzone.appendChild(empty);
   }
 
@@ -1170,7 +1168,7 @@ logoutButton.addEventListener("click", async () => {
     // Logout should still clear the UI locally even if the session is already gone.
   }
   handleSessionExpired();
-  setLoginMessage("Odhlášení proběhlo úspěšně.", "success");
+  setLoginMessage("OdhlĂˇĹˇenĂ­ probÄ›hlo ĂşspÄ›ĹˇnÄ›.", "success");
 });
 
 appTabButtons.forEach((button) => {
@@ -1200,7 +1198,7 @@ passwordForm.addEventListener("submit", async (event) => {
       body: JSON.stringify(payload),
     });
     passwordForm.reset();
-    setPasswordMessage("Heslo bylo změněno.", "success");
+    setPasswordMessage("Heslo bylo zmÄ›nÄ›no.", "success");
   } catch (error) {
     if (error.status !== 401) {
       setPasswordMessage(error.message, "error");
@@ -1225,7 +1223,7 @@ userForm.addEventListener("submit", async (event) => {
     userForm.reset();
     await loadUsers();
     renderUsers();
-    setUsersMessage("Nový účet byl vytvořen.", "success");
+    setUsersMessage("NovĂ˝ ĂşÄŤet byl vytvoĹ™en.", "success");
   } catch (error) {
     if (error.status !== 401) {
       setUsersMessage(error.message, "error");
@@ -1242,8 +1240,8 @@ form.addEventListener("submit", async (event) => {
 
   try {
     const confirmed = await askConfirmation(
-      `Uložit nový záznam "${String(payload.title || "").trim()}"?`,
-      "Uložit"
+      `UloĹľit novĂ˝ zĂˇznam "${String(payload.title || "").trim()}"?`,
+      "UloĹľit"
     );
     if (!confirmed) return;
 
@@ -1258,7 +1256,7 @@ form.addEventListener("submit", async (event) => {
     form.elements.severity.value = "medium";
     closeEntryDrawer();
     await loadAppData();
-    setMessage("Záznam byl uložen.", "success");
+    setMessage("ZĂˇznam byl uloĹľen.", "success");
   } catch (error) {
     if (error.status !== 401) {
       setMessage(error.message, "error");
@@ -1272,7 +1270,7 @@ editForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   if (!state.editingId) {
-    setEditMessage("Nebyl vybrán žádný záznam k úpravě.", "error");
+    setEditMessage("Nebyl vybrĂˇn ĹľĂˇdnĂ˝ zĂˇznam k ĂşpravÄ›.", "error");
     return;
   }
 
@@ -1281,8 +1279,8 @@ editForm.addEventListener("submit", async (event) => {
 
   try {
     const confirmed = await askConfirmation(
-      `Uložit změny u záznamu "${String(payload.title || "").trim()}"?`,
-      "Uložit"
+      `UloĹľit zmÄ›ny u zĂˇznamu "${String(payload.title || "").trim()}"?`,
+      "UloĹľit"
     );
     if (!confirmed) return;
 
@@ -1294,7 +1292,7 @@ editForm.addEventListener("submit", async (event) => {
     });
     await loadAppData();
     closeEditModal();
-    setMessage("Záznam byl upraven.", "success");
+    setMessage("ZĂˇznam byl upraven.", "success");
   } catch (error) {
     if (error.status !== 401) {
       setEditMessage(error.message, "error");
@@ -1347,13 +1345,13 @@ usersSelectAllEl?.addEventListener("change", () => {
 async function runBulkUserStatusChange(isActive) {
   const selectedIds = getSelectedUserIds();
   if (selectedIds.length === 0) {
-    setUsersMessage("Vyber alespoň jednoho uživatele.", "error");
+    setUsersMessage("Vyber alespoĹ jednoho uĹľivatele.", "error");
     return;
   }
 
   const actionLabel = isActive ? "aktivovat" : "deaktivovat";
   const confirmed = await askConfirmation(
-    `Opravdu ${actionLabel} ${selectedIds.length} vybraných uživatelů?`,
+    `Opravdu ${actionLabel} ${selectedIds.length} vybranĂ˝ch uĹľivatelĹŻ?`,
     "Potvrdit"
   );
   if (!confirmed) return;
@@ -1368,7 +1366,7 @@ async function runBulkUserStatusChange(isActive) {
     clearUserSelection();
     await loadUsers();
     renderUsers();
-    setUsersMessage(`Stav ${selectedIds.length} uživatelů byl upraven.`, "success");
+    setUsersMessage(`Stav ${selectedIds.length} uĹľivatelĹŻ byl upraven.`, "success");
   } catch (error) {
     if (error.status !== 401) {
       setUsersMessage(error.message, "error");
@@ -1390,7 +1388,7 @@ userEditForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   if (!state.editingUserId) {
-    setUserEditMessage("Nebyl vybrán žádný uživatel k úpravě.", "error");
+    setUserEditMessage("Nebyl vybrĂˇn ĹľĂˇdnĂ˝ uĹľivatel k ĂşpravÄ›.", "error");
     return;
   }
 
@@ -1401,8 +1399,8 @@ userEditForm.addEventListener("submit", async (event) => {
 
   try {
     const confirmed = await askConfirmation(
-      `Uložit změny pro uživatele "${String(payload.email || "").trim()}"?`,
-      "Uložit"
+      `UloĹľit zmÄ›ny pro uĹľivatele "${String(payload.email || "").trim()}"?`,
+      "UloĹľit"
     );
     if (!confirmed) return;
 
@@ -1415,7 +1413,7 @@ userEditForm.addEventListener("submit", async (event) => {
     await loadUsers();
     closeUserEditModal();
     renderUsers();
-    setUsersMessage("Účet byl upraven.", "success");
+    setUsersMessage("ĂšÄŤet byl upraven.", "success");
   } catch (error) {
     if (error.status !== 401) {
       setUserEditMessage(error.message, "error");
