@@ -1,17 +1,17 @@
 const VIEW_MODE_KEY = "near-miss-tracker.viewMode";
 
 const STATUS_OPTIONS = [
-  ["new", "NovĂ˝"],
-  ["in_progress", "V Ĺ™eĹˇenĂ­"],
-  ["resolved", "VyĹ™eĹˇeno"],
-  ["closed", "UzavĹ™eno"],
+  ["new", "Nový"],
+  ["in_progress", "V řešení"],
+  ["resolved", "Vyřešeno"],
+  ["closed", "Uzavřeno"],
 ];
 
 const STATUS_META = {
-  new: { label: "NovĂ˝", hint: "NovĂ© zĂˇznamy, kterĂ© ÄŤekajĂ­ na zpracovĂˇnĂ­." },
-  in_progress: { label: "V Ĺ™eĹˇenĂ­", hint: "ZĂˇznamy, na kterĂ˝ch se prĂˇvÄ› pracuje." },
-  resolved: { label: "VyĹ™eĹˇeno", hint: "PĹ™Ă­pady uzavĹ™enĂ©, ale stĂˇle dohledatelnĂ©." },
-  closed: { label: "UzavĹ™eno", hint: "UzavĹ™enĂ© poloĹľky bez dalĹˇĂ­ akce." },
+  new: { label: "Nový", hint: "Nové záznamy, které čekají na zpracování." },
+  in_progress: { label: "V řešení", hint: "Záznamy, na kterých se právě pracuje." },
+  resolved: { label: "Vyřešeno", hint: "Případy uzavřené, ale stále dohledatelné." },
+  closed: { label: "Uzavřeno", hint: "Uzavřené položky bez další akce." },
 };
 
 const TYPE_LABELS = {
@@ -20,19 +20,19 @@ const TYPE_LABELS = {
 };
 
 const PERSON_OPTIONS = [
-  "Miroslav HilĹˇer",
+  "Miroslav Hilšer",
   "David Hejhal",
   "Andrey Zhilstov",
-  "TomĂˇĹˇ Franc",
+  "Tomáš Franc",
   "Michael Gottwald",
-  "ZelenĂ˝ muĹľĂ­ÄŤek",
+  "Zelený mužíček",
 ];
 
 const SEVERITY_LABELS = {
-  low: "NĂ­zkĂˇ",
-  medium: "StĹ™ednĂ­",
-  high: "VysokĂˇ",
-  critical: "KritickĂˇ",
+  low: "Nízká",
+  medium: "Střední",
+  high: "Vysoká",
+  critical: "Kritická",
 };
 
 const PLURAL_RULES = new Intl.PluralRules("cs-CZ");
@@ -205,14 +205,14 @@ function formatDate(value) {
 }
 
 function formatPerson(value) {
-  return value || "NevyplnÄ›no";
+  return value || "Nevyplněno";
 }
 
 function populatePersonSelect(selectEl, value) {
   selectEl.innerHTML = "";
   const emptyOption = document.createElement("option");
   emptyOption.value = "";
-  emptyOption.textContent = "NevyplnÄ›no";
+  emptyOption.textContent = "Nevyplněno";
   selectEl.appendChild(emptyOption);
 
   for (const person of PERSON_OPTIONS) {
@@ -303,7 +303,7 @@ function syncUserSelectionUI() {
   const totalCount = state.users.length;
 
   if (usersSelectedCountEl) {
-    usersSelectedCountEl.textContent = `${selectedCount} vybranĂ˝ch`;
+    usersSelectedCountEl.textContent = `${selectedCount} vybraných`;
   }
   if (usersSelectAllEl) {
     usersSelectAllEl.checked = totalCount > 0 && selectedCount === totalCount;
@@ -420,25 +420,25 @@ function formatCountLabel(count, forms) {
 
 function formatResultsCount(count) {
   return formatCountLabel(count, {
-    one: "{count} vĂ˝sledek",
-    few: "{count} vĂ˝sledky",
-    many: "{count} vĂ˝sledkĹŻ",
+    one: "{count} výsledek",
+    few: "{count} výsledky",
+    many: "{count} výsledků",
   });
 }
 
 function formatRecordCount(count) {
   return formatCountLabel(count, {
-    one: "{count} zĂˇznam",
-    few: "{count} zĂˇznamy",
-    many: "{count} zĂˇznamĹŻ",
+    one: "{count} záznam",
+    few: "{count} záznamy",
+    many: "{count} záznamů",
   });
 }
 
 function formatUserCount(count) {
   return formatCountLabel(count, {
-    one: "{count} ĂşÄŤet",
-    few: "{count} ĂşÄŤty",
-    many: "{count} ĂşÄŤtĹŻ",
+    one: "{count} účet",
+    few: "{count} účty",
+    many: "{count} účtů",
   });
 }
 
@@ -484,7 +484,7 @@ function updateSortIndicators() {
     button.setAttribute("aria-sort", active ? (state.sort.direction === "asc" ? "ascending" : "descending") : "none");
     const indicator = button.querySelector(".sort-indicator");
     if (!indicator) return;
-    indicator.textContent = active ? (state.sort.direction === "asc" ? "â†‘" : "â†“") : "â†•";
+    indicator.textContent = active ? (state.sort.direction === "asc" ? "↑" : "↓") : "↕";
   });
 }
 
@@ -634,7 +634,7 @@ function handleSessionExpired() {
   appView.classList.add("hidden");
   authView.classList.remove("hidden");
   showLoginMode();
-  setLoginMessage("VaĹˇe session vyprĹˇela. PĹ™ihlas se znovu.", "error");
+  setLoginMessage("Vaše session vypršela. Přihlas se znovu.", "error");
 }
 
 function showBootstrapMode() {
@@ -745,7 +745,7 @@ function renderUsers() {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td class="col-select">
-        <input class="user-select-checkbox" type="checkbox" aria-label="Vybrat uĹľivatele ${user.email}" ${state.selectedUserIds.has(user.id) ? "checked" : ""} />
+        <input class="user-select-checkbox" type="checkbox" aria-label="Vybrat uživatele ${user.email}" ${state.selectedUserIds.has(user.id) ? "checked" : ""} />
       </td>
       <td class="col-title"><strong>${user.email}</strong></td>
       <td class="col-type"><span class="badge type-badge">${user.role_label || user.role}</span></td>
@@ -801,7 +801,7 @@ function bindEntryActions(container, item) {
           body: JSON.stringify({ status }),
         });
         await loadAppData();
-        setMessage(`ZĂˇznam pĹ™esunut do stavu "${STATUS_META[status].label}".`, "success");
+        setMessage(`Záznam přesunut do stavu "${STATUS_META[status].label}".`, "success");
       } catch (error) {
         if (error.status !== 401) {
           setMessage(error.message, "error");
@@ -819,7 +819,7 @@ function bindEntryActions(container, item) {
   if (deleteButton) {
     deleteButton.addEventListener("click", async () => {
       const confirmed = await askConfirmation(
-        `Opravdu smazat zĂˇznam "${item.title}"? Tuto akci nelze vrĂˇtit zpÄ›t.`,
+        `Opravdu smazat záznam "${item.title}"? Tuto akci nelze vrátit zpět.`,
         "Smazat"
       );
       if (!confirmed) return;
@@ -828,7 +828,7 @@ function bindEntryActions(container, item) {
         await apiProtected(`/api/entries/${item.id}`, { method: "DELETE" });
         if (state.editingId === item.id) closeEditModal();
         await loadAppData();
-        setMessage("ZĂˇznam byl smazĂˇn.", "success");
+        setMessage("Záznam byl smazán.", "success");
       } catch (error) {
         if (error.status !== 401) {
           setMessage(error.message, "error");
@@ -842,8 +842,8 @@ function bindRecordOpen(container, item) {
   container.classList.add("record-openable");
   container.tabIndex = 0;
   container.setAttribute("role", "button");
-  container.setAttribute("aria-label", `Zobrazit detail zĂˇznamu ${item.title}`);
-  container.title = "KliknutĂ­m otevĹ™ete detail";
+  container.setAttribute("aria-label", `Zobrazit detail záznamu ${item.title}`);
+  container.title = "Kliknutím otevřete detail";
 
   const openDetail = () => openDetailModal(item);
 
@@ -890,9 +890,9 @@ function cardTemplate(item, columnStatus = item.status) {
         <span class="updated-at"></span>
       </div>
       <div class="entry-actions">
-        <button class="icon-button secondary move-button" type="button" title="PĹ™esunout zĂˇznam" aria-label="PĹ™esunout zĂˇznam" data-icon="move"></button>
-        <button class="icon-button secondary edit-button" type="button" title="Upravit zĂˇznam" aria-label="Upravit zĂˇznam" data-icon="edit"></button>
-        <button class="icon-button danger delete-button" type="button" title="Smazat zĂˇznam" aria-label="Smazat zĂˇznam" data-icon="trash"></button>
+        <button class="icon-button secondary move-button" type="button" title="Přesunout záznam" aria-label="Přesunout záznam" data-icon="move"></button>
+        <button class="icon-button secondary edit-button" type="button" title="Upravit záznam" aria-label="Upravit záznam" data-icon="edit"></button>
+        <button class="icon-button danger delete-button" type="button" title="Smazat záznam" aria-label="Smazat záznam" data-icon="trash"></button>
       </div>
     </div>
   `;
@@ -901,8 +901,8 @@ function cardTemplate(item, columnStatus = item.status) {
   article.querySelector(".entry-description").textContent = item.description || "Bez popisu.";
   article.querySelector(".entry-title").title = item.title;
   article.querySelector(".entry-description").title = item.description || "Bez popisu.";
-  article.querySelector(".created-at").textContent = `VytvoĹ™eno: ${formatDate(item.created_at)}`;
-  article.querySelector(".updated-at").textContent = `AktualizovĂˇno: ${formatDate(item.updated_at)}`;
+  article.querySelector(".created-at").textContent = `Vytvořeno: ${formatDate(item.created_at)}`;
+  article.querySelector(".updated-at").textContent = `Aktualizováno: ${formatDate(item.updated_at)}`;
   hydrateIcons(article);
 
   article.addEventListener("dragstart", (event) => {
@@ -944,9 +944,9 @@ function tableRowTemplate(item) {
     <td class="col-updated">${formatDate(item.updated_at)}</td>
     <td class="col-actions">
       <div class="table-actions">
-        <button class="icon-button secondary move-button" type="button" title="PĹ™esunout zĂˇznam" aria-label="PĹ™esunout zĂˇznam" data-icon="move"></button>
-        <button class="icon-button secondary edit-button" type="button" title="Upravit zĂˇznam" aria-label="Upravit zĂˇznam" data-icon="edit"></button>
-        <button class="icon-button danger delete-button" type="button" title="Smazat zĂˇznam" aria-label="Smazat zĂˇznam" data-icon="trash"></button>
+        <button class="icon-button secondary move-button" type="button" title="Přesunout záznam" aria-label="Přesunout záznam" data-icon="move"></button>
+        <button class="icon-button secondary edit-button" type="button" title="Upravit záznam" aria-label="Upravit záznam" data-icon="edit"></button>
+        <button class="icon-button danger delete-button" type="button" title="Smazat záznam" aria-label="Smazat záznam" data-icon="trash"></button>
       </div>
     </td>
   `;
@@ -961,16 +961,16 @@ function tableRowTemplate(item) {
   titleEl.title = item.title;
   descriptionEl.textContent = item.description || "Bez popisu.";
   descriptionEl.title = item.description || "Bez popisu.";
-  metaEl.textContent = `Zadavatel problĂ©mu: ${formatPerson(item.problem_reporter)}`;
-  createdByEl.textContent = item.created_by_label || "SystĂ©m";
-  createdByEl.title = item.created_by_label || "SystĂ©m";
+  metaEl.textContent = `Zadavatel problému: ${formatPerson(item.problem_reporter)}`;
+  createdByEl.textContent = item.created_by_label || "Systém";
+  createdByEl.title = item.created_by_label || "Systém";
   hydrateIcons(row);
   bindEntryActions(row, item);
   bindRecordOpen(row, item);
   return row;
 }
 
-async function moveEntryToStatus(entryId, status, sourceLabel = "Stav pĹ™esunut") {
+async function moveEntryToStatus(entryId, status, sourceLabel = "Stav přesunut") {
   const dragged = state.items.find((item) => String(item.id) === String(entryId));
   if (!dragged || dragged.status === status) return false;
 
@@ -978,7 +978,7 @@ async function moveEntryToStatus(entryId, status, sourceLabel = "Stav pĹ™esun
   dragged.status = status;
   dragged.updated_at = new Date().toISOString();
   render();
-  showToast(`${dragged.title} pĹ™esunuto do ${STATUS_META[status].label}.`, "success");
+  showToast(`${dragged.title} přesunuto do ${STATUS_META[status].label}.`, "success");
 
   try {
     await apiProtected(`/api/entries/${entryId}`, {
@@ -992,7 +992,7 @@ async function moveEntryToStatus(entryId, status, sourceLabel = "Stav pĹ™esun
     dragged.status = previousStatus;
     dragged.updated_at = new Date().toISOString();
     render();
-    showToast(error.message || "PĹ™esun se nepodaĹ™il.", "error");
+    showToast(error.message || "Přesun se nepodařil.", "error");
     if (error.status !== 401) {
       setMessage(error.message, "error");
     }
@@ -1061,7 +1061,7 @@ function columnTemplate(status, items) {
   if (items.length === 0) {
     const empty = document.createElement("div");
     empty.className = "kanban-empty";
-    empty.textContent = "V tomto stavu zatĂ­m nejsou ĹľĂˇdnĂ© zĂˇznamy.";
+    empty.textContent = "V tomto stavu zatím nejsou žádné záznamy.";
     dropzone.appendChild(empty);
   }
 
@@ -1168,7 +1168,7 @@ logoutButton.addEventListener("click", async () => {
     // Logout should still clear the UI locally even if the session is already gone.
   }
   handleSessionExpired();
-  setLoginMessage("OdhlĂˇĹˇenĂ­ probÄ›hlo ĂşspÄ›ĹˇnÄ›.", "success");
+  setLoginMessage("Odhlášení proběhlo úspěšně.", "success");
 });
 
 appTabButtons.forEach((button) => {
@@ -1198,7 +1198,7 @@ passwordForm.addEventListener("submit", async (event) => {
       body: JSON.stringify(payload),
     });
     passwordForm.reset();
-    setPasswordMessage("Heslo bylo zmÄ›nÄ›no.", "success");
+    setPasswordMessage("Heslo bylo změněno.", "success");
   } catch (error) {
     if (error.status !== 401) {
       setPasswordMessage(error.message, "error");
@@ -1223,7 +1223,7 @@ userForm.addEventListener("submit", async (event) => {
     userForm.reset();
     await loadUsers();
     renderUsers();
-    setUsersMessage("NovĂ˝ ĂşÄŤet byl vytvoĹ™en.", "success");
+    setUsersMessage("Nový účet byl vytvořen.", "success");
   } catch (error) {
     if (error.status !== 401) {
       setUsersMessage(error.message, "error");
@@ -1240,8 +1240,8 @@ form.addEventListener("submit", async (event) => {
 
   try {
     const confirmed = await askConfirmation(
-      `UloĹľit novĂ˝ zĂˇznam "${String(payload.title || "").trim()}"?`,
-      "UloĹľit"
+      `Uložit nový záznam "${String(payload.title || "").trim()}"?`,
+      "Uložit"
     );
     if (!confirmed) return;
 
@@ -1256,7 +1256,7 @@ form.addEventListener("submit", async (event) => {
     form.elements.severity.value = "medium";
     closeEntryDrawer();
     await loadAppData();
-    setMessage("ZĂˇznam byl uloĹľen.", "success");
+    setMessage("Záznam byl uložen.", "success");
   } catch (error) {
     if (error.status !== 401) {
       setMessage(error.message, "error");
@@ -1270,7 +1270,7 @@ editForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   if (!state.editingId) {
-    setEditMessage("Nebyl vybrĂˇn ĹľĂˇdnĂ˝ zĂˇznam k ĂşpravÄ›.", "error");
+    setEditMessage("Nebyl vybrán žádný záznam k úpravě.", "error");
     return;
   }
 
@@ -1279,8 +1279,8 @@ editForm.addEventListener("submit", async (event) => {
 
   try {
     const confirmed = await askConfirmation(
-      `UloĹľit zmÄ›ny u zĂˇznamu "${String(payload.title || "").trim()}"?`,
-      "UloĹľit"
+      `Uložit změny u záznamu "${String(payload.title || "").trim()}"?`,
+      "Uložit"
     );
     if (!confirmed) return;
 
@@ -1292,7 +1292,7 @@ editForm.addEventListener("submit", async (event) => {
     });
     await loadAppData();
     closeEditModal();
-    setMessage("ZĂˇznam byl upraven.", "success");
+    setMessage("Záznam byl upraven.", "success");
   } catch (error) {
     if (error.status !== 401) {
       setEditMessage(error.message, "error");
@@ -1345,13 +1345,13 @@ usersSelectAllEl?.addEventListener("change", () => {
 async function runBulkUserStatusChange(isActive) {
   const selectedIds = getSelectedUserIds();
   if (selectedIds.length === 0) {
-    setUsersMessage("Vyber alespoĹ jednoho uĹľivatele.", "error");
+    setUsersMessage("Vyber alespoň jednoho uživatele.", "error");
     return;
   }
 
   const actionLabel = isActive ? "aktivovat" : "deaktivovat";
   const confirmed = await askConfirmation(
-    `Opravdu ${actionLabel} ${selectedIds.length} vybranĂ˝ch uĹľivatelĹŻ?`,
+    `Opravdu ${actionLabel} ${selectedIds.length} vybraných uživatelů?`,
     "Potvrdit"
   );
   if (!confirmed) return;
@@ -1366,7 +1366,7 @@ async function runBulkUserStatusChange(isActive) {
     clearUserSelection();
     await loadUsers();
     renderUsers();
-    setUsersMessage(`Stav ${selectedIds.length} uĹľivatelĹŻ byl upraven.`, "success");
+    setUsersMessage(`Stav ${selectedIds.length} uživatelů byl upraven.`, "success");
   } catch (error) {
     if (error.status !== 401) {
       setUsersMessage(error.message, "error");
@@ -1388,7 +1388,7 @@ userEditForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   if (!state.editingUserId) {
-    setUserEditMessage("Nebyl vybrĂˇn ĹľĂˇdnĂ˝ uĹľivatel k ĂşpravÄ›.", "error");
+    setUserEditMessage("Nebyl vybrán žádný uživatel k úpravě.", "error");
     return;
   }
 
@@ -1399,8 +1399,8 @@ userEditForm.addEventListener("submit", async (event) => {
 
   try {
     const confirmed = await askConfirmation(
-      `UloĹľit zmÄ›ny pro uĹľivatele "${String(payload.email || "").trim()}"?`,
-      "UloĹľit"
+      `Uložit změny pro uživatele "${String(payload.email || "").trim()}"?`,
+      "Uložit"
     );
     if (!confirmed) return;
 
@@ -1413,7 +1413,7 @@ userEditForm.addEventListener("submit", async (event) => {
     await loadUsers();
     closeUserEditModal();
     renderUsers();
-    setUsersMessage("ĂšÄŤet byl upraven.", "success");
+    setUsersMessage("Účet byl upraven.", "success");
   } catch (error) {
     if (error.status !== 401) {
       setUserEditMessage(error.message, "error");
