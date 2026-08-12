@@ -6,6 +6,7 @@ import os
 import re
 import sqlite3
 import secrets
+import threading
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -25,6 +26,9 @@ PASSWORD_HASH_ITERATIONS = 210000
 SESSION_DAYS = int(os.environ.get("SESSION_DAYS", "7"))
 SESSION_SECURE = os.environ.get("SESSION_SECURE", "0").lower() in {"1", "true", "yes"}
 APP_ORIGIN = os.environ.get("APP_ORIGIN", "").strip().rstrip("/")
+LOGIN_RATE_LIMIT_MAX_ATTEMPTS = int(os.environ.get("LOGIN_RATE_LIMIT_MAX_ATTEMPTS", "10"))
+LOGIN_RATE_LIMIT_WINDOW_SECONDS = int(os.environ.get("LOGIN_RATE_LIMIT_WINDOW_SECONDS", "600"))
+LOGIN_RATE_LIMIT_BLOCK_SECONDS = int(os.environ.get("LOGIN_RATE_LIMIT_BLOCK_SECONDS", "900"))
 
 ENTRY_TYPES = {"bug", "near_miss"}
 SEVERITIES = {"low", "medium", "high", "critical"}
@@ -71,6 +75,9 @@ ROLE_LABELS = {
 EMAIL_PATTERN = re.compile(
     r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$"
 )
+
+LOGIN_RATE_LIMIT_STATE: dict[str, dict[str, object]] = {}
+LOGIN_RATE_LIMIT_LOCK = threading.Lock()
 
 def sql(query: str) -> str:
     return query.replace("?", "%s") if USE_POSTGRES else query
@@ -430,6 +437,59 @@ def validate_password(password: str) -> str:
     if len(value) < 8:
         raise create_password_error()
     return value
+
+
+def client_ip(handler: BaseHTTPRequestHandler) -> str:
+    return str(handler.client_address[0] if handler.client_address else "unknown")
+
+
+def login_rate_limit_key(ip: str) -> str:
+    return f"login:{ip}"
+
+
+def login_rate_limit_check(ip: str) -> int | None:
+    now = now_dt().timestamp()
+    key = login_rate_limit_key(ip)
+    with LOGIN_RATE_LIMIT_LOCK:
+        state = LOGIN_RATE_LIMIT_STATE.get(key)
+        if not state:
+            return None
+
+        blocked_until = float(state.get("blocked_until", 0.0) or 0.0)
+        if blocked_until > now:
+            return max(1, int(blocked_until - now))
+
+        attempts = [float(value) for value in state.get("attempts", []) if now - float(value) <= LOGIN_RATE_LIMIT_WINDOW_SECONDS]
+        if not attempts:
+            LOGIN_RATE_LIMIT_STATE.pop(key, None)
+            return None
+
+        state["attempts"] = attempts
+        if len(attempts) >= LOGIN_RATE_LIMIT_MAX_ATTEMPTS:
+            state["blocked_until"] = now + LOGIN_RATE_LIMIT_BLOCK_SECONDS
+            state["attempts"] = []
+            return LOGIN_RATE_LIMIT_BLOCK_SECONDS
+
+        return None
+
+
+def login_rate_limit_fail(ip: str) -> None:
+    now = now_dt().timestamp()
+    key = login_rate_limit_key(ip)
+    with LOGIN_RATE_LIMIT_LOCK:
+        state = LOGIN_RATE_LIMIT_STATE.setdefault(key, {"attempts": [], "blocked_until": 0.0})
+        attempts = [float(value) for value in state.get("attempts", []) if now - float(value) <= LOGIN_RATE_LIMIT_WINDOW_SECONDS]
+        attempts.append(now)
+        state["attempts"] = attempts
+        state["blocked_until"] = 0.0
+        if len(attempts) >= LOGIN_RATE_LIMIT_MAX_ATTEMPTS:
+            state["blocked_until"] = now + LOGIN_RATE_LIMIT_BLOCK_SECONDS
+            state["attempts"] = []
+
+
+def login_rate_limit_clear(ip: str) -> None:
+    with LOGIN_RATE_LIMIT_LOCK:
+        LOGIN_RATE_LIMIT_STATE.pop(login_rate_limit_key(ip), None)
 
 
 def security_headers(content_type: str) -> list[tuple[str, str]]:
@@ -1074,6 +1134,16 @@ class AppHandler(BaseHTTPRequestHandler):
             try:
                 if not reject_cross_origin(self):
                     return
+                ip = client_ip(self)
+                retry_after = login_rate_limit_check(ip)
+                if retry_after is not None:
+                    json_response(
+                        self,
+                        {"error": "Příliš mnoho pokusů. Zkus to později."},
+                        HTTPStatus.TOO_MANY_REQUESTS,
+                        headers=[("Retry-After", str(retry_after))],
+                    )
+                    return
                 if user_count() > 0:
                     json_response(self, {"error": "Počáteční administrátor už existuje."}, HTTPStatus.CONFLICT)
                     return
@@ -1086,13 +1156,25 @@ class AppHandler(BaseHTTPRequestHandler):
                     HTTPStatus.CREATED,
                     headers=[("Set-Cookie", session_cookie_header(token, expires_at))],
                 )
+                login_rate_limit_clear(ip)
             except ValueError as exc:
+                login_rate_limit_fail(client_ip(self))
                 json_response(self, {"error": str(exc)}, HTTPStatus.BAD_REQUEST)
             return
 
         if path == "/api/auth/login":
             try:
                 if not reject_cross_origin(self):
+                    return
+                ip = client_ip(self)
+                retry_after = login_rate_limit_check(ip)
+                if retry_after is not None:
+                    json_response(
+                        self,
+                        {"error": "Příliš mnoho pokusů. Zkus to později."},
+                        HTTPStatus.TOO_MANY_REQUESTS,
+                        headers=[("Retry-After", str(retry_after))],
+                    )
                     return
                 data = read_json(self)
                 user = login_user(data)
@@ -1102,7 +1184,9 @@ class AppHandler(BaseHTTPRequestHandler):
                     {"user": user, "csrfToken": csrf},
                     headers=[("Set-Cookie", session_cookie_header(token, expires_at))],
                 )
+                login_rate_limit_clear(ip)
             except ValueError as exc:
+                login_rate_limit_fail(client_ip(self))
                 json_response(self, {"error": str(exc)}, HTTPStatus.UNAUTHORIZED)
             return
 
