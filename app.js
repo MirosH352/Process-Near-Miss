@@ -19,6 +19,15 @@ const TYPE_LABELS = {
   near_miss: "Near Miss",
 };
 
+const PERSON_OPTIONS = [
+  "Miroslav Hilšer",
+  "David Hejhal",
+  "Andrey Zhilstov",
+  "Tomáš Franc",
+  "Michael Gottwald",
+  "Zelený mužíček",
+];
+
 const SEVERITY_LABELS = {
   low: "Nízká",
   medium: "Střední",
@@ -110,6 +119,8 @@ const detailIdEl = document.getElementById("detailId");
 const detailTypeEl = document.getElementById("detailType");
 const detailPriorityEl = document.getElementById("detailPriority");
 const detailStatusEl = document.getElementById("detailStatus");
+const detailProblemReporterEl = document.getElementById("detailProblemReporter");
+const detailCulpritEl = document.getElementById("detailCulprit");
 const detailDescriptionEl = document.getElementById("detailDescription");
 const detailCreatedAtEl = document.getElementById("detailCreatedAt");
 const detailUpdatedAtEl = document.getElementById("detailUpdatedAt");
@@ -192,6 +203,27 @@ function formatDate(value) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
+}
+
+function formatPerson(value) {
+  return value || "Nevyplněno";
+}
+
+function populatePersonSelect(selectEl, value) {
+  selectEl.innerHTML = "";
+  const emptyOption = document.createElement("option");
+  emptyOption.value = "";
+  emptyOption.textContent = "Nevyplněno";
+  selectEl.appendChild(emptyOption);
+
+  for (const person of PERSON_OPTIONS) {
+    const option = document.createElement("option");
+    option.value = person;
+    option.textContent = person;
+    selectEl.appendChild(option);
+  }
+
+  selectEl.value = value || "";
 }
 
 function readViewMode() {
@@ -342,6 +374,8 @@ function matchesSearch(item, query) {
     item.title,
     item.description,
     item.created_by_label,
+    item.problem_reporter_label,
+    item.culprit_label,
     TYPE_LABELS[item.entry_type],
     SEVERITY_LABELS[item.severity],
     STATUS_META[item.status]?.label,
@@ -493,6 +527,8 @@ function openEditModal(item) {
   editForm.elements.description.value = item.description || "";
   editForm.elements.entry_type.value = item.entry_type;
   editForm.elements.severity.value = item.severity;
+  populatePersonSelect(editForm.elements.problem_reporter, item.problem_reporter);
+  populatePersonSelect(editForm.elements.culprit, item.culprit);
   editForm.elements.status.value = item.status;
   editModal.classList.remove("hidden");
   editModal.setAttribute("aria-hidden", "false");
@@ -535,11 +571,13 @@ function closeDetailModal() {
 function openDetailModal(item) {
   state.detailItem = item;
   detailTitleEl.textContent = item.title;
-  detailSubtitleEl.textContent = `${TYPE_LABELS[item.entry_type]} • ${STATUS_META[item.status].label} • ${item.created_by_label}`;
+    detailSubtitleEl.textContent = `${TYPE_LABELS[item.entry_type]} • ${STATUS_META[item.status].label} • Zadavatel: ${formatPerson(item.problem_reporter)} • Viník: ${formatPerson(item.culprit)}`;
   detailIdEl.textContent = item.id;
   detailTypeEl.textContent = TYPE_LABELS[item.entry_type];
   detailPriorityEl.textContent = SEVERITY_LABELS[item.severity];
   detailStatusEl.textContent = STATUS_META[item.status].label;
+  detailProblemReporterEl.textContent = formatPerson(item.problem_reporter);
+  detailCulpritEl.textContent = formatPerson(item.culprit);
   detailDescriptionEl.textContent = item.description || "Bez popisu.";
   detailCreatedAtEl.textContent = formatDate(item.created_at);
   detailUpdatedAtEl.textContent = formatDate(item.updated_at);
@@ -845,6 +883,10 @@ function cardTemplate(item, columnStatus = item.status) {
       </div>
     </div>
     <p class="entry-description"></p>
+    <div class="entry-meta">
+      <span class="entry-meta-item">Zadavatel: ${formatPerson(item.problem_reporter)}</span>
+      <span class="entry-meta-item">Viník: ${formatPerson(item.culprit)}</span>
+    </div>
     <div class="entry-footer">
       <div class="timestamps">
         <span class="created-at"></span>
@@ -894,6 +936,7 @@ function tableRowTemplate(item) {
       <div class="record-title-wrap">
         <strong class="record-title"></strong>
         <span class="record-description"></span>
+        <span class="record-meta"></span>
       </div>
     </td>
     <td class="col-type"><span class="badge type-badge">${TYPE_LABELS[item.entry_type]}</span></td>
@@ -913,6 +956,7 @@ function tableRowTemplate(item) {
   const idEl = row.querySelector(".record-id");
   const titleEl = row.querySelector(".record-title");
   const descriptionEl = row.querySelector(".record-description");
+  const metaEl = row.querySelector(".record-meta");
   const createdByEl = row.querySelector(".placeholder-value");
   idEl.textContent = shortId(item.id);
   idEl.title = item.id;
@@ -920,6 +964,7 @@ function tableRowTemplate(item) {
   titleEl.title = item.title;
   descriptionEl.textContent = item.description || "Bez popisu.";
   descriptionEl.title = item.description || "Bez popisu.";
+  metaEl.textContent = `Zadavatel: ${formatPerson(item.problem_reporter)} • Viník: ${formatPerson(item.culprit)}`;
   createdByEl.textContent = item.created_by_label || "Systém";
   createdByEl.title = item.created_by_label || "Systém";
   hydrateIcons(row);

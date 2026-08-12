@@ -43,7 +43,7 @@
       </section>
 
       <section class="grid">
-        <form id="entryForm" class="card form-card">
+                <form id="entryForm" class="card form-card">
           <div class="section-head">
             <h2>Přidat záznam</h2>
             <p>Krátký formulář pro nový incident nebo near miss.</p>
@@ -75,6 +75,34 @@
                 <option value="medium" selected>Střední</option>
                 <option value="high">Vysoká</option>
                 <option value="critical">Kritická</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="two-col">
+            <label>
+              Zadavatel problému
+              <select name="problem_reporter">
+                <option value="">Nevyplněno</option>
+                <option value="Miroslav Hilšer">Miroslav Hilšer</option>
+                <option value="David Hejhal">David Hejhal</option>
+                <option value="Andrey Zhilstov">Andrey Zhilstov</option>
+                <option value="Tomáš Franc">Tomáš Franc</option>
+                <option value="Michael Gottwald">Michael Gottwald</option>
+                <option value="Zelený mužíček">Zelený mužíček</option>
+              </select>
+            </label>
+
+            <label>
+              Viník
+              <select name="culprit">
+                <option value="">Nevyplněno</option>
+                <option value="Miroslav Hilšer">Miroslav Hilšer</option>
+                <option value="David Hejhal">David Hejhal</option>
+                <option value="Andrey Zhilstov">Andrey Zhilstov</option>
+                <option value="Tomáš Franc">Tomáš Franc</option>
+                <option value="Michael Gottwald">Michael Gottwald</option>
+                <option value="Zelený mužíček">Zelený mužíček</option>
               </select>
             </label>
           </div>
@@ -116,7 +144,7 @@
     </main>
 
     <template id="entryTemplate">
-      <article class="entry">
+            <article class="entry">
         <div class="entry-top">
           <div class="entry-title-wrap">
             <div class="badges">
@@ -131,6 +159,10 @@
         </div>
 
         <p class="entry-description"></p>
+        <div class="entry-meta">
+          <span class="problem-reporter"></span>
+          <span class="culprit"></span>
+        </div>
 
         <div class="entry-footer">
           <label>

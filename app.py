@@ -40,6 +40,17 @@ TYPE_LABELS = {
     "near_miss": "Near miss",
 }
 
+PERSON_CHOICES = (
+    "Miroslav Hilšer",
+    "David Hejhal",
+    "Andrey Zhilstov",
+    "Tomáš Franc",
+    "Michael Gottwald",
+    "Zelený mužíček",
+)
+PERSON_CHOICES_SET = set(PERSON_CHOICES)
+PERSON_EMPTY_LABEL = "Nevyplněno"
+
 SEVERITY_LABELS = {
     "low": "Nízká",
     "medium": "Střední",
@@ -187,6 +198,8 @@ def repair_foreign_key_tables(conn: sqlite3.Connection) -> None:
                 entry_type TEXT NOT NULL,
                 severity TEXT NOT NULL,
                 status TEXT NOT NULL,
+                problem_reporter TEXT,
+                culprit TEXT,
                 created_by_user_id INTEGER,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
@@ -217,6 +230,8 @@ def repair_foreign_key_tables(conn: sqlite3.Connection) -> None:
                 entry_type,
                 severity,
                 status,
+                NULL AS problem_reporter,
+                NULL AS culprit,
                 created_by_user_id,
                 created_at,
                 updated_at
@@ -266,6 +281,8 @@ def init_db() -> None:
                     entry_type TEXT NOT NULL,
                     severity TEXT NOT NULL,
                     status TEXT NOT NULL,
+                    problem_reporter TEXT,
+                    culprit TEXT,
                     created_by_user_id BIGINT,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
@@ -316,6 +333,8 @@ def init_db() -> None:
                     entry_type TEXT NOT NULL,
                     severity TEXT NOT NULL,
                     status TEXT NOT NULL,
+                    problem_reporter TEXT,
+                    culprit TEXT,
                     created_by_user_id INTEGER,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
@@ -327,6 +346,8 @@ def init_db() -> None:
                 """
             )
             ensure_column(conn, "entries", "created_by_user_id", "INTEGER")
+            ensure_column(conn, "entries", "problem_reporter", "TEXT")
+            ensure_column(conn, "entries", "culprit", "TEXT")
 
 
 def now_dt() -> datetime:
@@ -435,6 +456,8 @@ def user_to_dict(row: sqlite3.Row) -> dict:
 
 def row_to_dict(row: sqlite3.Row) -> dict:
     created_by_email = row["created_by_email"] if "created_by_email" in row.keys() else None
+    problem_reporter = row["problem_reporter"] if "problem_reporter" in row.keys() else None
+    culprit = row["culprit"] if "culprit" in row.keys() else None
     return {
         "id": row["id"],
         "title": row["title"],
@@ -445,12 +468,27 @@ def row_to_dict(row: sqlite3.Row) -> dict:
         "severity_label": SEVERITY_LABELS[row["severity"]],
         "status": row["status"],
         "status_label": STATUS_LABELS[row["status"]],
+        "problem_reporter": problem_reporter,
+        "problem_reporter_label": problem_reporter or PERSON_EMPTY_LABEL,
+        "culprit": culprit,
+        "culprit_label": culprit or PERSON_EMPTY_LABEL,
         "created_by_user_id": row["created_by_user_id"],
         "created_by_email": created_by_email,
-        "created_by_label": created_by_email or "Systém",
+        "created_by_label": created_by_email or "SystĂ©m",
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
     }
+
+
+def normalize_person_choice(value: object, field_label: str) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    if text not in PERSON_CHOICES_SET:
+        raise ValueError(f"NeplatnĂ˝ {field_label}.")
+    return text
 
 
 def session_expires_at() -> str:
@@ -723,6 +761,8 @@ def create_entry(data: dict, created_by_user_id: int | None) -> dict:
     entry_type = str(data.get("entry_type", "bug"))
     severity = str(data.get("severity", "medium"))
     status = str(data.get("status", "new"))
+    problem_reporter = normalize_person_choice(data.get("problem_reporter"), "zadavatele problému")
+    culprit = normalize_person_choice(data.get("culprit"), "viníka")
 
     if not title:
         raise ValueError("Název je povinný.")
@@ -743,11 +783,13 @@ def create_entry(data: dict, created_by_user_id: int | None) -> dict:
                 entry_type,
                 severity,
                 status,
+                problem_reporter,
+                culprit,
                 created_by_user_id,
                 created_at,
                 updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id
             """,
             (
@@ -756,6 +798,8 @@ def create_entry(data: dict, created_by_user_id: int | None) -> dict:
                 entry_type,
                 severity,
                 status,
+                problem_reporter,
+                culprit,
                 created_by_user_id,
                 created_at,
                 created_at,
@@ -797,6 +841,12 @@ def update_entry(entry_id: int, data: dict) -> dict:
         if status not in STATUSES:
             raise ValueError("Neplatný stav.")
         allowed_fields["status"] = status
+    if "problem_reporter" in data:
+        allowed_fields["problem_reporter"] = normalize_person_choice(
+            data["problem_reporter"], "zadavatele problému"
+        )
+    if "culprit" in data:
+        allowed_fields["culprit"] = normalize_person_choice(data["culprit"], "viníka")
 
     if not allowed_fields:
         raise ValueError("Není co aktualizovat.")

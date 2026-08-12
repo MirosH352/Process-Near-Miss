@@ -34,12 +34,25 @@ const typeTextMap = {
   near_miss: "Near miss",
 };
 
+const personOptions = [
+  "Miroslav Hilšer",
+  "David Hejhal",
+  "Andrey Zhilstov",
+  "Tomáš Franc",
+  "Michael Gottwald",
+  "Zelený mužíček",
+];
+
 const severityTextMap = {
   low: "Nízká",
   medium: "Střední",
   high: "Vysoká",
   critical: "Kritická",
 };
+
+function formatPerson(value) {
+  return value || "Nevyplněno";
+}
 
 function formatDate(value) {
   const date = new Date(value);
@@ -92,7 +105,15 @@ function render() {
   const query = state.search.trim().toLowerCase();
   const filtered = state.items.filter((item) => {
     if (!query) return true;
-    return [item.title, item.description, item.entry_type_label, item.severity_label, item.status_label]
+    return [
+      item.title,
+      item.description,
+      item.entry_type_label,
+      item.severity_label,
+      item.status_label,
+      item.problem_reporter_label,
+      item.culprit_label,
+    ]
       .join(" ")
       .toLowerCase()
       .includes(query);
@@ -114,6 +135,11 @@ function render() {
 
     node.querySelector(".entry-title").textContent = item.title;
     node.querySelector(".entry-description").textContent = item.description || "Bez popisu.";
+    const meta = node.querySelector(".entry-meta");
+    if (meta) {
+      meta.querySelector(".problem-reporter").textContent = `Zadavatel: ${formatPerson(item.problem_reporter)}`;
+      meta.querySelector(".culprit").textContent = `Viník: ${formatPerson(item.culprit)}`;
+    }
     node.querySelector(".created-at").textContent = `Vytvořeno: ${formatDate(item.created_at)}`;
     node.querySelector(".updated-at").textContent = `Aktualizováno: ${formatDate(item.updated_at)}`;
 

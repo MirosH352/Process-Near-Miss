@@ -424,7 +424,7 @@
           </button>
         </div>
 
-        <form id="entryForm" class="drawer-form">
+                <form id="entryForm" class="drawer-form">
           <label>
             Název
             <input
@@ -460,6 +460,34 @@
                 <option value="medium" selected>Střední</option>
                 <option value="high">Vysoká</option>
                 <option value="critical">Kritická</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="field-grid">
+            <label>
+              Zadavatel problému
+              <select name="problem_reporter">
+                <option value="">Nevyplněno</option>
+                <option value="Miroslav Hilšer">Miroslav Hilšer</option>
+                <option value="David Hejhal">David Hejhal</option>
+                <option value="Andrey Zhilstov">Andrey Zhilstov</option>
+                <option value="Tomáš Franc">Tomáš Franc</option>
+                <option value="Michael Gottwald">Michael Gottwald</option>
+                <option value="Zelený mužíček">Zelený mužíček</option>
+              </select>
+            </label>
+
+            <label>
+              Viník
+              <select name="culprit">
+                <option value="">Nevyplněno</option>
+                <option value="Miroslav Hilšer">Miroslav Hilšer</option>
+                <option value="David Hejhal">David Hejhal</option>
+                <option value="Andrey Zhilstov">Andrey Zhilstov</option>
+                <option value="Tomáš Franc">Tomáš Franc</option>
+                <option value="Michael Gottwald">Michael Gottwald</option>
+                <option value="Zelený mužíček">Zelený mužíček</option>
               </select>
             </label>
           </div>
@@ -545,7 +573,7 @@
           <button class="icon-button modal-close" type="button" data-close-modal>Zavřít</button>
         </div>
 
-        <form id="editForm" class="modal-form">
+                <form id="editForm" class="modal-form">
           <label>
             Název
             <input name="title" type="text" required />
@@ -576,6 +604,34 @@
             </label>
           </div>
 
+          <div class="two-col">
+            <label>
+              Zadavatel problému
+              <select name="problem_reporter">
+                <option value="">Nevyplněno</option>
+                <option value="Miroslav Hilšer">Miroslav Hilšer</option>
+                <option value="David Hejhal">David Hejhal</option>
+                <option value="Andrey Zhilstov">Andrey Zhilstov</option>
+                <option value="Tomáš Franc">Tomáš Franc</option>
+                <option value="Michael Gottwald">Michael Gottwald</option>
+                <option value="Zelený mužíček">Zelený mužíček</option>
+              </select>
+            </label>
+
+            <label>
+              Viník
+              <select name="culprit">
+                <option value="">Nevyplněno</option>
+                <option value="Miroslav Hilšer">Miroslav Hilšer</option>
+                <option value="David Hejhal">David Hejhal</option>
+                <option value="Andrey Zhilstov">Andrey Zhilstov</option>
+                <option value="Tomáš Franc">Tomáš Franc</option>
+                <option value="Michael Gottwald">Michael Gottwald</option>
+                <option value="Zelený mužíček">Zelený mužíček</option>
+              </select>
+            </label>
+          </div>
+
           <label>
             Stav
             <select name="status">
@@ -586,10 +642,7 @@
             </select>
           </label>
 
-          <div class="modal-actions">
-            <button type="button" class="icon-button secondary" data-close-modal>Zrušit</button>
-            <button type="submit" class="primary">Uložit změny</button>
-          </div>
+          <button type="submit" class="primary">Uložit změny</button>
           <p id="editMessage" class="form-message" aria-live="polite"></p>
         </form>
       </div>
@@ -628,7 +681,7 @@
 
         <div class="detail-badges" id="detailBadges"></div>
 
-        <div class="detail-metadata">
+                <div class="detail-metadata">
           <article class="detail-stat">
             <span class="detail-stat-label">ID</span>
             <strong id="detailId">-</strong>
@@ -644,6 +697,14 @@
           <article class="detail-stat">
             <span class="detail-stat-label">Stav</span>
             <strong id="detailStatus">-</strong>
+          </article>
+          <article class="detail-stat">
+            <span class="detail-stat-label">Zadavatel problému</span>
+            <strong id="detailProblemReporter">-</strong>
+          </article>
+          <article class="detail-stat">
+            <span class="detail-stat-label">Viník</span>
+            <strong id="detailCulprit">-</strong>
           </article>
         </div>
 
