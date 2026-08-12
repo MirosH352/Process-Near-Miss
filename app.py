@@ -120,6 +120,10 @@ def ensure_column(conn: sqlite3.Connection, table_name: str, column_name: str, d
         conn.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {definition}")
 
 
+def ensure_postgres_column(conn, table_name: str, column_name: str, definition: str) -> None:
+    conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS {column_name} {definition}")
+
+
 def migrate_users_table(conn: sqlite3.Connection) -> None:
     schema_row = conn.execute(
         "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'"
@@ -293,6 +297,8 @@ def init_db() -> None:
                 )
                 """
             )
+            ensure_postgres_column(conn, "entries", "problem_reporter", "TEXT")
+            ensure_postgres_column(conn, "entries", "culprit", "TEXT")
         else:
             conn.execute(
                 """
