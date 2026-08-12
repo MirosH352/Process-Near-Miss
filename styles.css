@@ -1424,7 +1424,7 @@ button:focus-visible {
 .modal {
   position: fixed;
   inset: 0;
-  z-index: 20;
+  z-index: 40;
   display: grid;
   place-items: center;
   padding: 1rem;
