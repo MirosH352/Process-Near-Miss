@@ -884,8 +884,8 @@ function cardTemplate(item, columnStatus = item.status) {
     </div>
     <p class="entry-description"></p>
     <div class="entry-meta">
-      <span class="entry-meta-item">Zadavatel: ${formatPerson(item.problem_reporter)}</span>
-      <span class="entry-meta-item">Viník: ${formatPerson(item.culprit)}</span>
+      <span class="entry-meta-label">Zadavatel problému</span>
+      <strong class="entry-meta-value">${formatPerson(item.problem_reporter)}</strong>
     </div>
     <div class="entry-footer">
       <div class="timestamps">
@@ -964,7 +964,7 @@ function tableRowTemplate(item) {
   titleEl.title = item.title;
   descriptionEl.textContent = item.description || "Bez popisu.";
   descriptionEl.title = item.description || "Bez popisu.";
-  metaEl.textContent = `Zadavatel: ${formatPerson(item.problem_reporter)} • Viník: ${formatPerson(item.culprit)}`;
+  metaEl.textContent = `Zadavatel problému: ${formatPerson(item.problem_reporter)}`;
   createdByEl.textContent = item.created_by_label || "Systém";
   createdByEl.title = item.created_by_label || "Systém";
   hydrateIcons(row);

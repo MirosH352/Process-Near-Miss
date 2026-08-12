@@ -1033,6 +1033,30 @@ button:focus-visible {
   overflow: hidden;
 }
 
+.entry-meta {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: 0.45rem;
+  padding: 0.75rem 0.85rem;
+  border-left: 3px solid rgba(47, 111, 237, 0.32);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(47, 111, 237, 0.06), rgba(47, 111, 237, 0.02));
+}
+
+.entry-meta-label {
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.entry-meta-value {
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
 .entry-footer {
   display: flex;
   align-items: center;
@@ -1322,6 +1346,17 @@ button:focus-visible {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+.record-meta {
+  display: block;
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid #e6edf5;
+  color: var(--color-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .record-id,
