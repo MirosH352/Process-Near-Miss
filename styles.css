@@ -1001,6 +1001,12 @@ button:focus-visible {
   border-color: #ffedd5;
 }
 
+.priority-badge.priority-incident {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
 .priority-badge.priority-critical {
   background: #fef2f2;
   color: var(--color-danger);

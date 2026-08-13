@@ -31,7 +31,7 @@ LOGIN_RATE_LIMIT_WINDOW_SECONDS = int(os.environ.get("LOGIN_RATE_LIMIT_WINDOW_SE
 LOGIN_RATE_LIMIT_BLOCK_SECONDS = int(os.environ.get("LOGIN_RATE_LIMIT_BLOCK_SECONDS", "900"))
 
 ENTRY_TYPES = {"bug", "near_miss"}
-SEVERITIES = {"low", "medium", "high", "critical"}
+SEVERITIES = {"low", "medium", "high", "incident", "critical"}
 STATUSES = {"new", "in_progress", "resolved", "closed"}
 USER_ROLES = {"admin", "user"}
 
@@ -75,6 +75,7 @@ SEVERITY_LABELS = {
     "low": "Nízká",
     "medium": "Střední",
     "high": "Vysoká",
+    "incident": "Incident",
     "critical": "Kritická",
 }
 
@@ -236,7 +237,7 @@ def repair_foreign_key_tables(conn: sqlite3.Connection) -> None:
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
                 CHECK (entry_type IN ('bug', 'near_miss')),
-                CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+                CHECK (severity IN ('low', 'medium', 'high', 'incident', 'critical')),
                 CHECK (status IN ('new', 'in_progress', 'resolved', 'closed')),
                 FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
             )
@@ -271,6 +272,84 @@ def repair_foreign_key_tables(conn: sqlite3.Connection) -> None:
             """
         )
         conn.execute("DROP TABLE entries_legacy")
+
+
+def migrate_entries_table(conn: sqlite3.Connection) -> None:
+    entries_schema_row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'entries'"
+    ).fetchone()
+    entries_schema_sql = (entries_schema_row["sql"] if entries_schema_row else "") or ""
+    if "'incident'" in entries_schema_sql:
+        return
+
+    existing_columns = table_columns(conn, "entries")
+    if not existing_columns:
+        return
+
+    conn.execute("ALTER TABLE entries RENAME TO entries_legacy")
+    conn.execute(
+        """
+        CREATE TABLE entries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL DEFAULT '',
+            entry_type TEXT NOT NULL,
+            severity TEXT NOT NULL,
+            status TEXT NOT NULL,
+            area TEXT,
+            problem_reporter TEXT,
+            culprit TEXT,
+            created_by_user_id INTEGER,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            CHECK (entry_type IN ('bug', 'near_miss')),
+            CHECK (severity IN ('low', 'medium', 'high', 'incident', 'critical')),
+            CHECK (status IN ('new', 'in_progress', 'resolved', 'closed')),
+            FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+        )
+        """
+    )
+    area_expr = "area" if "area" in existing_columns else "NULL AS area"
+    problem_reporter_expr = (
+        "problem_reporter" if "problem_reporter" in existing_columns else "NULL AS problem_reporter"
+    )
+    culprit_expr = "culprit" if "culprit" in existing_columns else "NULL AS culprit"
+    created_by_expr = (
+        "created_by_user_id" if "created_by_user_id" in existing_columns else "NULL AS created_by_user_id"
+    )
+    conn.execute(
+        f"""
+        INSERT INTO entries (
+            id,
+            title,
+            description,
+            entry_type,
+            severity,
+            status,
+            area,
+            problem_reporter,
+            culprit,
+            created_by_user_id,
+            created_at,
+            updated_at
+        )
+        SELECT
+            id,
+            title,
+            description,
+            entry_type,
+            severity,
+            status,
+            {area_expr},
+            {problem_reporter_expr},
+            {culprit_expr},
+            {created_by_expr},
+            created_at,
+            updated_at
+        FROM entries_legacy
+        """
+    )
+    conn.execute("DROP TABLE entries_legacy")
 
 
 def init_db() -> None:
@@ -322,7 +401,7 @@ def init_db() -> None:
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
                     CHECK (entry_type IN ('bug', 'near_miss')),
-                    CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+                    CHECK (severity IN ('low', 'medium', 'high', 'incident', 'critical')),
                     CHECK (status IN ('new', 'in_progress', 'resolved', 'closed')),
                     FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
                 )
@@ -380,7 +459,7 @@ def init_db() -> None:
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
                     CHECK (entry_type IN ('bug', 'near_miss')),
-                    CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+                    CHECK (severity IN ('low', 'medium', 'high', 'incident', 'critical')),
                     CHECK (status IN ('new', 'in_progress', 'resolved', 'closed')),
                     FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
                 )
@@ -390,6 +469,7 @@ def init_db() -> None:
             ensure_column(conn, "entries", "area", "TEXT")
             ensure_column(conn, "entries", "problem_reporter", "TEXT")
             ensure_column(conn, "entries", "culprit", "TEXT")
+            migrate_entries_table(conn)
 
 
 def now_dt() -> datetime:

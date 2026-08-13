@@ -32,6 +32,7 @@ const SEVERITY_LABELS = {
   low: "Nízká",
   medium: "Střední",
   high: "Vysoká",
+  incident: "Incident",
   critical: "Kritická",
 };
 
@@ -367,7 +368,8 @@ function priorityRank(severity) {
     low: 1,
     medium: 2,
     high: 3,
-    critical: 4,
+    incident: 4,
+    critical: 5,
   }[severity] || 0;
 }
 
@@ -931,7 +933,6 @@ function cardTemplate(item, columnStatus = item.status) {
     </div>
     <p class="entry-description"></p>
     <div class="entry-meta">
-      <span class="entry-meta-inline">Oblast: ${item.area_label}</span>
       <span class="entry-meta-inline">Zadavatel: ${formatPerson(item.problem_reporter)}</span>
     </div>
     <div class="entry-footer">
