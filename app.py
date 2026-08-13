@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import hashlib
@@ -57,6 +57,19 @@ PERSON_CHOICES = (
 )
 PERSON_CHOICES_SET = set(PERSON_CHOICES)
 PERSON_EMPTY_LABEL = "Nevyplněno"
+
+AREA_CHOICES = (
+    "AlzaBoxy",
+    "Pobočky",
+    "Sklad",
+    "Dropshipment",
+    "Zpětný tok",
+    "WebAdmin",
+    "IT BUG",
+    "Tracking",
+)
+AREA_CHOICES_SET = set(AREA_CHOICES)
+AREA_EMPTY_LABEL = "Nevyplněno"
 
 SEVERITY_LABELS = {
     "low": "Nízká",
@@ -216,6 +229,7 @@ def repair_foreign_key_tables(conn: sqlite3.Connection) -> None:
                 entry_type TEXT NOT NULL,
                 severity TEXT NOT NULL,
                 status TEXT NOT NULL,
+                area TEXT,
                 problem_reporter TEXT,
                 culprit TEXT,
                 created_by_user_id INTEGER,
@@ -237,6 +251,7 @@ def repair_foreign_key_tables(conn: sqlite3.Connection) -> None:
                 entry_type,
                 severity,
                 status,
+                area,
                 created_by_user_id,
                 created_at,
                 updated_at
@@ -248,8 +263,7 @@ def repair_foreign_key_tables(conn: sqlite3.Connection) -> None:
                 entry_type,
                 severity,
                 status,
-                NULL AS problem_reporter,
-                NULL AS culprit,
+                NULL AS area,
                 created_by_user_id,
                 created_at,
                 updated_at
@@ -301,6 +315,7 @@ def init_db() -> None:
                     entry_type TEXT NOT NULL,
                     severity TEXT NOT NULL,
                     status TEXT NOT NULL,
+                    area TEXT,
                     problem_reporter TEXT,
                     culprit TEXT,
                     created_by_user_id BIGINT,
@@ -313,6 +328,7 @@ def init_db() -> None:
                 )
                 """
             )
+            ensure_postgres_column(conn, "entries", "area", "TEXT")
             ensure_postgres_column(conn, "entries", "problem_reporter", "TEXT")
             ensure_postgres_column(conn, "entries", "culprit", "TEXT")
         else:
@@ -357,6 +373,7 @@ def init_db() -> None:
                     entry_type TEXT NOT NULL,
                     severity TEXT NOT NULL,
                     status TEXT NOT NULL,
+                    area TEXT,
                     problem_reporter TEXT,
                     culprit TEXT,
                     created_by_user_id INTEGER,
@@ -370,6 +387,7 @@ def init_db() -> None:
                 """
             )
             ensure_column(conn, "entries", "created_by_user_id", "INTEGER")
+            ensure_column(conn, "entries", "area", "TEXT")
             ensure_column(conn, "entries", "problem_reporter", "TEXT")
             ensure_column(conn, "entries", "culprit", "TEXT")
 
@@ -599,6 +617,7 @@ def user_to_dict(row: sqlite3.Row) -> dict:
 
 def row_to_dict(row: sqlite3.Row) -> dict:
     created_by_email = row["created_by_email"] if "created_by_email" in row.keys() else None
+    area = row["area"] if "area" in row.keys() else None
     problem_reporter = row["problem_reporter"] if "problem_reporter" in row.keys() else None
     culprit = row["culprit"] if "culprit" in row.keys() else None
     return {
@@ -611,6 +630,8 @@ def row_to_dict(row: sqlite3.Row) -> dict:
         "severity_label": SEVERITY_LABELS[row["severity"]],
         "status": row["status"],
         "status_label": STATUS_LABELS[row["status"]],
+        "area": area,
+        "area_label": area or AREA_EMPTY_LABEL,
         "problem_reporter": problem_reporter,
         "problem_reporter_label": problem_reporter or PERSON_EMPTY_LABEL,
         "culprit": culprit,
@@ -631,6 +652,17 @@ def normalize_person_choice(value: object, field_label: str) -> str | None:
         return None
     if text not in PERSON_CHOICES_SET:
         raise ValueError(f"NeplatnĂ˝ {field_label}.")
+    return text
+
+
+def normalize_area_choice(value: object) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    if text not in AREA_CHOICES_SET:
+        raise ValueError("Neplatná oblast.")
     return text
 
 
@@ -921,6 +953,7 @@ def create_entry(data: dict, created_by_user_id: int | None) -> dict:
     entry_type = str(data.get("entry_type", "bug"))
     severity = str(data.get("severity", "medium"))
     status = str(data.get("status", "new"))
+    area = normalize_area_choice(data.get("area"))
     problem_reporter = normalize_person_choice(data.get("problem_reporter"), "zadavatele problému")
     culprit = normalize_person_choice(data.get("culprit"), "viníka")
 
@@ -943,13 +976,14 @@ def create_entry(data: dict, created_by_user_id: int | None) -> dict:
                 entry_type,
                 severity,
                 status,
+                area,
                 problem_reporter,
                 culprit,
                 created_by_user_id,
                 created_at,
                 updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING id
             """,
             (
@@ -958,6 +992,7 @@ def create_entry(data: dict, created_by_user_id: int | None) -> dict:
                 entry_type,
                 severity,
                 status,
+                area,
                 problem_reporter,
                 culprit,
                 created_by_user_id,
@@ -1001,6 +1036,8 @@ def update_entry(entry_id: int, data: dict) -> dict:
         if status not in STATUSES:
             raise ValueError("Neplatný stav.")
         allowed_fields["status"] = status
+    if "area" in data:
+        allowed_fields["area"] = normalize_area_choice(data["area"])
     if "problem_reporter" in data:
         allowed_fields["problem_reporter"] = normalize_person_choice(
             data["problem_reporter"], "zadavatele problému"
@@ -1032,8 +1069,6 @@ def update_entry(entry_id: int, data: dict) -> dict:
             (entry_id,),
         ).fetchone()
     return row_to_dict(row)
-
-
 def delete_entry(entry_id: int) -> None:
     with connect() as conn:
         cursor = conn.execute("DELETE FROM entries WHERE id = ?", (entry_id,))
@@ -1397,3 +1432,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

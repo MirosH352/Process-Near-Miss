@@ -1,4 +1,4 @@
-const VIEW_MODE_KEY = "near-miss-tracker.viewMode";
+﻿const VIEW_MODE_KEY = "near-miss-tracker.viewMode";
 
 const STATUS_OPTIONS = [
   ["new", "Nový"],
@@ -119,6 +119,7 @@ const detailBadgesEl = document.getElementById("detailBadges");
 const detailIdEl = document.getElementById("detailId");
 const detailTypeEl = document.getElementById("detailType");
 const detailPriorityEl = document.getElementById("detailPriority");
+const detailAreaEl = document.getElementById("detailArea");
 const detailStatusEl = document.getElementById("detailStatus");
 const detailProblemReporterEl = document.getElementById("detailProblemReporter");
 const detailDescriptionEl = document.getElementById("detailDescription");
@@ -381,6 +382,7 @@ function matchesSearch(item, query) {
     item.title,
     item.description,
     item.created_by_label,
+    item.area_label,
     item.problem_reporter_label,
     item.culprit_label,
     TYPE_LABELS[item.entry_type],
@@ -534,6 +536,7 @@ function openEditModal(item) {
   editForm.elements.description.value = item.description || "";
   editForm.elements.entry_type.value = item.entry_type;
   editForm.elements.severity.value = item.severity;
+  editForm.elements.area.value = item.area || "";
   populatePersonSelect(editForm.elements.problem_reporter, item.problem_reporter);
   populatePersonSelect(editForm.elements.culprit, item.culprit);
   editForm.elements.status.value = item.status;
@@ -578,10 +581,11 @@ function closeDetailModal() {
 function openDetailModal(item) {
   state.detailItem = item;
   detailTitleEl.textContent = item.title;
-  detailSubtitleEl.textContent = `${TYPE_LABELS[item.entry_type]} • ${STATUS_META[item.status].label} • Zadavatel: ${formatPerson(item.problem_reporter)}`;
+  detailSubtitleEl.textContent = `${TYPE_LABELS[item.entry_type]} • ${STATUS_META[item.status].label} • Oblast: ${item.area_label} • Zadavatel: ${formatPerson(item.problem_reporter)}`;
   detailIdEl.textContent = item.id;
   detailTypeEl.textContent = TYPE_LABELS[item.entry_type];
   detailPriorityEl.textContent = SEVERITY_LABELS[item.severity];
+  detailAreaEl.textContent = item.area_label;
   detailStatusEl.textContent = STATUS_META[item.status].label;
   detailProblemReporterEl.textContent = formatPerson(item.problem_reporter);
   detailDescriptionEl.textContent = item.description || "Bez popisu.";
@@ -598,7 +602,6 @@ function openDetailModal(item) {
   syncBodyLock();
   window.setTimeout(() => detailEditBtn.focus(), 0);
 }
-
 function openConfirm(message, confirmLabel = "Potvrdit") {
   confirmTextEl.textContent = message;
   confirmAcceptBtn.textContent = confirmLabel;
@@ -925,6 +928,7 @@ function cardTemplate(item, columnStatus = item.status) {
     </div>
     <p class="entry-description"></p>
     <div class="entry-meta">
+      <span class="entry-meta-inline">Oblast: ${item.area_label}</span>
       <span class="entry-meta-inline">Zadavatel: ${formatPerson(item.problem_reporter)}</span>
     </div>
     <div class="entry-footer">
@@ -1004,7 +1008,7 @@ function tableRowTemplate(item) {
   titleEl.title = item.title;
   descriptionEl.textContent = item.description || "Bez popisu.";
   descriptionEl.title = item.description || "Bez popisu.";
-  metaEl.textContent = `Zadavatel problému: ${formatPerson(item.problem_reporter)}`;
+  metaEl.textContent = `Oblast: ${item.area_label} • Zadavatel problému: ${formatPerson(item.problem_reporter)}`;
   createdByEl.textContent = item.created_by_label || "Systém";
   createdByEl.title = item.created_by_label || "Systém";
   hydrateIcons(row);
@@ -1548,3 +1552,4 @@ async function start() {
 }
 
 start();
+
