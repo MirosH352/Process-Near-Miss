@@ -1013,7 +1013,7 @@ function tableRowTemplate(item) {
   titleEl.title = item.title;
   descriptionEl.textContent = item.description || "Bez popisu.";
   descriptionEl.title = item.description || "Bez popisu.";
-  metaEl.textContent = `Oblast: ${item.area_label} • Zadavatel problému: ${formatPerson(item.problem_reporter)}`;
+  metaEl.textContent = `Zadavatel problému: ${formatPerson(item.problem_reporter)}`;
   createdByEl.textContent = item.created_by_label || "Systém";
   createdByEl.title = item.created_by_label || "Systém";
   hydrateIcons(row);
