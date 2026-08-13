@@ -922,6 +922,7 @@ function cardTemplate(item, columnStatus = item.status) {
         <div class="badges">
           <span class="badge type-badge">${TYPE_LABELS[item.entry_type]}</span>
           <span class="badge priority-badge priority-${item.severity}">Priorita ${SEVERITY_LABELS[item.severity]}</span>
+          <span class="badge area-badge">${item.area_label}</span>
           ${statusBadge}
         </div>
         <h3 class="entry-title"></h3>
@@ -985,6 +986,7 @@ function tableRowTemplate(item) {
       </div>
     </td>
     <td class="col-type"><span class="badge type-badge">${TYPE_LABELS[item.entry_type]}</span></td>
+    <td class="col-area"><span class="badge area-badge">${item.area_label}</span></td>
     <td class="col-priority"><span class="badge priority-badge priority-${item.severity}">Priorita ${SEVERITY_LABELS[item.severity]}</span></td>
     <td class="col-status"><span class="badge status-badge status-${item.status}">${STATUS_META[item.status].label}</span></td>
     <td class="col-created-by"><span class="placeholder-value"></span></td>
