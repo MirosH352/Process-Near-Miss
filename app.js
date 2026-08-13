@@ -595,6 +595,7 @@ function openDetailModal(item) {
   detailBadgesEl.innerHTML = `
     <span class="badge type-badge">${TYPE_LABELS[item.entry_type]}</span>
     <span class="badge priority-badge priority-${item.severity}">Priorita ${SEVERITY_LABELS[item.severity]}</span>
+    <span class="badge area-badge">${item.area_label}</span>
     <span class="badge status-badge status-${item.status}">${STATUS_META[item.status].label}</span>
   `;
   detailModal.classList.remove("hidden");
