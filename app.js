@@ -382,6 +382,7 @@ function matchesSearch(item, query) {
     item.title,
     item.description,
     item.created_by_label,
+    item.area,
     item.area_label,
     item.problem_reporter_label,
     item.culprit_label,

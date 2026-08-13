@@ -975,6 +975,12 @@ button:focus-visible {
   border-color: #dbeafe;
 }
 
+.area-badge {
+  background: #ecfeff;
+  color: #0f766e;
+  border-color: #a5f3fc;
+}
+
 .priority-badge.priority-low,
 .status-badge.status-resolved {
   background: #f0fdf4;
