@@ -1,12 +1,16 @@
 ﻿from __future__ import annotations
 
-import json
+import base64
 import hashlib
+import hmac
+import json
 import os
 import re
 import sqlite3
 import secrets
 import threading
+import unicodedata
+from collections import Counter
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -26,6 +30,7 @@ PASSWORD_HASH_ITERATIONS = 210000
 SESSION_DAYS = int(os.environ.get("SESSION_DAYS", "7"))
 SESSION_SECURE = os.environ.get("SESSION_SECURE", "0").lower() in {"1", "true", "yes"}
 APP_ORIGIN = os.environ.get("APP_ORIGIN", "").strip().rstrip("/")
+TEAMS_OUTGOING_WEBHOOK_SECRET = os.environ.get("TEAMS_OUTGOING_WEBHOOK_SECRET", "").strip()
 LOGIN_RATE_LIMIT_MAX_ATTEMPTS = int(os.environ.get("LOGIN_RATE_LIMIT_MAX_ATTEMPTS", "10"))
 LOGIN_RATE_LIMIT_WINDOW_SECONDS = int(os.environ.get("LOGIN_RATE_LIMIT_WINDOW_SECONDS", "600"))
 LOGIN_RATE_LIMIT_BLOCK_SECONDS = int(os.environ.get("LOGIN_RATE_LIMIT_BLOCK_SECONDS", "900"))
@@ -671,16 +676,23 @@ def json_response(
     handler.wfile.write(body)
 
 
-def read_json(handler: BaseHTTPRequestHandler) -> dict:
+def read_body(handler: BaseHTTPRequestHandler) -> bytes:
     length = int(handler.headers.get("Content-Length", "0"))
-    raw = handler.rfile.read(length) if length else b"{}"
+    return handler.rfile.read(length) if length else b""
+
+
+def parse_json_body(raw: bytes) -> dict:
     try:
-        data = json.loads(raw.decode("utf-8"))
+        data = json.loads(raw.decode("utf-8") if raw else "{}")
     except json.JSONDecodeError as exc:
         raise ValueError("Neplatné JSON tělo.") from exc
     if not isinstance(data, dict):
         raise ValueError("JSON musí být objekt.")
     return data
+
+
+def read_json(handler: BaseHTTPRequestHandler) -> dict:
+    return parse_json_body(read_body(handler))
 
 
 def user_to_dict(row: sqlite3.Row) -> dict:
@@ -744,6 +756,239 @@ def normalize_area_choice(value: object) -> str | None:
     if text not in AREA_CHOICES_SET:
         raise ValueError("Neplatná oblast.")
     return text
+
+
+def normalize_search_text(value: object) -> str:
+    text = str(value or "").strip().lower()
+    normalized = unicodedata.normalize("NFKD", text)
+    return "".join(ch for ch in normalized if not unicodedata.combining(ch))
+
+
+def split_search_terms(query: str) -> list[str]:
+    normalized = normalize_search_text(query)
+    terms = [term for term in re.split(r"[^a-z0-9]+", normalized) if len(term) >= 2]
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for term in terms:
+        if term in seen:
+            continue
+        seen.add(term)
+        deduped.append(term)
+    return deduped
+
+
+def teams_mention_text(text: str) -> str:
+    cleaned = re.sub(r"<at>.*?</at>", "", text, flags=re.IGNORECASE)
+    cleaned = re.sub(r"@\S+", "", cleaned)
+    return " ".join(cleaned.split()).strip()
+
+
+def teams_hmac_is_valid(handler: BaseHTTPRequestHandler, body: bytes) -> bool:
+    if not TEAMS_OUTGOING_WEBHOOK_SECRET:
+        return False
+
+    header_value = (handler.headers.get("Authorization") or handler.headers.get("hmac") or "").strip()
+    if not header_value:
+        return False
+
+    provided_signature = header_value
+    if header_value.lower().startswith("hmac "):
+        provided_signature = header_value[5:].strip()
+
+    try:
+        key_bytes = base64.b64decode(TEAMS_OUTGOING_WEBHOOK_SECRET, validate=True)
+    except Exception:
+        return False
+
+    calculated = base64.b64encode(hmac.new(key_bytes, body, hashlib.sha256).digest()).decode("ascii")
+    return secrets.compare_digest(provided_signature, calculated)
+
+
+def entry_search_blob(entry: dict) -> str:
+    parts = [
+        entry.get("title", ""),
+        entry.get("description", ""),
+        entry.get("entry_type_label", ""),
+        entry.get("severity_label", ""),
+        entry.get("status_label", ""),
+        entry.get("area_label", ""),
+        entry.get("problem_reporter_label", ""),
+        entry.get("culprit_label", ""),
+        entry.get("created_by_label", ""),
+    ]
+    return normalize_search_text(" ".join(str(part) for part in parts))
+
+
+def score_entry_for_query(entry: dict, terms: list[str]) -> tuple[int, list[str]]:
+    if not terms:
+        return 0, []
+
+    score = 0
+    reasons: list[str] = []
+
+    title = normalize_search_text(entry.get("title", ""))
+    description = normalize_search_text(entry.get("description", ""))
+    area = normalize_search_text(entry.get("area_label", ""))
+    culprit = normalize_search_text(entry.get("culprit_label", ""))
+    reporter = normalize_search_text(entry.get("problem_reporter_label", ""))
+    entry_type = normalize_search_text(entry.get("entry_type_label", ""))
+    severity = normalize_search_text(entry.get("severity_label", ""))
+    status = normalize_search_text(entry.get("status_label", ""))
+    blob = entry_search_blob(entry)
+
+    for term in terms:
+        matched = False
+        if term == area and area:
+            score += 7
+            matched = True
+            reasons.append(f"oblast {entry.get('area_label')}")
+        elif term in area and area:
+            score += 4
+            matched = True
+            reasons.append(f"oblast {entry.get('area_label')}")
+
+        if term == culprit and culprit:
+            score += 5
+            matched = True
+            reasons.append(f"viník {entry.get('culprit_label')}")
+        elif term in culprit and culprit:
+            score += 3
+            matched = True
+            reasons.append(f"viník {entry.get('culprit_label')}")
+
+        if term == reporter and reporter:
+            score += 4
+            matched = True
+            reasons.append(f"zadavatel {entry.get('problem_reporter_label')}")
+        elif term in reporter and reporter:
+            score += 2
+            matched = True
+            reasons.append(f"zadavatel {entry.get('problem_reporter_label')}")
+
+        if term in title:
+            score += 6
+            matched = True
+            reasons.append("shoda v názvu")
+
+        if term in description:
+            score += 3
+            matched = True
+            reasons.append("shoda v popisu")
+
+        if term == entry_type and entry_type:
+            score += 2
+            matched = True
+            reasons.append(f"typ {entry.get('entry_type_label')}")
+
+        if term == severity and severity:
+            score += 1
+            matched = True
+            reasons.append(f"závažnost {entry.get('severity_label')}")
+
+        if term == status and status:
+            score += 1
+            matched = True
+            reasons.append(f"stav {entry.get('status_label')}")
+
+        if not matched and term in blob:
+            score += 1
+
+    return score, list(dict.fromkeys(reasons))
+
+
+def similar_entries_for_query(query: str, limit: int = 5) -> list[dict]:
+    items = list_entries()
+    terms = split_search_terms(query)
+    if not terms:
+        return [
+            {
+                **entry,
+                "_match_score": 0,
+                "_match_reasons": [],
+            }
+            for entry in items[: max(0, limit)]
+        ]
+
+    scored: list[tuple[int, dict, list[str]]] = []
+    for item in items:
+        score, reasons = score_entry_for_query(item, terms)
+        scored.append((score, item, reasons))
+
+    scored.sort(
+        key=lambda item: (
+            item[0],
+            str(item[1].get("updated_at", "")),
+            int(item[1].get("id", 0)),
+        ),
+        reverse=True,
+    )
+
+    top = [item for item in scored if item[0] > 0][: max(1, limit)]
+    if top:
+        return [
+            {
+                **entry,
+                "_match_score": score,
+                "_match_reasons": reasons,
+            }
+            for score, entry, reasons in top
+        ]
+
+    fallback = items[: max(0, limit)]
+    return [
+        {
+            **entry,
+            "_match_score": 0,
+            "_match_reasons": [],
+        }
+        for entry in fallback
+    ]
+
+
+def build_teams_reply(query: str, limit: int = 5) -> dict:
+    cleaned_query = teams_mention_text(query)
+    matches = similar_entries_for_query(cleaned_query, limit=limit)
+    if not matches:
+        return {
+            "type": "message",
+            "text": "V databázi zatím nejsou žádné incidenty nebo near miss záznamy.",
+        }
+
+    if not cleaned_query:
+        lines = ["Nemám konkrétní dotaz, takže posílám nejnovější záznamy:"]
+    else:
+        lines = [f"Hledal jsem podobné záznamy pro: {cleaned_query}"]
+
+    for idx, item in enumerate(matches, start=1):
+        reasons = item.get("_match_reasons") or []
+        reason_text = ", ".join(reasons) if reasons else "nejnovější relevantní záznam"
+        lines.append(
+            f"{idx}. [#{item['id']}] {item['title']} | {item['area_label']} | "
+            f"{item['status_label']} | {item['severity_label']} | {reason_text}"
+        )
+
+    area_counter = Counter(
+        item.get("area_label")
+        for item in matches
+        if item.get("area_label") and item.get("area_label") != AREA_EMPTY_LABEL
+    )
+    culprit_counter = Counter(
+        item.get("culprit_label")
+        for item in matches
+        if item.get("culprit_label") and item.get("culprit_label") != PERSON_EMPTY_LABEL
+    )
+    if area_counter:
+        area_name, area_count = area_counter.most_common(1)[0]
+        lines.append(f"Nejčastější oblast v nalezených výsledcích: {area_name} ({area_count}x).")
+    if culprit_counter:
+        culprit_name, culprit_count = culprit_counter.most_common(1)[0]
+        lines.append(f"Nejčastější viník v nalezených výsledcích: {culprit_name} ({culprit_count}x).")
+
+    return {"type": "message", "text": "\n".join(lines)}
+
+
+def log_teams_event(message: str) -> None:
+    print(f"[teams] {message}", flush=True)
 
 
 def session_expires_at() -> str:
@@ -1245,6 +1490,33 @@ class AppHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         path = urlparse(self.path).path
+        if path == "/api/teams/outgoing-webhook":
+            try:
+                body = read_body(self)
+                log_teams_event(
+                    f"request from {client_ip(self)} len={len(body)} auth={'yes' if (self.headers.get('Authorization') or self.headers.get('hmac')) else 'no'}"
+                )
+                if not teams_hmac_is_valid(self, body):
+                    log_teams_event("invalid HMAC")
+                    json_response(self, {"error": "Neplatná Teams HMAC autentizace."}, HTTPStatus.UNAUTHORIZED)
+                    return
+                data = parse_json_body(body)
+                query = str(data.get("text", "") or "")
+                log_teams_event(f"query={query!r}")
+                limit_value = data.get("limit", 5)
+                try:
+                    limit = int(limit_value)
+                except (TypeError, ValueError):
+                    limit = 5
+                limit = max(1, min(limit, 10))
+                response = build_teams_reply(query, limit=limit)
+                log_teams_event(f"reply_type={response.get('type')} chars={len(str(response.get('text', '')))}")
+                json_response(self, response)
+            except ValueError as exc:
+                log_teams_event(f"bad request: {exc}")
+                json_response(self, {"error": str(exc)}, HTTPStatus.BAD_REQUEST)
+            return
+
         if path == "/api/bootstrap/admin":
             try:
                 if not reject_cross_origin(self):

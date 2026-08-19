@@ -62,3 +62,26 @@ Po prvnim nasazeni otevri aplikaci a zaloz prvniho admina pres bootstrap formula
 ## Kdyz chces jen lokalni vyvoj
 
 Soubor `start.bat` spusti lokalni server a otevre aplikaci v prohlizeci.
+
+## Teams integrace
+
+Projekt ted obsahuje callback pro **Microsoft Teams Outgoing Webhook** na adrese `/api/teams/outgoing-webhook`.
+
+Co to umi:
+
+- prijme dotaz z Teams kanalu pres `@mention`
+- overi HMAC podpis z Teams
+- projde tabulku `entries`
+- vrati nejpodobnejsi incidenty nebo near miss záznamy
+
+Co musis udelat ty:
+
+1. Nastav verejne dostupnou HTTPS adresu aplikace.
+2. V Teams zaloz **Outgoing Webhook** a jako callback URL dej `https://tvoje-domena/api/teams/outgoing-webhook`.
+3. Z Teams si vezmi podpisovy klic webhooku a nastav ho jako promenou prostredi `TEAMS_OUTGOING_WEBHOOK_SECRET`.
+4. Spust aplikaci znovu.
+
+Poznamka:
+
+- Outgoing Webhook funguje v kanalech v teamu, ne v soukromem 1:1 chatu.
+- Pokud chces opravdu soukromy bot do chatu, bude dalsi krok Azure Bot / Bot Framework. Tenhle projekt na to uz ma hotovou vyhledavaci logiku, ale samotne Teams cloud napojeni je dalsi integracni krok.
