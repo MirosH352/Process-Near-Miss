@@ -119,6 +119,9 @@
             <button type="button" class="app-tab-button is-active" data-app-tab="records" role="tab" aria-selected="true">
               Záznamy
             </button>
+            <button type="button" class="app-tab-button" data-app-tab="checklist" role="tab" aria-selected="false">
+              Checklist
+            </button>
             <button type="button" class="app-tab-button hidden" data-app-tab="admin" role="tab" aria-selected="false">
               Správa účtů
             </button>
@@ -309,6 +312,37 @@
           <div id="tableEmptyState" class="records-empty hidden">
             V tomto pohledu zatím nejsou žádné záznamy.
           </div>
+        </section>
+      </div>
+
+      <div id="checklistPanel" class="app-panel hidden">
+        <section class="card dashboard-card checklist-card">
+          <div class="section-head checklist-head">
+            <div>
+              <h2>AlzaBoxy a trasy - Checklist</h2>
+              <p>Rychlá kontrola před výjezdem, během trasy i po návratu. Stav se ukládá lokálně pro přihlášený účet.</p>
+            </div>
+            <div class="checklist-actions">
+              <div class="checklist-summary">
+                <strong id="checklistPercent">0 %</strong>
+                <span id="checklistCounter">0 / 0 hotovo</span>
+              </div>
+              <button type="button" class="icon-button secondary" id="resetChecklistButton">
+                Resetovat checklist
+              </button>
+            </div>
+          </div>
+
+          <div class="checklist-progress" aria-hidden="true">
+            <div id="checklistProgressBar" class="checklist-progress-bar"></div>
+          </div>
+
+          <div class="checklist-meta">
+            <span id="checklistStatusText">Checklist je připravený.</span>
+            <span id="checklistUpdatedAt">Ještě neuloženo</span>
+          </div>
+
+          <div id="checklistGroups" class="checklist-groups"></div>
         </section>
       </div>
 

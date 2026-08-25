@@ -28,6 +28,89 @@ const PERSON_OPTIONS = [
   "Zelený mužíček",
 ];
 
+const CHECKLIST_SECTIONS = [
+  {
+    title: "Před výjezdem",
+    items: [
+      {
+        id: "route_plan",
+        title: "Potvrdit trasu a pořadí zastávek",
+        note: "Porovnej dnešní plán, pořadí bodů a časová okna.",
+      },
+      {
+        id: "box_status",
+        title: "Ověřit aktivní AlzaBoxy na trase",
+        note: "Vyřaď boxy, které jsou mimo provoz, plné nebo nedostupné.",
+      },
+      {
+        id: "capacity_check",
+        title: "Zkontrolovat kapacitu a výměnu zásilek",
+        note: "Zkontroluj objem zásilek a připravené doručení i vyzvednutí.",
+      },
+    ],
+  },
+  {
+    title: "Na trase",
+    items: [
+      {
+        id: "scan_before_departure",
+        title: "Provést sken před odjezdem",
+        note: "Ujisti se, že jsou všechny zásilky načtené do systému.",
+      },
+      {
+        id: "navigation",
+        title: "Mít připravenou navigaci a podklady",
+        note: "Zkontroluj adresy, offline mapu a kontakty na dispečink.",
+      },
+      {
+        id: "exceptions",
+        title: "Zapsat výjimky okamžitě na místě",
+        note: "U každého problému doplň důvod, čas a případně fotku.",
+      },
+      {
+        id: "customer_contact",
+        title: "Potvrdit kontakt při změně trasy",
+        note: "Při zpoždění nebo odklonu informuj odpovědnou osobu.",
+      },
+    ],
+  },
+  {
+    title: "Po návratu",
+    items: [
+      {
+        id: "unresolved_shipments",
+        title: "Předat nedoručené zásilky",
+        note: "Nedoručené kusy předat na další směnu nebo do skladu.",
+      },
+      {
+        id: "route_close",
+        title: "Uzavřít trasu v systému",
+        note: "Doplň stav, komentář a uzavři všechny otevřené výjimky.",
+      },
+      {
+        id: "handover",
+        title: "Předat souhrn o průběhu trasy",
+        note: "Shrň odchylky, nedostupné boxy a doporučení pro další den.",
+      },
+    ],
+  },
+];
+
+const CHECKLIST_STORAGE_KEY = "near-miss-tracker.checklist";
+
+function createDefaultChecklistState() {
+  const items = {};
+  for (const section of CHECKLIST_SECTIONS) {
+    for (const item of section.items) {
+      items[item.id] = false;
+    }
+  }
+  return {
+    items,
+    updatedAt: null,
+  };
+}
+
 const SEVERITY_LABELS = {
   low: "Nízká",
   medium: "Střední",
@@ -47,6 +130,7 @@ const state = {
   items: [],
   users: [],
   search: "",
+  checklist: createDefaultChecklistState(),
   filters: {
     status: "all",
     priority: "all",
@@ -132,7 +216,15 @@ const detailHasDescriptionEl = document.getElementById("detailHasDescription");
 const detailEditBtn = document.getElementById("detailEdit");
 const appTabButtons = document.querySelectorAll(".app-tab-button");
 const recordsPanel = document.getElementById("recordsPanel");
+const checklistPanel = document.getElementById("checklistPanel");
 const adminPanel = document.getElementById("adminPanel");
+const checklistGroupsEl = document.getElementById("checklistGroups");
+const checklistPercentEl = document.getElementById("checklistPercent");
+const checklistCounterEl = document.getElementById("checklistCounter");
+const checklistProgressBarEl = document.getElementById("checklistProgressBar");
+const checklistStatusTextEl = document.getElementById("checklistStatusText");
+const checklistUpdatedAtEl = document.getElementById("checklistUpdatedAt");
+const resetChecklistButton = document.getElementById("resetChecklistButton");
 const toastRegion = document.getElementById("toastRegion");
 const viewButtons = document.querySelectorAll(".view-button");
 const sortButtons = document.querySelectorAll(".sort-button");
@@ -214,6 +306,131 @@ function formatDate(value) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
+}
+
+function checklistStorageId() {
+  const email = state.user?.email || "guest";
+  return `${CHECKLIST_STORAGE_KEY}.${email}`;
+}
+
+function loadChecklistState() {
+  const defaults = createDefaultChecklistState();
+  try {
+    const raw = localStorage.getItem(checklistStorageId());
+    if (!raw) return defaults;
+    const parsed = JSON.parse(raw);
+    const items = { ...defaults.items, ...(parsed?.items || {}) };
+    return {
+      items,
+      updatedAt: parsed?.updatedAt || null,
+    };
+  } catch {
+    return defaults;
+  }
+}
+
+function saveChecklistState() {
+  try {
+    localStorage.setItem(checklistStorageId(), JSON.stringify(state.checklist));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function getChecklistStats() {
+  const total = CHECKLIST_SECTIONS.reduce((count, section) => count + section.items.length, 0);
+  const completed = CHECKLIST_SECTIONS.reduce(
+    (count, section) => count + section.items.filter((item) => Boolean(state.checklist.items[item.id])).length,
+    0
+  );
+  const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+  return {
+    total,
+    completed,
+    remaining: total - completed,
+    percent,
+  };
+}
+
+function renderChecklist() {
+  if (!checklistGroupsEl) return;
+
+  const stats = getChecklistStats();
+  checklistPercentEl.textContent = `${stats.percent} %`;
+  checklistCounterEl.textContent = `${stats.completed} / ${stats.total} hotovo`;
+  checklistProgressBarEl.style.width = `${stats.percent}%`;
+
+  if (stats.total === 0) {
+    checklistStatusTextEl.textContent = "Checklist zatím nemá žádné položky.";
+  } else if (stats.remaining === 0) {
+    checklistStatusTextEl.textContent = "Všechno je hotové. Trasa je připravená.";
+  } else if (stats.remaining === 1) {
+    checklistStatusTextEl.textContent = "Chybí už jen 1 bod ke splnění checklistu.";
+  } else {
+    checklistStatusTextEl.textContent = `Zbývá doplnit ${stats.remaining} bodů checklistu.`;
+  }
+
+  checklistUpdatedAtEl.textContent = state.checklist.updatedAt
+    ? `Naposledy uloženo: ${formatDate(state.checklist.updatedAt)}`
+    : "Ještě neuloženo";
+
+  checklistGroupsEl.innerHTML = "";
+
+  for (const section of CHECKLIST_SECTIONS) {
+    const sectionNode = document.createElement("section");
+    sectionNode.className = "checklist-group";
+
+    const header = document.createElement("div");
+    header.className = "checklist-group-head";
+    const title = document.createElement("h3");
+    title.textContent = section.title;
+    const counter = document.createElement("span");
+    const sectionCompleted = section.items.filter((item) => Boolean(state.checklist.items[item.id])).length;
+    counter.textContent = `${sectionCompleted} / ${section.items.length}`;
+    header.append(title, counter);
+    sectionNode.appendChild(header);
+
+    const list = document.createElement("div");
+    list.className = "checklist-items";
+
+    for (const item of section.items) {
+      const checked = Boolean(state.checklist.items[item.id]);
+      const label = document.createElement("label");
+      label.className = "checklist-item";
+      label.dataset.checked = checked ? "true" : "false";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = checked;
+      checkbox.setAttribute("aria-label", item.title);
+      checkbox.addEventListener("change", () => {
+        state.checklist.items[item.id] = checkbox.checked;
+        state.checklist.updatedAt = new Date().toISOString();
+        saveChecklistState();
+        renderChecklist();
+      });
+
+      const content = document.createElement("div");
+      content.className = "checklist-item-content";
+      const itemTitle = document.createElement("strong");
+      itemTitle.textContent = item.title;
+      const itemNote = document.createElement("span");
+      itemNote.textContent = item.note;
+      content.append(itemTitle, itemNote);
+
+      label.append(checkbox, content);
+      list.appendChild(label);
+    }
+
+    sectionNode.appendChild(list);
+    checklistGroupsEl.appendChild(sectionNode);
+  }
+}
+
+function resetChecklist() {
+  state.checklist = createDefaultChecklistState();
+  saveChecklistState();
+  renderChecklist();
 }
 
 function formatPerson(value) {
@@ -653,6 +870,7 @@ function handleSessionExpired() {
   state.csrfToken = null;
   state.items = [];
   state.users = [];
+  state.checklist = createDefaultChecklistState();
   clearUserSelection();
   state.appSection = "records";
   closeEditModal();
@@ -695,11 +913,16 @@ function updateRoleVisibility() {
 }
 
 function setAppSection(section) {
-  state.appSection = section === "admin" && state.user?.role === "admin" ? "admin" : "records";
-  const isAdminSection = state.appSection === "admin";
+  const isAdmin = state.user?.role === "admin";
+  const allowedSections = new Set(["records", "checklist"]);
+  if (isAdmin) {
+    allowedSections.add("admin");
+  }
+  state.appSection = allowedSections.has(section) ? section : "records";
 
-  recordsPanel.classList.toggle("hidden", isAdminSection);
-  adminPanel.classList.toggle("hidden", !isAdminSection);
+  recordsPanel.classList.toggle("hidden", state.appSection !== "records");
+  checklistPanel.classList.toggle("hidden", state.appSection !== "checklist");
+  adminPanel.classList.toggle("hidden", state.appSection !== "admin");
 
   appTabButtons.forEach((button) => {
     const active = button.dataset.appTab === state.appSection;
@@ -714,6 +937,7 @@ function renderAuthState() {
   state.appSection = "records";
   resetSearch();
   recordsPanel.classList.remove("hidden");
+  checklistPanel.classList.add("hidden");
   adminPanel.classList.add("hidden");
   if (state.needsBootstrap) {
     showBootstrapMode();
@@ -728,12 +952,14 @@ function enterApp(user, csrfToken = null) {
     state.csrfToken = csrfToken;
   }
   currentUserEmailEl.textContent = user.email;
+  state.checklist = loadChecklistState();
   authView.classList.add("hidden");
   appView.classList.remove("hidden");
   resetSearch();
   updateRoleVisibility();
   setAppSection(state.appSection);
   updateViewModeUI();
+  renderChecklist();
   hydrateIcons();
 }
 
@@ -846,6 +1072,7 @@ function render() {
   updateStats(state.items);
   renderBoard(visibleItems);
   renderTable(visibleItems);
+  renderChecklist();
   if (state.user?.role === "admin") {
     renderUsers();
   }
@@ -1554,6 +1781,13 @@ sortButtons.forEach((button) => {
     }
     render();
   });
+});
+
+resetChecklistButton?.addEventListener("click", async () => {
+  const confirmed = await askConfirmation("Opravdu resetovat celý checklist?", "Resetovat");
+  if (!confirmed) return;
+  resetChecklist();
+  showToast("Checklist byl vynulován.", "success");
 });
 
 async function start() {
