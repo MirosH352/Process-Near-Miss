@@ -139,8 +139,8 @@ h3 {
 .app-shell.home-mode .app-content {
   width: min(1260px, calc(100% - 48px));
   min-height: calc(100svh - 64px);
-  grid-template-rows: auto 1fr auto;
-  align-content: stretch;
+  display: flex;
+  flex-direction: column;
   gap: 0.9rem;
 }
 
@@ -439,9 +439,9 @@ h3 {
   gap: 1rem;
   width: 100%;
   max-width: 1260px;
-  align-self: start;
   justify-self: center;
-  padding: clamp(1.3rem, 4vh, 2.6rem) 0 0;
+  margin-top: clamp(1rem, 2.5vh, 1.75rem);
+  padding: 0;
 }
 
 .home-hero {
