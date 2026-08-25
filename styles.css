@@ -147,6 +147,30 @@ h3 {
   background: rgba(255, 255, 255, 0.86);
 }
 
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.brand-link:hover .brand-mark {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+.brand-link:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.35);
+  outline-offset: 4px;
+  border-radius: 16px;
+}
+
 .brand-mark {
   display: inline-flex;
   align-items: center;
@@ -396,6 +420,126 @@ h3 {
 .app-panel {
   display: grid;
   gap: 1rem;
+}
+
+.home-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.home-hero {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1.35rem;
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 30%),
+    linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.home-hero .lead {
+  max-width: 52ch;
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.home-tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  width: 100%;
+  padding: 1.1rem;
+  border: 1px solid var(--color-border);
+  text-align: left;
+  background: #fff;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.home-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(194, 205, 220, 0.98);
+}
+
+.home-tile:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, 0.35);
+  outline-offset: 2px;
+}
+
+.home-tile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 16px;
+  color: #fff;
+  flex: 0 0 auto;
+}
+
+.home-tile-icon svg,
+.home-tile-arrow svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.home-tile-copy {
+  display: grid;
+  gap: 0.34rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.home-tile-copy strong {
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.home-tile-copy span {
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+.home-tile-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  color: #96a3b6;
+  transition: transform 180ms ease, color 180ms ease;
+}
+
+.home-tile:hover .home-tile-arrow {
+  transform: translateX(2px);
+  color: var(--color-primary);
+}
+
+.home-tile-records .home-tile-icon {
+  background: linear-gradient(180deg, #2f6fed 0%, #1f5bd8 100%);
+}
+
+.home-tile-checklist .home-tile-icon {
+  background: linear-gradient(180deg, #14b8a6 0%, #0f9b8e 100%);
+}
+
+.home-tile-users .home-tile-icon {
+  background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%);
+}
+
+.home-tile-records:hover {
+  border-color: rgba(47, 111, 237, 0.2);
+}
+
+.home-tile-checklist:hover {
+  border-color: rgba(20, 184, 166, 0.2);
+}
+
+.home-tile-users:hover {
+  border-color: rgba(139, 92, 246, 0.2);
 }
 
 .page-footer {
@@ -2056,6 +2200,10 @@ button:focus-visible {
     grid-template-columns: 1fr;
   }
 
+  .home-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2144,6 +2292,10 @@ button:focus-visible {
   .drawer-panel {
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+
+  .home-grid {
+    grid-template-columns: 1fr;
   }
 
   .records-toolbar {

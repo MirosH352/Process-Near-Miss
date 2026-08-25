@@ -239,7 +239,7 @@ const state = {
     direction: "desc",
   },
   viewMode: readViewMode(),
-  appSection: "records",
+  appSection: "home",
   draggingEntryId: null,
   editingId: null,
   editingUserId: null,
@@ -250,10 +250,13 @@ const state = {
 
 const authView = document.getElementById("authView");
 const appView = document.getElementById("appView");
+const homePanel = document.getElementById("homePanel");
+const dashboardHeader = document.getElementById("workspaceHeader");
 const bootstrapForm = document.getElementById("bootstrapForm");
 const loginForm = document.getElementById("loginForm");
 const bootstrapMessageEl = document.getElementById("bootstrapMessage");
 const loginMessageEl = document.getElementById("loginMessage");
+const homeButton = document.getElementById("homeButton");
 const currentUserEmailEl = document.getElementById("currentUserEmail");
 const logoutButton = document.getElementById("logoutButton");
 const passwordForm = document.getElementById("passwordForm");
@@ -327,6 +330,7 @@ const checklistStatusTextEl = document.getElementById("checklistStatusText");
 const checklistUpdatedAtEl = document.getElementById("checklistUpdatedAt");
 const resetChecklistButton = document.getElementById("resetChecklistButton");
 const toastRegion = document.getElementById("toastRegion");
+const homeTiles = document.querySelectorAll("[data-home-target]");
 const viewButtons = document.querySelectorAll(".view-button");
 const sortButtons = document.querySelectorAll(".sort-button");
 
@@ -337,6 +341,16 @@ const ICONS = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="8" r="4"/></svg>',
   dashboard:
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>',
+  home:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M6 10.5V20h12v-9.5"/><path d="M10 20v-6h4v6"/></svg>',
+  records:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6.5h14"/><path d="M5 12h14"/><path d="M5 17.5h14"/><circle cx="7" cy="6.5" r="1"/><circle cx="7" cy="12" r="1"/><circle cx="7" cy="17.5" r="1"/></svg>',
+  checklist:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 8 1.5 1.5L12 7"/><path d="M8 12h8"/><path d="m8 15 1.5 1.5L12 14"/></svg>',
+  users:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21a5 5 0 0 0-10 0"/><circle cx="12" cy="8" r="3.5"/><path d="M20 21a4.25 4.25 0 0 0-3.2-4.1"/><path d="M16.5 6.5a2.5 2.5 0 1 1 0 5"/><path d="M4 21a4.25 4.25 0 0 1 3.2-4.1"/></svg>',
+  "arrow-right":
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h12"/><path d="m13 6 6 6-6 6"/></svg>',
   grid:
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="13" width="7" height="7" rx="1.5"/><rect x="14" y="13" width="7" height="7" rx="1.5"/></svg>',
   columns:
@@ -597,6 +611,24 @@ function writeViewMode(viewMode) {
   } catch {
     // Ignore storage failures.
   }
+}
+
+function getSectionFromHash() {
+  const rawHash = window.location.hash.replace(/^#/, "").trim().toLowerCase();
+  const allowed = new Set(["home", "records", "checklist", "admin"]);
+  return allowed.has(rawHash) ? rawHash : null;
+}
+
+function syncSectionHash(section) {
+  const normalized = ["home", "records", "checklist", "admin"].includes(section) ? section : "home";
+  const nextHash = `#${normalized}`;
+  if (window.location.hash === nextHash) {
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  url.hash = normalized;
+  window.history.replaceState(null, "", url.toString());
 }
 
 function resetSearch() {
@@ -1000,7 +1032,7 @@ function handleSessionExpired() {
   state.users = [];
   state.checklist = createDefaultChecklistState();
   clearUserSelection();
-  state.appSection = "records";
+  state.appSection = "home";
   closeEditModal();
   closeUserEditModal();
   resetSearch();
@@ -1034,20 +1066,27 @@ function updateRoleVisibility() {
       button.classList.toggle("hidden", !isAdmin);
     }
   });
+  homeTiles.forEach((tile) => {
+    if (tile.dataset.homeTarget === "admin") {
+      tile.classList.toggle("hidden", !isAdmin);
+    }
+  });
   if (!isAdmin && state.appSection === "admin") {
-    state.appSection = "records";
+    state.appSection = "home";
   }
   setAppSection(state.appSection);
 }
 
 function setAppSection(section) {
   const isAdmin = state.user?.role === "admin";
-  const allowedSections = new Set(["records", "checklist"]);
+  const allowedSections = new Set(["home", "records", "checklist"]);
   if (isAdmin) {
     allowedSections.add("admin");
   }
-  state.appSection = allowedSections.has(section) ? section : "records";
+  state.appSection = allowedSections.has(section) ? section : "home";
 
+  homePanel.classList.toggle("hidden", state.appSection !== "home");
+  dashboardHeader.classList.toggle("hidden", state.appSection === "home");
   recordsPanel.classList.toggle("hidden", state.appSection !== "records");
   checklistPanel.classList.toggle("hidden", state.appSection !== "checklist");
   adminPanel.classList.toggle("hidden", state.appSection !== "admin");
@@ -1057,13 +1096,17 @@ function setAppSection(section) {
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-selected", active ? "true" : "false");
   });
+
+  syncSectionHash(state.appSection);
 }
 
 function renderAuthState() {
   authView.classList.toggle("hidden", false);
   appView.classList.toggle("hidden", true);
-  state.appSection = "records";
+  state.appSection = "home";
   resetSearch();
+  homePanel.classList.add("hidden");
+  dashboardHeader.classList.add("hidden");
   recordsPanel.classList.remove("hidden");
   checklistPanel.classList.add("hidden");
   adminPanel.classList.add("hidden");
@@ -1074,7 +1117,7 @@ function renderAuthState() {
   }
 }
 
-function enterApp(user, csrfToken = null) {
+function enterApp(user, csrfToken = null, initialSection = getSectionFromHash() || "home") {
   state.user = user;
   if (csrfToken) {
     state.csrfToken = csrfToken;
@@ -1084,8 +1127,8 @@ function enterApp(user, csrfToken = null) {
   authView.classList.add("hidden");
   appView.classList.remove("hidden");
   resetSearch();
+  state.appSection = initialSection;
   updateRoleVisibility();
-  setAppSection(state.appSection);
   updateViewModeUI();
   renderChecklist();
   hydrateIcons();
@@ -1523,7 +1566,7 @@ async function bootstrapAuth() {
 
   try {
     const payload = await api("/api/auth/me");
-    enterApp(payload.user, payload.csrfToken);
+    enterApp(payload.user, payload.csrfToken, getSectionFromHash() || "home");
     await loadAppData();
   } catch (error) {
     if (error.status === 401) {
@@ -1550,7 +1593,7 @@ bootstrapForm.addEventListener("submit", async (event) => {
     });
     state.needsBootstrap = false;
     resetSearch();
-    enterApp(response.user, response.csrfToken);
+    enterApp(response.user, response.csrfToken, "home");
     await loadAppData();
     setBootstrapMessage("");
   } catch (error) {
@@ -1573,7 +1616,7 @@ loginForm.addEventListener("submit", async (event) => {
       body: JSON.stringify(payload),
     });
     resetSearch();
-    enterApp(response.user, response.csrfToken);
+    enterApp(response.user, response.csrfToken, "home");
     await loadAppData();
     setLoginMessage("");
   } catch (error) {
@@ -1605,6 +1648,41 @@ appTabButtons.forEach((button) => {
       renderUsers();
     }
   });
+});
+
+homeButton?.addEventListener("click", () => {
+  setAppSection("home");
+});
+
+homeTiles.forEach((tile) => {
+  tile.addEventListener("click", async () => {
+    if (tile.classList.contains("hidden")) return;
+    const target = tile.dataset.homeTarget;
+    if (!target) return;
+    if (target === "admin" && state.user?.role !== "admin") return;
+    if (target === "admin" && state.user?.role === "admin" && state.users.length === 0) {
+      try {
+        await loadUsers();
+        setAppSection(target);
+        renderUsers();
+      } catch {
+        // The existing UI will surface the error if the admin data cannot load.
+      }
+      return;
+    }
+    setAppSection(target);
+    if (target === "admin") {
+      renderUsers();
+    }
+  });
+});
+
+window.addEventListener("hashchange", () => {
+  if (!state.user) return;
+  const section = getSectionFromHash();
+  if (section) {
+    setAppSection(section);
+  }
 });
 
 passwordForm.addEventListener("submit", async (event) => {
@@ -1926,6 +2004,7 @@ async function start() {
   try {
     await bootstrapAuth();
     if (state.user) {
+      syncSectionHash(state.appSection);
       render();
     }
   } catch (error) {
