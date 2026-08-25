@@ -319,6 +319,9 @@ const adminPanel = document.getElementById("adminPanel");
 const checklistGroupsEl = document.getElementById("checklistGroups");
 const checklistPercentEl = document.getElementById("checklistPercent");
 const checklistCounterEl = document.getElementById("checklistCounter");
+const checklistCompletedStepsEl = document.getElementById("checklistCompletedSteps");
+const checklistCompletedSectionsEl = document.getElementById("checklistCompletedSections");
+const checklistTotalStepsEl = document.getElementById("checklistTotalSteps");
 const checklistProgressBarEl = document.getElementById("checklistProgressBar");
 const checklistStatusTextEl = document.getElementById("checklistStatusText");
 const checklistUpdatedAtEl = document.getElementById("checklistUpdatedAt");
@@ -441,10 +444,16 @@ function getChecklistStats() {
     (count, section) => count + section.items.filter((item) => Boolean(state.checklist.items[item.id])).length,
     0
   );
+  const totalSections = CHECKLIST_SECTIONS.length;
+  const completedSections = CHECKLIST_SECTIONS.filter((section) =>
+    section.items.every((item) => Boolean(state.checklist.items[item.id]))
+  ).length;
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
   return {
     total,
     completed,
+    totalSections,
+    completedSections,
     remaining: total - completed,
     percent,
   };
@@ -456,6 +465,15 @@ function renderChecklist() {
   const stats = getChecklistStats();
   checklistPercentEl.textContent = `${stats.percent} %`;
   checklistCounterEl.textContent = `${stats.completed} / ${stats.total} hotovo`;
+  if (checklistCompletedStepsEl) {
+    checklistCompletedStepsEl.textContent = String(stats.completed);
+  }
+  if (checklistCompletedSectionsEl) {
+    checklistCompletedSectionsEl.textContent = `${stats.completedSections}/${stats.totalSections}`;
+  }
+  if (checklistTotalStepsEl) {
+    checklistTotalStepsEl.textContent = String(stats.total);
+  }
   checklistProgressBarEl.style.width = `${stats.percent}%`;
 
   if (stats.total === 0) {

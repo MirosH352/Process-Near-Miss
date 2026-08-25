@@ -317,32 +317,68 @@
 
       <div id="checklistPanel" class="app-panel hidden">
         <section class="card dashboard-card checklist-card">
-          <div class="section-head checklist-head">
-            <div>
-              <h2>AlzaBoxy a trasy</h2>
-              <p>Checklist pro spuštění nového AlzaBoxu, změny pořadí a deinstalace boxů, nastavení nové trasy, vratkové pravidlo a finální kontrolu rout.</p>
+          <div class="checklist-hero">
+            <div class="checklist-breadcrumbs" aria-label="Navigace">
+              <span>Domů</span>
+              <span>Checklisty</span>
+              <strong>Checklist</strong>
             </div>
-            <div class="checklist-actions">
-              <div class="checklist-summary">
-                <strong id="checklistPercent">0 %</strong>
-                <span id="checklistCounter">0 / 0 hotovo</span>
+            <div class="checklist-hero-copy">
+              <p class="eyebrow">ALZABOXY A TRASY</p>
+              <h2>AlzaBoxy a trasy</h2>
+              <p>
+                Checklist pro spuštění nového AlzaBoxu, změny pořadí a deinstalace boxů,
+                nastavení nové trasy, vratkové pravidlo a finální kontrolu rout.
+              </p>
+              <div class="checklist-intro-chip">Rychlý vstup do správy obsahu a pracovních stavů.</div>
+            </div>
+          </div>
+
+          <div class="checklist-layout">
+            <div class="checklist-main">
+              <div id="checklistGroups" class="checklist-groups"></div>
+            </div>
+
+            <aside class="checklist-sidebar">
+              <div class="checklist-summary-grid">
+                <article class="checklist-metric-card checklist-metric-primary">
+                  <strong id="checklistPercent">0 %</strong>
+                  <span>Průběh checklistu</span>
+                </article>
+                <article class="checklist-metric-card">
+                  <strong id="checklistCompletedSteps">0</strong>
+                  <span>hotových kroků</span>
+                </article>
+                <article class="checklist-metric-card">
+                  <strong id="checklistCompletedSections">0/0</strong>
+                  <span>sekcí dokončeno</span>
+                </article>
+                <article class="checklist-metric-card">
+                  <strong id="checklistTotalSteps">0</strong>
+                  <span>celkem položek</span>
+                </article>
               </div>
-              <button type="button" class="icon-button secondary" id="resetChecklistButton">
+
+              <div class="checklist-progress-block">
+                <div class="checklist-progress-label">
+                  <span>Průběh checklistu</span>
+                  <strong id="checklistCounter">0 / 0 hotovo</strong>
+                </div>
+                <div class="checklist-progress" aria-hidden="true">
+                  <div id="checklistProgressBar" class="checklist-progress-bar"></div>
+                </div>
+              </div>
+
+              <div class="checklist-meta-card">
+                <span id="checklistStatusText">Checklist je připravený.</span>
+                <span id="checklistUpdatedAt">Ještě neuloženo</span>
+              </div>
+
+              <button type="button" class="icon-button secondary checklist-reset-button" id="resetChecklistButton">
                 Resetovat checklist
               </button>
-            </div>
+            </aside>
           </div>
-
-          <div class="checklist-progress" aria-hidden="true">
-            <div id="checklistProgressBar" class="checklist-progress-bar"></div>
-          </div>
-
-          <div class="checklist-meta">
-            <span id="checklistStatusText">Checklist je připravený.</span>
-            <span id="checklistUpdatedAt">Ještě neuloženo</span>
-          </div>
-
-          <div id="checklistGroups" class="checklist-groups"></div>
         </section>
       </div>
 
