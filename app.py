@@ -764,6 +764,18 @@ def normalize_search_text(value: object) -> str:
     return "".join(ch for ch in normalized if not unicodedata.combining(ch))
 
 
+def public_app_origin() -> str:
+    return (
+        APP_ORIGIN
+        or os.environ.get("RENDER_EXTERNAL_URL", "").strip().rstrip("/")
+        or "https://process-near-miss.onrender.com"
+    )
+
+
+def entry_detail_url(entry_id: int) -> str:
+    return f"{public_app_origin()}/?entry={entry_id}"
+
+
 def split_search_terms(query: str) -> list[str]:
     normalized = normalize_search_text(query)
     terms = [term for term in re.split(r"[^a-z0-9]+", normalized) if len(term) >= 2]
@@ -865,10 +877,6 @@ def format_match_summary(details: dict[str, list[str]]) -> str:
     if area_terms:
         parts.append(f"oblast: {', '.join(area_terms)}")
 
-    culprit_terms = details.get("culprit_terms", [])
-    if culprit_terms:
-        parts.append(f"viník: {', '.join(culprit_terms)}")
-
     reporter_terms = details.get("reporter_terms", [])
     if reporter_terms:
         parts.append(f"zadavatel: {', '.join(reporter_terms)}")
@@ -917,7 +925,6 @@ def score_entry_for_query(entry: dict, terms: list[str]) -> tuple[int, list[str]
         "title_terms": title_terms,
         "description_terms": description_terms,
         "area_terms": area_terms,
-        "culprit_terms": culprit_terms,
         "reporter_terms": reporter_terms,
         "type_terms": type_terms,
         "severity_terms": severity_terms,
@@ -927,10 +934,6 @@ def score_entry_for_query(entry: dict, terms: list[str]) -> tuple[int, list[str]
     if area_terms:
         score += 7 * len(area_terms)
         reasons.append(f"oblast {entry.get('area_label')}")
-
-    if culprit_terms:
-        score += 5 * len(culprit_terms)
-        reasons.append(f"viník {entry.get('culprit_label')}")
 
     if reporter_terms:
         score += 4 * len(reporter_terms)
@@ -1036,9 +1039,11 @@ def build_teams_reply(query: str, limit: int = 5) -> dict:
         reason_text = format_match_summary(match_details) if match_details else ""
         if not reason_text:
             reason_text = ", ".join(reasons) if reasons else "nejnovější relevantní záznam"
+        detail_url = entry_detail_url(int(item["id"]))
         lines.append(
             f"{idx}. [#{item['id']}] {item['title']} | {item['area_label']} | "
-            f"{item['status_label']} | {item['severity_label']}"
+            f"{item['status_label']} | {item['severity_label']} | "
+            f"[otevřít issue]({detail_url})"
         )
         lines.append(f"   shoda: {reason_text}")
 
@@ -1047,17 +1052,9 @@ def build_teams_reply(query: str, limit: int = 5) -> dict:
         for item in matches
         if item.get("area_label") and item.get("area_label") != AREA_EMPTY_LABEL
     )
-    culprit_counter = Counter(
-        item.get("culprit_label")
-        for item in matches
-        if item.get("culprit_label") and item.get("culprit_label") != PERSON_EMPTY_LABEL
-    )
     if area_counter:
         area_name, area_count = area_counter.most_common(1)[0]
         lines.append(f"Nejčastější oblast v nalezených výsledcích: {area_name} ({area_count}x).")
-    if culprit_counter:
-        culprit_name, culprit_count = culprit_counter.most_common(1)[0]
-        lines.append(f"Nejčastější viník v nalezených výsledcích: {culprit_name} ({culprit_count}x).")
 
     return {"type": "message", "text": "\n".join(lines)}
 

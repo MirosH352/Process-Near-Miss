@@ -36,6 +36,8 @@ const SEVERITY_LABELS = {
   critical: "Kritická",
 };
 
+const DETAIL_ENTRY_QUERY_KEY = "entry";
+
 const PLURAL_RULES = new Intl.PluralRules("cs-CZ");
 
 const state = {
@@ -606,6 +608,18 @@ function openDetailModal(item) {
   syncBodyLock();
   window.setTimeout(() => detailEditBtn.focus(), 0);
 }
+
+function openDetailFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const entryId = params.get(DETAIL_ENTRY_QUERY_KEY);
+  if (!entryId) return false;
+
+  const item = state.items.find((entry) => String(entry.id) === String(entryId));
+  if (!item) return false;
+
+  openDetailModal(item);
+  return true;
+}
 function openConfirm(message, confirmLabel = "Potvrdit") {
   confirmTextEl.textContent = message;
   confirmAcceptBtn.textContent = confirmLabel;
@@ -1138,6 +1152,7 @@ async function loadAppData() {
     state.users = [];
   }
   render();
+  openDetailFromUrl();
 }
 
 async function bootstrapAuth() {
