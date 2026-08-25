@@ -1667,6 +1667,20 @@ def change_password(user_id: int, current_password: str, new_password: str) -> N
         )
 
 
+def update_user_avatar(user_id: int, avatar_url: str | None) -> dict:
+    normalized_avatar_url = normalize_avatar_url(avatar_url)
+    updated_at = now_iso()
+    with connect() as conn:
+        cursor = conn.execute(
+            "UPDATE users SET avatar_url = ?, updated_at = ? WHERE id = ?",
+            (normalized_avatar_url, updated_at, user_id),
+        )
+        if cursor.rowcount == 0:
+            raise LookupError("Uživatel nebyl nalezen.")
+        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    return user_to_dict(row)
+
+
 class AppHandler(BaseHTTPRequestHandler):
     server_version = "NearMissTracker/1.0"
 
@@ -1890,6 +1904,24 @@ class AppHandler(BaseHTTPRequestHandler):
 
     def do_PATCH(self) -> None:
         path = urlparse(self.path).path
+        if path == "/api/auth/me":
+            user = require_user(self)
+            if user is None:
+                return
+            if not require_csrf(self, user):
+                return
+            try:
+                data = read_json(self)
+                if set(data.keys()) - {"avatar_url"}:
+                    raise ValueError("Profil lze upravit jen přes avatar.")
+                item = update_user_avatar(user["id"], data.get("avatar_url"))
+                json_response(self, item)
+            except ValueError as exc:
+                json_response(self, {"error": str(exc)}, HTTPStatus.BAD_REQUEST)
+            except LookupError as exc:
+                json_response(self, {"error": str(exc)}, HTTPStatus.NOT_FOUND)
+            return
+
         users_prefix = "/api/users/"
         if path.startswith(users_prefix):
             bulk_suffix = "bulk-status"

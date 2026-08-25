@@ -102,6 +102,9 @@
                 <span class="user-menu-caret" aria-hidden="true">⌄</span>
               </summary>
               <div class="user-menu-panel">
+                <button type="button" class="secondary logout-button" id="openProfileButton">
+                  Upravit avatar
+                </button>
                 <button type="button" class="secondary logout-button" id="logoutButton">Odhlásit se</button>
               </div>
             </details>
@@ -703,6 +706,49 @@
             <button type="submit" class="primary">Uložit změny</button>
           </div>
           <p id="userEditMessage" class="form-message" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+
+    <div id="profileModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-profile-modal></div>
+      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Můj profil</p>
+            <h2 id="profileTitle">Profilový obrázek</h2>
+          </div>
+          <button class="icon-button modal-close" type="button" data-close-profile-modal>Zavřít</button>
+        </div>
+
+        <form id="profileForm" class="modal-form">
+          <div class="avatar-upload">
+            <div id="profileAvatarPreview" class="avatar-preview" aria-hidden="true"></div>
+            <div class="avatar-upload-copy">
+              <label class="file-field">
+                Nahrát nový obrázek
+                <input
+                  name="avatar_file"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif,image/*"
+                />
+              </label>
+              <div class="avatar-actions">
+                <button type="button" class="icon-button secondary" name="clear_avatar" disabled>
+                  Odebrat profilovku
+                </button>
+              </div>
+              <p class="form-hint">
+                Změna se uloží jen pro tvůj účet. Podporované formáty: PNG, JPG, GIF a WEBP.
+              </p>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="icon-button secondary" data-close-profile-modal>Zrušit</button>
+            <button type="submit" class="primary">Uložit avatar</button>
+          </div>
+          <p id="profileMessage" class="form-message" aria-live="polite"></p>
         </form>
       </div>
     </div>

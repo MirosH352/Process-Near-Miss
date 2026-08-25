@@ -244,6 +244,7 @@ const state = {
   editingId: null,
   editingUserId: null,
   editingUserAvatarCleared: false,
+  editingProfileAvatarCleared: false,
   selectedUserIds: new Set(),
   detailItem: null,
   confirmResolver: null,
@@ -271,6 +272,11 @@ const userEditModal = document.getElementById("userEditModal");
 const userEditForm = document.getElementById("userEditForm");
 const userEditMessageEl = document.getElementById("userEditMessage");
 const userEditAvatarPreviewEl = document.getElementById("userEditAvatarPreview");
+const profileModal = document.getElementById("profileModal");
+const profileForm = document.getElementById("profileForm");
+const profileMessageEl = document.getElementById("profileMessage");
+const profileAvatarPreviewEl = document.getElementById("profileAvatarPreview");
+const openProfileButton = document.getElementById("openProfileButton");
 const usersSelectAllEl = document.getElementById("usersSelectAll");
 const usersSelectedCountEl = document.getElementById("usersSelectedCount");
 const bulkActivateUsersButton = document.getElementById("bulkActivateUsers");
@@ -644,10 +650,11 @@ function resetSearch() {
 function syncBodyLock() {
   const editOpen = !editModal.classList.contains("hidden");
   const userEditOpen = !userEditModal.classList.contains("hidden");
+  const profileOpen = !profileModal.classList.contains("hidden");
   const confirmOpen = !confirmModal.classList.contains("hidden");
   const detailOpen = !detailModal.classList.contains("hidden");
   const drawerOpen = !createDrawer.classList.contains("hidden");
-  document.body.classList.toggle("modal-open", editOpen || userEditOpen || confirmOpen || detailOpen || drawerOpen);
+  document.body.classList.toggle("modal-open", editOpen || userEditOpen || profileOpen || confirmOpen || detailOpen || drawerOpen);
 }
 
 function setMessage(text, kind = "info") {
@@ -678,6 +685,11 @@ function setUsersMessage(text, kind = "info") {
 function setUserEditMessage(text, kind = "info") {
   userEditMessageEl.textContent = text;
   userEditMessageEl.dataset.kind = kind;
+}
+
+function setProfileMessage(text, kind = "info") {
+  profileMessageEl.textContent = text;
+  profileMessageEl.dataset.kind = kind;
 }
 
 function setPasswordMessage(text, kind = "info") {
@@ -768,6 +780,10 @@ function updateUserEditAvatarPreview(avatarUrl) {
   setAvatarElement(userEditAvatarPreviewEl, avatarUrl || null);
 }
 
+function updateProfileAvatarPreview(avatarUrl) {
+  setAvatarElement(profileAvatarPreviewEl, avatarUrl || null);
+}
+
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -777,8 +793,8 @@ function readFileAsDataUrl(file) {
   });
 }
 
-function avatarPreviewFromForm() {
-  const input = userEditForm?.elements?.avatar_file;
+function avatarPreviewFromForm(formEl = userEditForm) {
+  const input = formEl?.elements?.avatar_file;
   if (!input || !(input instanceof HTMLInputElement) || input.files.length === 0) {
     return null;
   }
@@ -986,6 +1002,27 @@ function closeUserEditModal() {
   syncBodyLock();
 }
 
+function closeProfileModal() {
+  state.editingProfileAvatarCleared = false;
+  profileModal.classList.add("hidden");
+  profileModal.setAttribute("aria-hidden", "true");
+  profileForm.reset();
+  setProfileMessage("");
+  syncBodyLock();
+}
+
+function openProfileModal() {
+  state.editingProfileAvatarCleared = false;
+  profileForm.elements.avatar_file.value = "";
+  profileForm.elements.clear_avatar.disabled = !state.user?.avatar_url;
+  updateProfileAvatarPreview(state.user?.avatar_url || null);
+  profileModal.classList.remove("hidden");
+  profileModal.setAttribute("aria-hidden", "false");
+  setProfileMessage("");
+  syncBodyLock();
+  window.setTimeout(() => profileForm.elements.avatar_file.focus(), 0);
+}
+
 function openUserEditModal(user) {
   state.editingUserId = user.id;
   state.editingUserAvatarCleared = false;
@@ -1091,6 +1128,7 @@ function handleSessionExpired() {
   state.appSection = "home";
   closeEditModal();
   closeUserEditModal();
+  closeProfileModal();
   resetSearch();
   currentUserEmailEl.textContent = "-";
   setAvatarElement(currentUserAvatarEl, null);
@@ -2033,6 +2071,85 @@ userEditForm.addEventListener("submit", async (event) => {
   }
 });
 
+openProfileButton?.addEventListener("click", () => {
+  openProfileModal();
+});
+
+profileForm.elements.avatar_file?.addEventListener("change", async () => {
+  try {
+    state.editingProfileAvatarCleared = false;
+    profileForm.elements.clear_avatar.disabled = false;
+    const preview = await avatarPreviewFromForm(profileForm);
+    updateProfileAvatarPreview(preview);
+  } catch {
+    updateProfileAvatarPreview(null);
+  }
+});
+
+profileForm.elements.clear_avatar?.addEventListener("click", () => {
+  const input = profileForm.elements.avatar_file;
+  if (input instanceof HTMLInputElement) {
+    input.value = "";
+  }
+  state.editingProfileAvatarCleared = true;
+  profileForm.elements.clear_avatar.disabled = true;
+  updateProfileAvatarPreview(null);
+});
+
+profileForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const submitButton = profileForm.querySelector("button[type='submit']");
+  const avatarInput = profileForm.elements.avatar_file;
+  const payload = {};
+
+  try {
+    const confirmed = await askConfirmation("Uložit změnu profilového obrázku?", "Uložit");
+    if (!confirmed) return;
+
+    if (!(avatarInput instanceof HTMLInputElement)) {
+      throw new Error("Profilový obrázek se nepodařilo načíst.");
+    }
+
+    if (avatarInput.files.length === 0 && !state.editingProfileAvatarCleared) {
+      setProfileMessage("Vyber obrázek, nebo použij odebrání profilovky.", "error");
+      return;
+    }
+
+    submitButton.disabled = true;
+    if (avatarInput.files.length > 0) {
+      const file = avatarInput.files[0];
+      if (file.size > 1024 * 1024) {
+        throw new Error("Profilový obrázek je příliš velký. Zkus menší soubor.");
+      }
+      payload.avatar_url = await avatarPreviewFromForm(profileForm);
+    } else {
+      payload.avatar_url = null;
+    }
+
+    const updatedUser = await apiProtected("/api/auth/me", {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+    state.user = { ...state.user, ...updatedUser };
+    updateCurrentUserAvatar();
+    closeProfileModal();
+    showToast("Profilový obrázek byl aktualizován.", "success");
+  } catch (error) {
+    if (error.status !== 401) {
+      setProfileMessage(error.message, "error");
+    }
+  } finally {
+    submitButton.disabled = false;
+  }
+});
+
+document.querySelectorAll("[data-close-profile-modal]").forEach((button) => {
+  button.addEventListener("click", () => {
+    closeProfileModal();
+  });
+});
+
 confirmAcceptBtn.addEventListener("click", () => {
   closeConfirm(true);
 });
@@ -2048,6 +2165,8 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     if (!confirmModal.classList.contains("hidden")) {
       closeConfirm(false);
+    } else if (!profileModal.classList.contains("hidden")) {
+      closeProfileModal();
     } else if (!detailModal.classList.contains("hidden")) {
       closeDetailModal();
     } else if (!userEditModal.classList.contains("hidden")) {
