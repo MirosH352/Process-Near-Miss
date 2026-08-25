@@ -1145,9 +1145,12 @@ def build_teams_reply(query: str, limit: int = 3) -> dict:
         }
 
     if not cleaned_query:
-        lines = ["Nemám konkrétní dotaz, takže posílám nejnovější záznamy:"]
+        lines = ["**Nemám konkrétní dotaz, takže posílám nejnovější záznamy.**"]
     else:
-        lines = [f"Hledal jsem podobné záznamy pro: {cleaned_query}"]
+        lines = [f"**Hledal jsem podobné záznamy pro:** {cleaned_query}"]
+
+    lines.append(f"Našel jsem **{len(matches)}** podobné záznamy seřazené podle relevance.")
+    lines.append("")
 
     for idx, item in enumerate(matches, start=1):
         reasons = item.get("_match_reasons") or []
@@ -1156,11 +1159,16 @@ def build_teams_reply(query: str, limit: int = 3) -> dict:
         if not reason_text:
             reason_text = ", ".join(reasons) if reasons else "nejnovější relevantní záznam"
         detail_url = entry_detail_url(int(item["id"]))
-        lines.append(
-            f"{idx}. [#{item['id']}] {item['title']} • {item['area_label']} • "
-            f"{item['status_label']} • {item['severity_label']} • [otevřít issue]({detail_url})"
+        lines.extend(
+            [
+                f"**{idx}. #{item['id']} {item['title']}**",
+                f"- Oblast: {item['area_label']}",
+                f"- Stav: {item['status_label']} | Priorita: {item['severity_label']}",
+                f"- Proč je podobný: {reason_text}",
+                f"- Detail: [otevřít issue]({detail_url})",
+                "",
+            ]
         )
-        lines.append(f"   shoda: {reason_text}")
 
     return {"type": "message", "text": "\n".join(lines)}
 
