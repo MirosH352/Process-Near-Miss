@@ -819,12 +819,82 @@ def entry_search_blob(entry: dict) -> str:
     return normalize_search_text(" ".join(str(part) for part in parts))
 
 
-def score_entry_for_query(entry: dict, terms: list[str]) -> tuple[int, list[str]]:
+def entry_words(value: object) -> list[tuple[str, str]]:
+    raw_words = re.findall(r"[0-9A-Za-zÀ-ž]+", str(value or ""))
+    result: list[tuple[str, str]] = []
+    for word in raw_words:
+        normalized = normalize_search_text(word)
+        if normalized:
+            result.append((word, normalized))
+    return result
+
+
+def collect_field_matches(value: object, terms: list[str], limit: int = 4) -> list[str]:
     if not terms:
-        return 0, []
+        return []
+
+    matches: list[str] = []
+    seen: set[str] = set()
+    for original, normalized in entry_words(value):
+        for term in terms:
+            if not term or len(term) < 2:
+                continue
+            if normalized == term or normalized.startswith(term) or term.startswith(normalized):
+                key = normalized
+                if key in seen:
+                    break
+                seen.add(key)
+                matches.append(original)
+                break
+        if len(matches) >= limit:
+            break
+    return matches
+
+
+def format_match_summary(details: dict[str, list[str]]) -> str:
+    parts: list[str] = []
+    title_terms = details.get("title_terms", [])
+    if title_terms:
+        parts.append(f"název: {', '.join(title_terms)}")
+
+    description_terms = details.get("description_terms", [])
+    if description_terms:
+        parts.append(f"popis: {', '.join(description_terms)}")
+
+    area_terms = details.get("area_terms", [])
+    if area_terms:
+        parts.append(f"oblast: {', '.join(area_terms)}")
+
+    culprit_terms = details.get("culprit_terms", [])
+    if culprit_terms:
+        parts.append(f"viník: {', '.join(culprit_terms)}")
+
+    reporter_terms = details.get("reporter_terms", [])
+    if reporter_terms:
+        parts.append(f"zadavatel: {', '.join(reporter_terms)}")
+
+    type_terms = details.get("type_terms", [])
+    if type_terms:
+        parts.append(f"typ: {', '.join(type_terms)}")
+
+    severity_terms = details.get("severity_terms", [])
+    if severity_terms:
+        parts.append(f"závažnost: {', '.join(severity_terms)}")
+
+    status_terms = details.get("status_terms", [])
+    if status_terms:
+        parts.append(f"stav: {', '.join(status_terms)}")
+
+    return "; ".join(parts)
+
+
+def score_entry_for_query(entry: dict, terms: list[str]) -> tuple[int, list[str], dict[str, list[str]]]:
+    if not terms:
+        return 0, [], {}
 
     score = 0
     reasons: list[str] = []
+    details: dict[str, list[str]] = {}
 
     title = normalize_search_text(entry.get("title", ""))
     description = normalize_search_text(entry.get("description", ""))
@@ -835,65 +905,63 @@ def score_entry_for_query(entry: dict, terms: list[str]) -> tuple[int, list[str]
     severity = normalize_search_text(entry.get("severity_label", ""))
     status = normalize_search_text(entry.get("status_label", ""))
     blob = entry_search_blob(entry)
+    title_terms = collect_field_matches(entry.get("title", ""), terms)
+    description_terms = collect_field_matches(entry.get("description", ""), terms)
+    area_terms = collect_field_matches(entry.get("area_label", ""), terms)
+    culprit_terms = collect_field_matches(entry.get("culprit_label", ""), terms)
+    reporter_terms = collect_field_matches(entry.get("problem_reporter_label", ""), terms)
+    type_terms = collect_field_matches(entry.get("entry_type_label", ""), terms)
+    severity_terms = collect_field_matches(entry.get("severity_label", ""), terms)
+    status_terms = collect_field_matches(entry.get("status_label", ""), terms)
+    details = {
+        "title_terms": title_terms,
+        "description_terms": description_terms,
+        "area_terms": area_terms,
+        "culprit_terms": culprit_terms,
+        "reporter_terms": reporter_terms,
+        "type_terms": type_terms,
+        "severity_terms": severity_terms,
+        "status_terms": status_terms,
+    }
 
+    if area_terms:
+        score += 7 * len(area_terms)
+        reasons.append(f"oblast {entry.get('area_label')}")
+
+    if culprit_terms:
+        score += 5 * len(culprit_terms)
+        reasons.append(f"viník {entry.get('culprit_label')}")
+
+    if reporter_terms:
+        score += 4 * len(reporter_terms)
+        reasons.append(f"zadavatel {entry.get('problem_reporter_label')}")
+
+    if title_terms:
+        score += 6 * len(title_terms)
+        reasons.append("shoda v názvu")
+
+    if description_terms:
+        score += 3 * len(description_terms)
+        reasons.append("shoda v popisu")
+
+    if type_terms:
+        score += 2 * len(type_terms)
+        reasons.append(f"typ {entry.get('entry_type_label')}")
+
+    if severity_terms:
+        score += len(severity_terms)
+        reasons.append(f"závažnost {entry.get('severity_label')}")
+
+    if status_terms:
+        score += len(status_terms)
+        reasons.append(f"stav {entry.get('status_label')}")
+
+    matched_tokens = {normalize_search_text(token) for values in details.values() for token in values}
     for term in terms:
-        matched = False
-        if term == area and area:
-            score += 7
-            matched = True
-            reasons.append(f"oblast {entry.get('area_label')}")
-        elif term in area and area:
-            score += 4
-            matched = True
-            reasons.append(f"oblast {entry.get('area_label')}")
-
-        if term == culprit and culprit:
-            score += 5
-            matched = True
-            reasons.append(f"viník {entry.get('culprit_label')}")
-        elif term in culprit and culprit:
-            score += 3
-            matched = True
-            reasons.append(f"viník {entry.get('culprit_label')}")
-
-        if term == reporter and reporter:
-            score += 4
-            matched = True
-            reasons.append(f"zadavatel {entry.get('problem_reporter_label')}")
-        elif term in reporter and reporter:
-            score += 2
-            matched = True
-            reasons.append(f"zadavatel {entry.get('problem_reporter_label')}")
-
-        if term in title:
-            score += 6
-            matched = True
-            reasons.append("shoda v názvu")
-
-        if term in description:
-            score += 3
-            matched = True
-            reasons.append("shoda v popisu")
-
-        if term == entry_type and entry_type:
-            score += 2
-            matched = True
-            reasons.append(f"typ {entry.get('entry_type_label')}")
-
-        if term == severity and severity:
-            score += 1
-            matched = True
-            reasons.append(f"závažnost {entry.get('severity_label')}")
-
-        if term == status and status:
-            score += 1
-            matched = True
-            reasons.append(f"stav {entry.get('status_label')}")
-
-        if not matched and term in blob:
+        if term in blob and not any(term == token or term in token or token in term for token in matched_tokens):
             score += 1
 
-    return score, list(dict.fromkeys(reasons))
+    return score, list(dict.fromkeys(reasons)), details
 
 
 def similar_entries_for_query(query: str, limit: int = 5) -> list[dict]:
@@ -905,14 +973,15 @@ def similar_entries_for_query(query: str, limit: int = 5) -> list[dict]:
                 **entry,
                 "_match_score": 0,
                 "_match_reasons": [],
+                "_match_details": {},
             }
             for entry in items[: max(0, limit)]
         ]
 
-    scored: list[tuple[int, dict, list[str]]] = []
+    scored: list[tuple[int, dict, list[str], dict[str, list[str]]]] = []
     for item in items:
-        score, reasons = score_entry_for_query(item, terms)
-        scored.append((score, item, reasons))
+        score, reasons, details = score_entry_for_query(item, terms)
+        scored.append((score, item, reasons, details))
 
     scored.sort(
         key=lambda item: (
@@ -930,8 +999,9 @@ def similar_entries_for_query(query: str, limit: int = 5) -> list[dict]:
                 **entry,
                 "_match_score": score,
                 "_match_reasons": reasons,
+                "_match_details": details,
             }
-            for score, entry, reasons in top
+            for score, entry, reasons, details in top
         ]
 
     fallback = items[: max(0, limit)]
@@ -940,6 +1010,7 @@ def similar_entries_for_query(query: str, limit: int = 5) -> list[dict]:
             **entry,
             "_match_score": 0,
             "_match_reasons": [],
+            "_match_details": {},
         }
         for entry in fallback
     ]
@@ -961,11 +1032,15 @@ def build_teams_reply(query: str, limit: int = 5) -> dict:
 
     for idx, item in enumerate(matches, start=1):
         reasons = item.get("_match_reasons") or []
-        reason_text = ", ".join(reasons) if reasons else "nejnovější relevantní záznam"
+        match_details = item.get("_match_details") or {}
+        reason_text = format_match_summary(match_details) if match_details else ""
+        if not reason_text:
+            reason_text = ", ".join(reasons) if reasons else "nejnovější relevantní záznam"
         lines.append(
             f"{idx}. [#{item['id']}] {item['title']} | {item['area_label']} | "
-            f"{item['status_label']} | {item['severity_label']} | {reason_text}"
+            f"{item['status_label']} | {item['severity_label']}"
         )
+        lines.append(f"   shoda: {reason_text}")
 
     area_counter = Counter(
         item.get("area_label")
