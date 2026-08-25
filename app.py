@@ -165,6 +165,12 @@ EMAIL_PATTERN = re.compile(
     r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$"
 )
 
+AVATAR_DATA_URL_PATTERN = re.compile(
+    r"^data:(image/(?:png|jpe?g|gif|webp));base64,([A-Za-z0-9+/=\s]+)$",
+    re.IGNORECASE,
+)
+MAX_AVATAR_BYTES = 1_000_000
+
 LOGIN_RATE_LIMIT_STATE: dict[str, dict[str, object]] = {}
 LOGIN_RATE_LIMIT_LOCK = threading.Lock()
 
@@ -438,6 +444,7 @@ def init_db() -> None:
                     password_hash TEXT NOT NULL,
                     role TEXT NOT NULL DEFAULT 'user',
                     is_active INTEGER NOT NULL DEFAULT 1,
+                    avatar_url TEXT,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
                     CHECK (role IN ('admin', 'user')),
@@ -445,6 +452,7 @@ def init_db() -> None:
                 )
                 """
             )
+            ensure_postgres_column(conn, "users", "avatar_url", "TEXT")
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS sessions (
@@ -494,6 +502,7 @@ def init_db() -> None:
                     password_hash TEXT NOT NULL,
                     role TEXT NOT NULL DEFAULT 'user',
                     is_active INTEGER NOT NULL DEFAULT 1,
+                    avatar_url TEXT,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
                     CHECK (role IN ('admin', 'user')),
@@ -502,6 +511,7 @@ def init_db() -> None:
                 """
             )
             migrate_users_table(conn)
+            ensure_column(conn, "users", "avatar_url", "TEXT")
             repair_foreign_key_tables(conn)
             conn.execute(
                 """
@@ -557,6 +567,32 @@ def now_iso() -> str:
 
 def normalize_email(email: str) -> str:
     return email.strip().lower()
+
+
+def normalize_avatar_url(value: object) -> str | None:
+    if value is None:
+        return None
+
+    text = str(value).strip()
+    if not text:
+        return None
+
+    match = AVATAR_DATA_URL_PATTERN.fullmatch(text)
+    if not match:
+        raise ValueError("Profilový obrázek musí být nahraný jako PNG, JPG, GIF nebo WEBP.")
+
+    mime_type = match.group(1).lower()
+    encoded = re.sub(r"\s+", "", match.group(2))
+
+    try:
+        decoded = base64.b64decode(encoded, validate=True)
+    except Exception as exc:
+        raise ValueError("Profilový obrázek je poškozený.") from exc
+
+    if len(decoded) > MAX_AVATAR_BYTES:
+        raise ValueError("Profilový obrázek je příliš velký. Zkus menší soubor.")
+
+    return f"data:{mime_type};base64,{base64.b64encode(decoded).decode('ascii')}"
 
 
 def hash_password(password: str) -> str:
@@ -772,6 +808,7 @@ def user_to_dict(row: sqlite3.Row) -> dict:
         "role": row["role"],
         "role_label": ROLE_LABELS.get(row["role"], row["role"]),
         "is_active": bool(row["is_active"]),
+        "avatar_url": row["avatar_url"] if "avatar_url" in row.keys() else None,
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
     }
@@ -1295,6 +1332,9 @@ def update_user(user_id: int, data: dict, actor_user_id: int | None = None) -> d
         password_value = str(data.get("new_password", data.get("password", "")) or "").strip()
         if password_value:
             allowed_fields["password_hash"] = hash_password(validate_password(password_value))
+
+    if "avatar_url" in data:
+        allowed_fields["avatar_url"] = normalize_avatar_url(data.get("avatar_url"))
 
     if not allowed_fields:
         raise ValueError("Není co aktualizovat.")

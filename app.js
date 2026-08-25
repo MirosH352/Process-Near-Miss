@@ -269,6 +269,7 @@ const usersSection = document.getElementById("usersSection");
 const userEditModal = document.getElementById("userEditModal");
 const userEditForm = document.getElementById("userEditForm");
 const userEditMessageEl = document.getElementById("userEditMessage");
+const userEditAvatarPreviewEl = document.getElementById("userEditAvatarPreview");
 const usersSelectAllEl = document.getElementById("usersSelectAll");
 const usersSelectedCountEl = document.getElementById("usersSelectedCount");
 const bulkActivateUsersButton = document.getElementById("bulkActivateUsers");
@@ -333,6 +334,7 @@ const toastRegion = document.getElementById("toastRegion");
 const homeTiles = document.querySelectorAll("[data-home-target]");
 const viewButtons = document.querySelectorAll(".view-button");
 const sortButtons = document.querySelectorAll(".sort-button");
+const currentUserAvatarEl = document.querySelector(".user-avatar");
 
 const ICONS = {
   logo:
@@ -733,9 +735,53 @@ function showToast(message, kind = "info") {
 
 function hydrateIcons(root = document) {
   root.querySelectorAll("[data-icon]").forEach((node) => {
+    if (node.classList.contains("has-image")) {
+      return;
+    }
     const icon = node.getAttribute("data-icon");
     node.innerHTML = ICONS[icon] || "";
   });
+}
+
+function setAvatarElement(element, avatarUrl) {
+  if (!element) return;
+
+  const hasImage = Boolean(avatarUrl);
+  element.classList.toggle("has-image", hasImage);
+  element.style.backgroundImage = hasImage ? `url("${avatarUrl}")` : "";
+
+  if (hasImage) {
+    element.textContent = "";
+    return;
+  }
+
+  const iconName = element.dataset.icon || "user";
+  element.innerHTML = ICONS[iconName] || ICONS.user;
+}
+
+function updateCurrentUserAvatar() {
+  setAvatarElement(currentUserAvatarEl, state.user?.avatar_url || null);
+}
+
+function updateUserEditAvatarPreview(avatarUrl) {
+  setAvatarElement(userEditAvatarPreviewEl, avatarUrl || null);
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Soubor obrázku se nepodařilo načíst."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function avatarPreviewFromForm() {
+  const input = userEditForm?.elements?.avatar_file;
+  if (!input || !(input instanceof HTMLInputElement) || input.files.length === 0) {
+    return null;
+  }
+  return readFileAsDataUrl(input.files[0]);
 }
 
 function shortId(id) {
@@ -946,6 +992,10 @@ function openUserEditModal(user) {
   if (userEditForm.elements.new_password) {
     userEditForm.elements.new_password.value = "";
   }
+  if (userEditForm.elements.avatar_file) {
+    userEditForm.elements.avatar_file.value = "";
+  }
+  updateUserEditAvatarPreview(user.avatar_url || null);
   userEditModal.classList.remove("hidden");
   userEditModal.setAttribute("aria-hidden", "false");
   setUserEditMessage("");
@@ -1037,6 +1087,7 @@ function handleSessionExpired() {
   closeUserEditModal();
   resetSearch();
   currentUserEmailEl.textContent = "-";
+  setAvatarElement(currentUserAvatarEl, null);
   setPasswordMessage("");
   setUsersMessage("");
   appView.classList.add("hidden");
@@ -1134,6 +1185,7 @@ function enterApp(user, csrfToken = null, initialSection = getSectionFromHash() 
   updateViewModeUI();
   renderChecklist();
   hydrateIcons();
+  updateCurrentUserAvatar();
 }
 
 function renderBoard(visibleItems) {
@@ -1886,6 +1938,15 @@ bulkDeactivateUsersButton?.addEventListener("click", () => {
   runBulkUserStatusChange(false);
 });
 
+userEditForm.elements.avatar_file?.addEventListener("change", async () => {
+  try {
+    const preview = await avatarPreviewFromForm();
+    updateUserEditAvatarPreview(preview);
+  } catch {
+    updateUserEditAvatarPreview(null);
+  }
+});
+
 userEditForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -1898,6 +1959,7 @@ userEditForm.addEventListener("submit", async (event) => {
   const payload = Object.fromEntries(formData.entries());
   payload.is_active = payload.is_active === "1";
   payload.new_password = String(payload.new_password || "").trim();
+  delete payload.avatar_file;
 
   try {
     const confirmed = await askConfirmation(
@@ -1908,10 +1970,22 @@ userEditForm.addEventListener("submit", async (event) => {
 
     const submitButton = userEditForm.querySelector("button[type='submit']");
     submitButton.disabled = true;
-    await apiProtected(`/api/users/${state.editingUserId}`, {
+    const avatarInput = userEditForm.elements.avatar_file;
+    if (avatarInput instanceof HTMLInputElement && avatarInput.files.length > 0) {
+      const file = avatarInput.files[0];
+      if (file.size > 1024 * 1024) {
+        throw new Error("Profilový obrázek je příliš velký. Zkus menší soubor.");
+      }
+      payload.avatar_url = await avatarPreviewFromForm();
+    }
+    const updatedUser = await apiProtected(`/api/users/${state.editingUserId}`, {
       method: "PATCH",
       body: JSON.stringify(payload),
     });
+    if (state.user?.id === state.editingUserId) {
+      state.user = { ...state.user, ...updatedUser };
+      updateCurrentUserAvatar();
+    }
     await loadUsers();
     closeUserEditModal();
     renderUsers();

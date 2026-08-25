@@ -650,6 +650,23 @@
             <input name="email" type="email" required />
           </label>
 
+          <div class="avatar-upload">
+            <div id="userEditAvatarPreview" class="avatar-preview" aria-hidden="true"></div>
+            <div class="avatar-upload-copy">
+              <label class="file-field">
+                Profilový obrázek
+                <input
+                  name="avatar_file"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif,image/*"
+                />
+              </label>
+              <p class="form-hint">
+                Nahrání nového obrázku nahradí stávající profilovku. Podporované formáty: PNG, JPG, GIF a WEBP.
+              </p>
+            </div>
+          </div>
+
           <div class="two-col">
             <label>
               Role
