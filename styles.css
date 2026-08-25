@@ -1187,8 +1187,20 @@ button:focus-visible {
   margin-bottom: 0.8rem;
 }
 
+.checklist-group-copy {
+  display: grid;
+  gap: 0.2rem;
+}
+
 .checklist-group-head h3 {
   margin-bottom: 0;
+}
+
+.checklist-group-summary {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .checklist-group-head span {

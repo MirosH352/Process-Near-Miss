@@ -30,67 +30,165 @@ const PERSON_OPTIONS = [
 
 const CHECKLIST_SECTIONS = [
   {
-    title: "Před výjezdem",
+    title: "1. Spuštění nového AlzaBoxu do existující trasy",
+    summary: "První nasazení boxu do existující trasy a nové skupiny.",
     items: [
       {
         id: "route_plan",
-        title: "Potvrdit trasu a pořadí zastávek",
-        note: "Porovnej dnešní plán, pořadí bodů a časová okna.",
+        title: "Zkopírován kód dopravce (ABXXXX) ze zadání v tasku.",
       },
       {
         id: "box_status",
-        title: "Ověřit aktivní AlzaBoxy na trase",
-        note: "Vyřaď boxy, které jsou mimo provoz, plné nebo nedostupné.",
+        title: "Nalezena správná cílová skupina ve Skupinách výdejních míst.",
       },
       {
         id: "capacity_check",
-        title: "Zkontrolovat kapacitu a výměnu zásilek",
-        note: "Zkontroluj objem zásilek a připravené doručení i vyzvednutí.",
+        title: "U původní skupiny ukončena platnost „DO“ den před spuštěním boxu.",
+      },
+      {
+        id: "original_group_copy",
+        title: "Vytvořena kopie původní skupiny.",
+      },
+      {
+        id: "new_group_validity",
+        title: "U nové skupiny opravena platnost „OD“ a „DO“, odstraněn defaultní rok 2079.",
+      },
+      {
+        id: "old_label",
+        title: "Původní skupina přejmenována - přidáno OLD/Hvězdička.",
+      },
+      {
+        id: "new_label",
+        title: "Nová skupina přejmenována, odstraněno „NEW“ na začátku a podtržítko na konci.",
+      },
+      {
+        id: "new_box_added",
+        title: "Nový AlzaBox přidán na konec nové skupiny.",
+      },
+      {
+        id: "time_correction",
+        title: "Vyplněna správná časová korekce, případně 0, pokud není požadována.",
+      },
+      {
+        id: "route_order",
+        title: "Nastaveno pořadí boxů na trase dle zadání.",
+      },
+      {
+        id: "asana_log",
+        title: "V Asaně založen task na LOG pro nastavení řídicích pravidel.",
+      },
+      {
+        id: "task_status",
+        title: "Původní task k AB přepnut do stavu „nastavené boxy“.",
       },
     ],
   },
   {
-    title: "Na trase",
+    title: "2. Změny a deaktivace AlzaBoxů",
+    summary: "Změny pořadí a bezpečné odebrání boxu z trasy.",
     items: [
       {
-        id: "scan_before_departure",
-        title: "Provést sken před odjezdem",
-        note: "Ujisti se, že jsou všechny zásilky načtené do systému.",
+        id: "route_change",
+        title: "Změna pořadí boxů na aktivní trase.",
       },
       {
-        id: "navigation",
-        title: "Mít připravenou navigaci a podklady",
-        note: "Zkontroluj adresy, offline mapu a kontakty na dispečink.",
+        id: "group_closed",
+        title: "Platnost stávající skupiny ukončena.",
       },
       {
-        id: "exceptions",
-        title: "Zapsat výjimky okamžitě na místě",
-        note: "U každého problému doplň důvod, čas a případně fotku.",
+        id: "history_order",
+        title: "Vytvořena nová skupina, aby se nezměnilo pořadí na historických štítcích.",
       },
       {
-        id: "customer_contact",
-        title: "Potvrdit kontakt při změně trasy",
-        note: "Při zpoždění nebo odklonu informuj odpovědnou osobu.",
+        id: "uninstall_box",
+        title: "Deinstalovaný box odebrán z nové skupiny.",
       },
     ],
   },
   {
-    title: "Po návratu",
+    title: "3. Nastavení nové trasy",
+    summary: "Krok za krokem od skupiny přes přepravní směr až po svoz.",
     items: [
       {
-        id: "unresolved_shipments",
-        title: "Předat nedoručené zásilky",
-        note: "Nedoručené kusy předat na další směnu nebo do skladu.",
+        id: "route_group",
+        title: "Založena Skupina přepravních směrů ve formátu AB – Zkratka státu – Trasa.",
       },
       {
-        id: "route_close",
-        title: "Uzavřít trasu v systému",
-        note: "Doplň stav, komentář a uzavři všechny otevřené výjimky.",
+        id: "carrier_direction",
+        title: "Založen Přepravní směr ve formátu Dopravce – AB – Trasa.",
       },
       {
-        id: "handover",
-        title: "Předat souhrn o průběhu trasy",
-        note: "Shrň odchylky, nedostupné boxy a doporučení pro další den.",
+        id: "primary_carrier",
+        title: "U přepravního směru vybrán primární dopravce, nastaveny atributy, vstupní depo DEFAULT a vypsána cache.",
+        note: "Pozor: když není vyplněné DEFAULT, rozbijeme trasování svozů a může to mít výrazný dopad na provoz.",
+      },
+      {
+        id: "pickup_copy",
+        title: "V nastavení svozů vytvořena kopie existující trasy a přiřazen nový Přepravní směr.",
+      },
+      {
+        id: "route_activity",
+        title: "Trasa má aktivitu = 3 a popis ve formátu AB – Sklad – Trasa.",
+      },
+      {
+        id: "route_days",
+        title: "Správně vyplněny dny svozu, zdrojová pobočka a limity dle zadání.",
+      },
+      {
+        id: "route_timing",
+        title: "Správně nastaven čas svozu, čas doručení a dodání.",
+      },
+      {
+        id: "old_route_validity",
+        title: "Na staré trase a starých boxech nastavena platnost „DO“ s hodinovou rezervou po posledním doručení.",
+      },
+      {
+        id: "pickup_row",
+        title: "Ve Výdejních místech vytvořen nový řádek pro trasu, přiřazen přepravní směr a přidány boxy.",
+      },
+    ],
+  },
+  {
+    title: "4. Zpětný tok a vratkovací pravidla",
+    summary: "Nastavení vratkovacích pravidel a speciálních tras.",
+    items: [
+      {
+        id: "return_goods",
+        title: "Nastavena vratkovací pravidla Alza zboží – LC.",
+      },
+      {
+        id: "return_claims",
+        title: "Nastavena vratkovací pravidla Alza reklamace – LC.",
+      },
+      {
+        id: "drop_rules",
+        title: "Nastavena vratkovací pravidla DROP zboží / DROP reklamace / BxB – TC.",
+      },
+      {
+        id: "special_routes",
+        title: "U speciálních tras z Chrášťan nastaven zpětný tok kompletně na jednom místě.",
+      },
+    ],
+  },
+  {
+    title: "5. Generování rout a finální kontrola",
+    summary: "Kontrola před generováním a ověření, že se routy propsaly správně.",
+    items: [
+      {
+        id: "check_before_generate",
+        title: "Před generováním rout kliknuto na „Zkontrolovat“.",
+      },
+      {
+        id: "error_column",
+        title: "Ve sloupci „Chyba popis“ nejsou žádná chybová hlášení.",
+      },
+      {
+        id: "generate_routes",
+        title: "Kliknuto na „Vygenerovat routy“.",
+      },
+      {
+        id: "routes_persisted",
+        title: "Routy se úspěšně propsaly.",
       },
     ],
   },
@@ -382,12 +480,21 @@ function renderChecklist() {
 
     const header = document.createElement("div");
     header.className = "checklist-group-head";
+    const titleWrap = document.createElement("div");
+    titleWrap.className = "checklist-group-copy";
     const title = document.createElement("h3");
     title.textContent = section.title;
+    titleWrap.appendChild(title);
+    if (section.summary) {
+      const summary = document.createElement("p");
+      summary.className = "checklist-group-summary";
+      summary.textContent = section.summary;
+      titleWrap.appendChild(summary);
+    }
     const counter = document.createElement("span");
     const sectionCompleted = section.items.filter((item) => Boolean(state.checklist.items[item.id])).length;
     counter.textContent = `${sectionCompleted} / ${section.items.length}`;
-    header.append(title, counter);
+    header.append(titleWrap, counter);
     sectionNode.appendChild(header);
 
     const list = document.createElement("div");
@@ -414,9 +521,12 @@ function renderChecklist() {
       content.className = "checklist-item-content";
       const itemTitle = document.createElement("strong");
       itemTitle.textContent = item.title;
-      const itemNote = document.createElement("span");
-      itemNote.textContent = item.note;
-      content.append(itemTitle, itemNote);
+      content.appendChild(itemTitle);
+      if (item.note) {
+        const itemNote = document.createElement("span");
+        itemNote.textContent = item.note;
+        content.appendChild(itemNote);
+      }
 
       label.append(checkbox, content);
       list.appendChild(label);
