@@ -1085,6 +1085,7 @@ function setAppSection(section) {
   }
   state.appSection = allowedSections.has(section) ? section : "home";
 
+  appView.classList.toggle("home-mode", state.appSection === "home");
   homePanel.classList.toggle("hidden", state.appSection !== "home");
   dashboardHeader.classList.toggle("hidden", state.appSection === "home");
   recordsPanel.classList.toggle("hidden", state.appSection !== "records");
@@ -1103,6 +1104,7 @@ function setAppSection(section) {
 function renderAuthState() {
   authView.classList.toggle("hidden", false);
   appView.classList.toggle("hidden", true);
+  appView.classList.remove("home-mode");
   state.appSection = "home";
   resetSearch();
   homePanel.classList.add("hidden");
