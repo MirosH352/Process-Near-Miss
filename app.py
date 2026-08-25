@@ -1135,7 +1135,7 @@ def similar_entries_for_query(query: str, limit: int = 5) -> list[dict]:
     ]
 
 
-def build_teams_reply(query: str, limit: int = 5) -> dict:
+def build_teams_reply(query: str, limit: int = 3) -> dict:
     cleaned_query = teams_mention_text(query)
     matches = similar_entries_for_query(cleaned_query, limit=limit)
     if not matches:
@@ -1157,20 +1157,10 @@ def build_teams_reply(query: str, limit: int = 5) -> dict:
             reason_text = ", ".join(reasons) if reasons else "nejnovější relevantní záznam"
         detail_url = entry_detail_url(int(item["id"]))
         lines.append(
-            f"{idx}. [#{item['id']}] {item['title']} | {item['area_label']} | "
-            f"{item['status_label']} | {item['severity_label']} | "
-            f"[otevřít issue]({detail_url})"
+            f"{idx}. [#{item['id']}] {item['title']} • {item['area_label']} • "
+            f"{item['status_label']} • {item['severity_label']} • [otevřít issue]({detail_url})"
         )
         lines.append(f"   shoda: {reason_text}")
-
-    area_counter = Counter(
-        item.get("area_label")
-        for item in matches
-        if item.get("area_label") and item.get("area_label") != AREA_EMPTY_LABEL
-    )
-    if area_counter:
-        area_name, area_count = area_counter.most_common(1)[0]
-        lines.append(f"Nejčastější oblast v nalezených výsledcích: {area_name} ({area_count}x).")
 
     return {"type": "message", "text": "\n".join(lines)}
 
@@ -1696,7 +1686,7 @@ class AppHandler(BaseHTTPRequestHandler):
                     limit = int(limit_value)
                 except (TypeError, ValueError):
                     limit = 5
-                limit = max(1, min(limit, 10))
+                limit = max(1, min(limit, 3))
                 response = build_teams_reply(query, limit=limit)
                 log_teams_event(f"reply_type={response.get('type')} chars={len(str(response.get('text', '')))}")
                 json_response(self, response)
