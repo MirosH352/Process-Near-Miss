@@ -142,8 +142,8 @@ h3 {
   z-index: 1;
 }
 
-body::before,
-body::after {
+.app-shell:not(.hidden):not(.home-mode)::before,
+.app-shell:not(.hidden):not(.home-mode)::after {
   content: "";
   position: fixed;
   top: 0;
@@ -154,12 +154,12 @@ body::after {
   background: url("./web.png") left center / auto 100% no-repeat;
 }
 
-body::before {
+.app-shell:not(.hidden):not(.home-mode)::before {
   left: 0;
   background-position: left center;
 }
 
-body::after {
+.app-shell:not(.hidden):not(.home-mode)::after {
   right: 0;
   background-position: right center;
 }
@@ -2366,8 +2366,8 @@ button:focus-visible {
 }
 
 @media (max-width: 980px) {
-  body::before,
-  body::after {
+  .app-shell:not(.hidden):not(.home-mode)::before,
+  .app-shell:not(.hidden):not(.home-mode)::after {
     display: none;
   }
 
