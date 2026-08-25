@@ -76,6 +76,76 @@ AREA_CHOICES = (
 AREA_CHOICES_SET = set(AREA_CHOICES)
 AREA_EMPTY_LABEL = "Nevyplněno"
 
+SEARCH_STOPWORDS = {
+    "a",
+    "ale",
+    "ani",
+    "asi",
+    "bez",
+    "by",
+    "byl",
+    "byla",
+    "bylo",
+    "byly",
+    "co",
+    "do",
+    "ho",
+    "i",
+    "jak",
+    "je",
+    "jen",
+    "ji",
+    "jsem",
+    "jsme",
+    "jsi",
+    "jsou",
+    "jste",
+    "k",
+    "kde",
+    "kdy",
+    "ke",
+    "kdo",
+    "ma",
+    "má",
+    "mi",
+    "mne",
+    "mě",
+    "na",
+    "nad",
+    "ne",
+    "ně",
+    "nebo",
+    "o",
+    "od",
+    "po",
+    "pro",
+    "při",
+    "se",
+    "si",
+    "s",
+    "u",
+    "v",
+    "ve",
+    "za",
+    "z",
+    "už",
+    "tak",
+    "ten",
+    "to",
+    "tu",
+    "toto",
+    "tam",
+    "tady",
+    "tím",
+    "tímto",
+    "jenž",
+    "jej",
+    "její",
+    "jeho",
+    "jich",
+    "jí",
+}
+
 SEVERITY_LABELS = {
     "low": "Nízká",
     "medium": "Střední",
@@ -778,7 +848,11 @@ def entry_detail_url(entry_id: int) -> str:
 
 def split_search_terms(query: str) -> list[str]:
     normalized = normalize_search_text(query)
-    terms = [term for term in re.split(r"[^a-z0-9]+", normalized) if len(term) >= 2]
+    terms = [
+        term
+        for term in re.split(r"[^a-z0-9]+", normalized)
+        if len(term) >= 3 and term not in SEARCH_STOPWORDS
+    ]
     seen: set[str] = set()
     deduped: list[str] = []
     for term in terms:
@@ -863,35 +937,78 @@ def collect_field_matches(value: object, terms: list[str], limit: int = 4) -> li
     return matches
 
 
-def format_match_summary(details: dict[str, list[str]]) -> str:
+def normalize_terms_for_display(terms: list[str]) -> list[str]:
+    return list(dict.fromkeys(term for term in terms if term and term not in SEARCH_STOPWORDS))
+
+
+def build_description_excerpt(description: str, terms: list[str], window: int = 42) -> str:
+    if not description:
+        return ""
+
+    normalized_description = normalize_search_text(description)
+    best_index: int | None = None
+    best_term: str | None = None
+    for term in terms:
+        if len(term) < 3:
+            continue
+        index = normalized_description.find(term)
+        if index == -1:
+            continue
+        if best_index is None or index < best_index:
+            best_index = index
+            best_term = term
+
+    if best_index is None or best_term is None:
+        return ""
+
+    raw_text = " ".join(str(description).strip().split())
+    raw_index = raw_text.lower().find(best_term)
+    if raw_index == -1:
+        raw_index = 0
+    start = max(0, raw_index - window)
+    end = min(len(raw_text), raw_index + len(best_term) + window)
+    excerpt = raw_text[start:end]
+    if start > 0:
+        excerpt = f"…{excerpt}"
+    if end < len(raw_text):
+        excerpt = f"{excerpt}…"
+    return excerpt
+
+
+def format_match_summary(details: dict[str, list[str]], description: str = "") -> str:
     parts: list[str] = []
-    title_terms = details.get("title_terms", [])
+    title_terms = normalize_terms_for_display(details.get("title_terms", []))
     if title_terms:
         parts.append(f"název: {', '.join(title_terms)}")
 
-    description_terms = details.get("description_terms", [])
+    description_terms = normalize_terms_for_display(details.get("description_terms", []))
     if description_terms:
         parts.append(f"popis: {', '.join(description_terms)}")
 
-    area_terms = details.get("area_terms", [])
+    area_terms = normalize_terms_for_display(details.get("area_terms", []))
     if area_terms:
         parts.append(f"oblast: {', '.join(area_terms)}")
 
-    reporter_terms = details.get("reporter_terms", [])
+    reporter_terms = normalize_terms_for_display(details.get("reporter_terms", []))
     if reporter_terms:
         parts.append(f"zadavatel: {', '.join(reporter_terms)}")
 
-    type_terms = details.get("type_terms", [])
+    type_terms = normalize_terms_for_display(details.get("type_terms", []))
     if type_terms:
         parts.append(f"typ: {', '.join(type_terms)}")
 
-    severity_terms = details.get("severity_terms", [])
+    severity_terms = normalize_terms_for_display(details.get("severity_terms", []))
     if severity_terms:
         parts.append(f"závažnost: {', '.join(severity_terms)}")
 
-    status_terms = details.get("status_terms", [])
+    status_terms = normalize_terms_for_display(details.get("status_terms", []))
     if status_terms:
         parts.append(f"stav: {', '.join(status_terms)}")
+
+    excerpt_terms = description_terms or title_terms
+    excerpt = build_description_excerpt(description, excerpt_terms)
+    if excerpt:
+        parts.append(f"úryvek: {excerpt}")
 
     return "; ".join(parts)
 
@@ -913,14 +1030,13 @@ def score_entry_for_query(entry: dict, terms: list[str]) -> tuple[int, list[str]
     severity = normalize_search_text(entry.get("severity_label", ""))
     status = normalize_search_text(entry.get("status_label", ""))
     blob = entry_search_blob(entry)
-    title_terms = collect_field_matches(entry.get("title", ""), terms)
-    description_terms = collect_field_matches(entry.get("description", ""), terms)
-    area_terms = collect_field_matches(entry.get("area_label", ""), terms)
-    culprit_terms = collect_field_matches(entry.get("culprit_label", ""), terms)
-    reporter_terms = collect_field_matches(entry.get("problem_reporter_label", ""), terms)
-    type_terms = collect_field_matches(entry.get("entry_type_label", ""), terms)
-    severity_terms = collect_field_matches(entry.get("severity_label", ""), terms)
-    status_terms = collect_field_matches(entry.get("status_label", ""), terms)
+    title_terms = normalize_terms_for_display(collect_field_matches(entry.get("title", ""), terms))
+    description_terms = normalize_terms_for_display(collect_field_matches(entry.get("description", ""), terms))
+    area_terms = normalize_terms_for_display(collect_field_matches(entry.get("area_label", ""), terms))
+    reporter_terms = normalize_terms_for_display(collect_field_matches(entry.get("problem_reporter_label", ""), terms))
+    type_terms = normalize_terms_for_display(collect_field_matches(entry.get("entry_type_label", ""), terms))
+    severity_terms = normalize_terms_for_display(collect_field_matches(entry.get("severity_label", ""), terms))
+    status_terms = normalize_terms_for_display(collect_field_matches(entry.get("status_label", ""), terms))
     details = {
         "title_terms": title_terms,
         "description_terms": description_terms,
@@ -1036,7 +1152,7 @@ def build_teams_reply(query: str, limit: int = 5) -> dict:
     for idx, item in enumerate(matches, start=1):
         reasons = item.get("_match_reasons") or []
         match_details = item.get("_match_details") or {}
-        reason_text = format_match_summary(match_details) if match_details else ""
+        reason_text = format_match_summary(match_details, item.get("description", "")) if match_details else ""
         if not reason_text:
             reason_text = ", ".join(reasons) if reasons else "nejnovější relevantní záznam"
         detail_url = entry_detail_url(int(item["id"]))
