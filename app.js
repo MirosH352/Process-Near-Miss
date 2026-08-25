@@ -243,6 +243,7 @@ const state = {
   draggingEntryId: null,
   editingId: null,
   editingUserId: null,
+  editingUserAvatarCleared: false,
   selectedUserIds: new Set(),
   detailItem: null,
   confirmResolver: null,
@@ -977,6 +978,7 @@ function openEditModal(item) {
 
 function closeUserEditModal() {
   state.editingUserId = null;
+  state.editingUserAvatarCleared = false;
   userEditModal.classList.add("hidden");
   userEditModal.setAttribute("aria-hidden", "true");
   userEditForm.reset();
@@ -986,6 +988,7 @@ function closeUserEditModal() {
 
 function openUserEditModal(user) {
   state.editingUserId = user.id;
+  state.editingUserAvatarCleared = false;
   userEditForm.elements.email.value = user.email;
   userEditForm.elements.role.value = user.role;
   userEditForm.elements.is_active.value = user.is_active ? "1" : "0";
@@ -994,6 +997,9 @@ function openUserEditModal(user) {
   }
   if (userEditForm.elements.avatar_file) {
     userEditForm.elements.avatar_file.value = "";
+  }
+  if (userEditForm.elements.clear_avatar) {
+    userEditForm.elements.clear_avatar.disabled = !user.avatar_url;
   }
   updateUserEditAvatarPreview(user.avatar_url || null);
   userEditModal.classList.remove("hidden");
@@ -1249,6 +1255,15 @@ function renderUsers() {
     roleBadge.textContent = user.role_label || user.role;
     roleCell.appendChild(roleBadge);
 
+    const avatarCell = document.createElement("td");
+    avatarCell.className = "col-avatar";
+    const avatarBadge = document.createElement("span");
+    avatarBadge.className = "user-avatar table-user-avatar";
+    avatarBadge.dataset.icon = "user";
+    setAvatarElement(avatarBadge, user.avatar_url || null);
+    avatarBadge.setAttribute("aria-label", user.avatar_url ? "Profilový obrázek" : "Bez profilového obrázku");
+    avatarCell.appendChild(avatarBadge);
+
     const activeCell = document.createElement("td");
     activeCell.className = "col-status";
     const activeBadge = document.createElement("span");
@@ -1276,7 +1291,7 @@ function renderUsers() {
     actionsWrap.appendChild(editButton);
     actionsCell.appendChild(actionsWrap);
 
-    row.append(selectCell, emailCell, roleCell, activeCell, createdCell, updatedCell, actionsCell);
+    row.append(selectCell, avatarCell, emailCell, roleCell, activeCell, createdCell, updatedCell, actionsCell);
 
     selectCheckbox.addEventListener("change", () => {
       setUserSelection(user.id, selectCheckbox.checked);
@@ -1940,11 +1955,27 @@ bulkDeactivateUsersButton?.addEventListener("click", () => {
 
 userEditForm.elements.avatar_file?.addEventListener("change", async () => {
   try {
+    state.editingUserAvatarCleared = false;
+    if (userEditForm.elements.clear_avatar) {
+      userEditForm.elements.clear_avatar.disabled = false;
+    }
     const preview = await avatarPreviewFromForm();
     updateUserEditAvatarPreview(preview);
   } catch {
     updateUserEditAvatarPreview(null);
   }
+});
+
+userEditForm.elements.clear_avatar?.addEventListener("click", () => {
+  const input = userEditForm.elements.avatar_file;
+  if (input instanceof HTMLInputElement) {
+    input.value = "";
+  }
+  state.editingUserAvatarCleared = true;
+  if (userEditForm.elements.clear_avatar) {
+    userEditForm.elements.clear_avatar.disabled = true;
+  }
+  updateUserEditAvatarPreview(null);
 });
 
 userEditForm.addEventListener("submit", async (event) => {
@@ -1960,6 +1991,7 @@ userEditForm.addEventListener("submit", async (event) => {
   payload.is_active = payload.is_active === "1";
   payload.new_password = String(payload.new_password || "").trim();
   delete payload.avatar_file;
+  delete payload.clear_avatar;
 
   try {
     const confirmed = await askConfirmation(
@@ -1977,6 +2009,8 @@ userEditForm.addEventListener("submit", async (event) => {
         throw new Error("Profilový obrázek je příliš velký. Zkus menší soubor.");
       }
       payload.avatar_url = await avatarPreviewFromForm();
+    } else if (state.editingUserAvatarCleared) {
+      payload.avatar_url = null;
     }
     const updatedUser = await apiProtected(`/api/users/${state.editingUserId}`, {
       method: "PATCH",

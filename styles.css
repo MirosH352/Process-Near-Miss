@@ -364,6 +364,13 @@ h3 {
   min-width: 0;
 }
 
+.avatar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
 .file-field {
   display: grid;
   gap: 0.35rem;
@@ -377,6 +384,23 @@ h3 {
   border: 1px solid var(--color-border);
   background: #fff;
   color: var(--color-text-primary);
+}
+
+.table-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  margin: 0 auto;
+}
+
+.table-user-avatar svg {
+  width: 18px;
+  height: 18px;
+}
+
+.users-table .col-avatar {
+  width: 72px;
+  text-align: center;
 }
 
 .user-meta {
