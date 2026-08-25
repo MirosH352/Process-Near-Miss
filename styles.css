@@ -45,6 +45,8 @@ body {
   color: var(--color-text-primary);
   font-size: 14px;
   line-height: 1.55;
+  position: relative;
+  overflow-x: hidden;
 }
 
 body,
@@ -138,7 +140,28 @@ h3 {
   gap: 18px;
   position: relative;
   z-index: 1;
-  background: url("./web.png") center top / 100% auto no-repeat;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: max(0px, calc((100vw - 1600px) / 2));
+  pointer-events: none;
+  z-index: 0;
+  background: url("./web.png") left center / auto 100% no-repeat;
+}
+
+body::before {
+  left: 0;
+  background-position: left center;
+}
+
+body::after {
+  right: 0;
+  background-position: right center;
 }
 
 .app-shell.home-mode .app-content {
@@ -2343,6 +2366,11 @@ button:focus-visible {
 }
 
 @media (max-width: 980px) {
+  body::before,
+  body::after {
+    display: none;
+  }
+
   .password-form,
   .users-layout {
     grid-template-columns: 1fr;
