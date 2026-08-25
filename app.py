@@ -1712,6 +1712,10 @@ class AppHandler(BaseHTTPRequestHandler):
             self.serve_file(STATIC_DIR / "app.js", "application/javascript; charset=utf-8")
             return
 
+        if path == "/web.png":
+            self.serve_file(STATIC_DIR / "web.png", "image/png")
+            return
+
         self.send_error(HTTPStatus.NOT_FOUND, "Not found")
 
     def do_POST(self) -> None:
