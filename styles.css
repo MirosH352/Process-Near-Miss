@@ -1387,6 +1387,7 @@ button:focus-visible {
   background: #ecfeff;
   color: #0f766e;
   border-color: #a5f3fc;
+  white-space: nowrap;
 }
 
 .priority-badge.priority-low,
@@ -2060,6 +2061,10 @@ button:focus-visible {
 
 .records-table .col-type {
   width: 118px;
+}
+
+.records-table .col-area {
+  width: 122px;
 }
 
 .records-table .col-priority {
