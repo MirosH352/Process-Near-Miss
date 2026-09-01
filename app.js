@@ -6,6 +6,7 @@ const STATUS_OPTIONS = [
   ["resolved", "Vyřešeno"],
   ["closed", "Uzavřeno"],
 ];
+const KANBAN_PREVIEW_LIMIT = 3;
 
 const STATUS_META = {
   new: { label: "Nový", hint: "Nové záznamy, které čekají na zpracování." },
@@ -248,6 +249,7 @@ const state = {
   selectedUserIds: new Set(),
   detailItem: null,
   confirmResolver: null,
+  expandedBoardStatuses: new Set(),
 };
 
 const authView = document.getElementById("authView");
@@ -1069,7 +1071,7 @@ function openDetailModal(item) {
   detailHasDescriptionEl.textContent = item.description?.trim() ? "Ano" : "Ne";
   detailBadgesEl.innerHTML = `
     <span class="badge type-badge">${TYPE_LABELS[item.entry_type]}</span>
-    <span class="badge priority-badge priority-${item.severity}">Priorita ${SEVERITY_LABELS[item.severity]}</span>
+    <span class="badge priority-badge priority-${item.severity}">${SEVERITY_LABELS[item.severity]}</span>
     <span class="badge area-badge">${item.area_label}</span>
     <span class="badge status-badge status-${item.status}">${STATUS_META[item.status].label}</span>
   `;
@@ -1443,7 +1445,7 @@ function cardTemplate(item, columnStatus = item.status) {
       <div class="entry-title-wrap">
         <div class="badges">
           <span class="badge type-badge">${TYPE_LABELS[item.entry_type]}</span>
-          <span class="badge priority-badge priority-${item.severity}">Priorita ${SEVERITY_LABELS[item.severity]}</span>
+          <span class="badge priority-badge priority-${item.severity}">${SEVERITY_LABELS[item.severity]}</span>
           <span class="badge area-badge">${item.area_label}</span>
           ${statusBadge}
         </div>
@@ -1508,7 +1510,7 @@ function tableRowTemplate(item) {
     </td>
     <td class="col-type"><span class="badge type-badge">${TYPE_LABELS[item.entry_type]}</span></td>
     <td class="col-area"><span class="badge area-badge">${item.area_label}</span></td>
-    <td class="col-priority"><span class="badge priority-badge priority-${item.severity}">Priorita ${SEVERITY_LABELS[item.severity]}</span></td>
+    <td class="col-priority"><span class="badge priority-badge priority-${item.severity}">${SEVERITY_LABELS[item.severity]}</span></td>
     <td class="col-status"><span class="badge status-badge status-${item.status}">${STATUS_META[item.status].label}</span></td>
     <td class="col-created-by"><span class="placeholder-value"></span></td>
     <td class="col-created">${formatDate(item.created_at)}</td>
@@ -1576,6 +1578,14 @@ function columnTemplate(status, items) {
   column.className = `kanban-column status-${status}`;
   column.dataset.status = status;
 
+  const sortedItems = [...items].sort((a, b) => {
+    const createdDifference = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    return createdDifference || Number(b.id) - Number(a.id);
+  });
+  const isExpanded = state.expandedBoardStatuses.has(status);
+  const visibleItems = isExpanded ? sortedItems : sortedItems.slice(0, KANBAN_PREVIEW_LIMIT);
+  const hiddenItemCount = sortedItems.length - visibleItems.length;
+
   column.innerHTML = `
     <header class="kanban-column-head">
       <div>
@@ -1625,15 +1635,32 @@ function columnTemplate(status, items) {
   });
   column.addEventListener("drop", handleDrop);
 
-  for (const item of items) {
+  for (const item of visibleItems) {
     dropzone.appendChild(cardTemplate(item, status));
   }
 
-  if (items.length === 0) {
+  if (sortedItems.length === 0) {
     const empty = document.createElement("div");
     empty.className = "kanban-empty";
     empty.textContent = "V tomto stavu zatím nejsou žádné záznamy.";
     dropzone.appendChild(empty);
+  }
+
+  if (sortedItems.length > KANBAN_PREVIEW_LIMIT) {
+    const moreButton = document.createElement("button");
+    moreButton.type = "button";
+    moreButton.className = "kanban-more-button";
+    moreButton.textContent = isExpanded ? "Zobrazit méně" : `Zobrazit více (${hiddenItemCount})`;
+    moreButton.setAttribute("aria-expanded", isExpanded ? "true" : "false");
+    moreButton.addEventListener("click", () => {
+      if (isExpanded) {
+        state.expandedBoardStatuses.delete(status);
+      } else {
+        state.expandedBoardStatuses.add(status);
+      }
+      render();
+    });
+    column.appendChild(moreButton);
   }
 
   return column;
