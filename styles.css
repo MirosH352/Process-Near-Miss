@@ -1142,6 +1142,7 @@ button:focus-visible {
   position: relative;
   min-width: 0;
   display: grid;
+  align-content: start;
   gap: 0.8rem;
   padding: 1rem;
   border-radius: 14px;
