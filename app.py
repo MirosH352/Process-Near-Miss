@@ -233,6 +233,18 @@ def ensure_postgres_column(conn, table_name: str, column_name: str, definition: 
     conn.execute(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS {column_name} {definition}")
 
 
+def ensure_postgres_entry_constraints(conn) -> None:
+    """Keep constraints in sync for entries tables created by older deployments."""
+    constraints = {
+        "entries_entry_type_check": "entry_type IN ('bug', 'near_miss')",
+        "entries_severity_check": "severity IN ('low', 'medium', 'high', 'incident', 'critical')",
+        "entries_status_check": "status IN ('new', 'in_progress', 'resolved', 'closed')",
+    }
+    for name, expression in constraints.items():
+        conn.execute(f"ALTER TABLE entries DROP CONSTRAINT IF EXISTS {name}")
+        conn.execute(f"ALTER TABLE entries ADD CONSTRAINT {name} CHECK ({expression})")
+
+
 def migrate_users_table(conn: sqlite3.Connection) -> None:
     schema_row = conn.execute(
         "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'users'"
@@ -493,6 +505,7 @@ def init_db() -> None:
             ensure_postgres_column(conn, "entries", "area", "TEXT")
             ensure_postgres_column(conn, "entries", "problem_reporter", "TEXT")
             ensure_postgres_column(conn, "entries", "culprit", "TEXT")
+            ensure_postgres_entry_constraints(conn)
         else:
             conn.execute(
                 """
@@ -1863,6 +1876,13 @@ class AppHandler(BaseHTTPRequestHandler):
                 json_response(self, item, HTTPStatus.CREATED)
             except ValueError as exc:
                 json_response(self, {"error": str(exc)}, HTTPStatus.BAD_REQUEST)
+            except Exception as exc:
+                print(f"POST /api/entries failed: {exc}", flush=True)
+                json_response(
+                    self,
+                    {"error": "Záznam se nepodařilo uložit. Zkontroluj prosím serverový log."},
+                    HTTPStatus.INTERNAL_SERVER_ERROR,
+                )
             return
 
         if path == "/api/users":
