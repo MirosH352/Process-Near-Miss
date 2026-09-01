@@ -366,20 +366,28 @@
 
       <div id="checklistPanel" class="app-panel hidden">
         <section class="card dashboard-card checklist-card">
+          <div class="checklist-page-switcher" role="tablist" aria-label="Výběr checklistu">
+            <button type="button" class="checklist-page-button is-active" data-checklist-page="alzaboxy-a-trasy" role="tab" aria-selected="true">
+              AlzaBoxy a trasy
+            </button>
+            <button type="button" class="checklist-page-button" data-checklist-page="drop-1-0" role="tab" aria-selected="false">
+              Drop 1.0
+            </button>
+          </div>
           <div class="checklist-hero">
             <div class="checklist-breadcrumbs" aria-label="Navigace">
               <span>Domů</span>
               <span>Checklisty</span>
-              <strong>Checklist</strong>
+              <strong id="checklistBreadcrumbCurrent">Checklist</strong>
             </div>
             <div class="checklist-hero-copy">
-              <p class="eyebrow">ALZABOXY A TRASY</p>
-              <h2>AlzaBoxy a trasy</h2>
-              <p>
+              <p class="eyebrow" id="checklistPageEyebrow">ALZABOXY A TRASY</p>
+              <h2 id="checklistPageTitle">AlzaBoxy a trasy</h2>
+              <p id="checklistPageDescription">
                 Checklist pro spuštění nového AlzaBoxu, změny pořadí a deinstalace boxů,
                 nastavení nové trasy, vratkové pravidlo a finální kontrolu rout.
               </p>
-              <div class="checklist-intro-chip">Rychlý vstup do správy obsahu a pracovních stavů.</div>
+              <div class="checklist-intro-chip" id="checklistIntroChip">Rychlý vstup do správy obsahu a pracovních stavů.</div>
             </div>
           </div>
 

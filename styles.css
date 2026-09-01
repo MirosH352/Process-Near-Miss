@@ -1457,6 +1457,45 @@ button:focus-visible {
   border-color: rgba(203, 218, 194, 0.85);
 }
 
+.checklist-page-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.checklist-page-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.35rem;
+  padding: 0 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(203, 218, 194, 0.9);
+  background: rgba(255, 255, 255, 0.92);
+  color: #5f6b58;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.checklist-page-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(132, 188, 108, 0.45);
+  color: #33412f;
+  box-shadow: 0 8px 22px rgba(132, 188, 108, 0.08);
+}
+
+.checklist-page-button.is-active,
+.checklist-page-button[aria-selected="true"] {
+  border-color: rgba(132, 188, 108, 0.65);
+  background: linear-gradient(180deg, #f6fbf2 0%, #ffffff 100%);
+  color: #2f4b26;
+  box-shadow: 0 10px 24px rgba(132, 188, 108, 0.12);
+}
+
 .checklist-card::before {
   content: "";
   position: absolute;

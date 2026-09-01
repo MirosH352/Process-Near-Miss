@@ -29,177 +29,348 @@ const PERSON_OPTIONS = [
   "Zelený mužíček",
 ];
 
-const CHECKLIST_SECTIONS = [
-  {
-    title: "1. Spuštění nového AlzaBoxu do existující trasy",
-    summary: "První nasazení boxu do existující trasy a nové skupiny.",
-    items: [
-      {
-        id: "route_plan",
-        title: "Zkopírován kód dopravce (ABXXXX) ze zadání v tasku.",
-      },
-      {
-        id: "box_status",
-        title: "Nalezena správná cílová skupina ve Skupinách výdejních míst.",
-      },
-      {
-        id: "capacity_check",
-        title: "U původní skupiny ukončena platnost „DO“ den před spuštěním boxu.",
-      },
-      {
-        id: "original_group_copy",
-        title: "Vytvořena kopie původní skupiny.",
-      },
-      {
-        id: "new_group_validity",
-        title: "U nové skupiny opravena platnost „OD“ a „DO“, odstraněn defaultní rok 2079.",
-      },
-      {
-        id: "old_label",
-        title: "Původní skupina přejmenována - přidáno OLD/Hvězdička.",
-      },
-      {
-        id: "new_label",
-        title: "Nová skupina přejmenována, odstraněno „NEW“ na začátku a podtržítko na konci.",
-      },
-      {
-        id: "new_box_added",
-        title: "Nový AlzaBox přidán na konec nové skupiny.",
-      },
-      {
-        id: "time_correction",
-        title: "Vyplněna správná časová korekce, případně 0, pokud není požadována.",
-      },
-      {
-        id: "route_order",
-        title: "Nastaveno pořadí boxů na trase dle zadání.",
-      },
-      {
-        id: "asana_log",
-        title: "V Asaně založen task na LOG pro nastavení řídicích pravidel.",
-      },
-      {
-        id: "task_status",
-        title: "Původní task k AB přepnut do stavu „nastavené boxy“.",
-      },
-    ],
-  },
-  {
-    title: "2. Změny a deaktivace AlzaBoxů",
-    summary: "Změny pořadí a bezpečné odebrání boxu z trasy.",
-    items: [
-      {
-        id: "route_change",
-        title: "Změna pořadí boxů na aktivní trase.",
-      },
-      {
-        id: "group_closed",
-        title: "Platnost stávající skupiny ukončena.",
-      },
-      {
-        id: "history_order",
-        title: "Vytvořena nová skupina, aby se nezměnilo pořadí na historických štítcích.",
-      },
-      {
-        id: "uninstall_box",
-        title: "Deinstalovaný box odebrán z nové skupiny.",
-      },
-    ],
-  },
-  {
-    title: "3. Nastavení nové trasy",
-    summary: "Krok za krokem od skupiny přes přepravní směr až po svoz.",
-    items: [
-      {
-        id: "route_group",
-        title: "Založena Skupina přepravních směrů ve formátu AB – Zkratka státu – Trasa.",
-      },
-      {
-        id: "carrier_direction",
-        title: "Založen Přepravní směr ve formátu Dopravce – AB – Trasa.",
-      },
-      {
-        id: "primary_carrier",
-        title: "U přepravního směru vybrán primární dopravce, nastaveny atributy, vstupní depo DEFAULT a vypsána cache.",
-        note: "Pozor: když není vyplněné DEFAULT, rozbijeme trasování svozů a může to mít výrazný dopad na provoz.",
-      },
-      {
-        id: "pickup_copy",
-        title: "V nastavení svozů vytvořena kopie existující trasy a přiřazen nový Přepravní směr.",
-      },
-      {
-        id: "route_activity",
-        title: "Trasa má aktivitu = 3 a popis ve formátu AB – Sklad – Trasa.",
-      },
-      {
-        id: "route_days",
-        title: "Správně vyplněny dny svozu, zdrojová pobočka a limity dle zadání.",
-      },
-      {
-        id: "route_timing",
-        title: "Správně nastaven čas svozu, čas doručení a dodání.",
-      },
-      {
-        id: "old_route_validity",
-        title: "Na staré trase a starých boxech nastavena platnost „DO“ s hodinovou rezervou po posledním doručení.",
-      },
-      {
-        id: "pickup_row",
-        title: "Ve Výdejních místech vytvořen nový řádek pro trasu, přiřazen přepravní směr a přidány boxy.",
-      },
-    ],
-  },
-  {
-    title: "4. Zpětný tok a vratkovací pravidla",
-    summary: "Nastavení vratkovacích pravidel a speciálních tras.",
-    items: [
-      {
-        id: "return_goods",
-        title: "Nastavena vratkovací pravidla Alza zboží – LC.",
-      },
-      {
-        id: "return_claims",
-        title: "Nastavena vratkovací pravidla Alza reklamace – LC.",
-      },
-      {
-        id: "drop_rules",
-        title: "Nastavena vratkovací pravidla DROP zboží / DROP reklamace / BxB – TC.",
-      },
-      {
-        id: "special_routes",
-        title: "U speciálních tras z Chrášťan nastaven zpětný tok kompletně na jednom místě.",
-      },
-    ],
-  },
-  {
-    title: "5. Generování rout a finální kontrola",
-    summary: "Kontrola před generováním a ověření, že se routy propsaly správně.",
-    items: [
-      {
-        id: "check_before_generate",
-        title: "Před generováním rout kliknuto na „Zkontrolovat“.",
-      },
-      {
-        id: "error_column",
-        title: "Ve sloupci „Chyba popis“ nejsou žádná chybová hlášení.",
-      },
-      {
-        id: "generate_routes",
-        title: "Kliknuto na „Vygenerovat routy“.",
-      },
-      {
-        id: "routes_persisted",
-        title: "Routy se úspěšně propsaly.",
-      },
-    ],
-  },
-];
-
+const CHECKLIST_DEFAULT_PAGE_ID = "alzaboxy-a-trasy";
 const CHECKLIST_STORAGE_KEY = "near-miss-tracker.checklist";
+const CHECKLIST_PAGE_KEY = "near-miss-tracker.checklist.page";
 
-function createDefaultChecklistState() {
+const CHECKLIST_PAGES = {
+  "alzaboxy-a-trasy": {
+    breadcrumb: "Checklist",
+    eyebrow: "ALZABOXY A TRASY",
+    title: "AlzaBoxy a trasy",
+    description:
+      "Checklist pro spuštění nového AlzaBoxu, změny pořadí a deinstalace boxů, nastavení nové trasy, vratkové pravidlo a finální kontrolu rout.",
+    chip: "Rychlý vstup do správy obsahu a pracovních stavů.",
+    sections: [
+      {
+        title: "1. Spuštění nového AlzaBoxu do existující trasy",
+        summary: "První nasazení boxu do existující trasy a nové skupiny.",
+        items: [
+          {
+            id: "route_plan",
+            title: "Zkopírován kód dopravce (ABXXXX) ze zadání v tasku.",
+          },
+          {
+            id: "box_status",
+            title: "Nalezena správná cílová skupina ve Skupinách výdejních míst.",
+          },
+          {
+            id: "capacity_check",
+            title: "U původní skupiny ukončena platnost „DO“ den před spuštěním boxu.",
+          },
+          {
+            id: "original_group_copy",
+            title: "Vytvořena kopie původní skupiny.",
+          },
+          {
+            id: "new_group_validity",
+            title: "U nové skupiny opravena platnost „OD“ a „DO“, odstraněn defaultní rok 2079.",
+          },
+          {
+            id: "old_label",
+            title: "Původní skupina přejmenována - přidáno OLD/Hvězdička.",
+          },
+          {
+            id: "new_label",
+            title: "Nová skupina přejmenována, odstraněno „NEW“ na začátku a podtržítko na konci.",
+          },
+          {
+            id: "new_box_added",
+            title: "Nový AlzaBox přidán na konec nové skupiny.",
+          },
+          {
+            id: "time_correction",
+            title: "Vyplněna správná časová korekce, případně 0, pokud není požadována.",
+          },
+          {
+            id: "route_order",
+            title: "Nastaveno pořadí boxů na trase dle zadání.",
+          },
+          {
+            id: "asana_log",
+            title: "V Asaně založen task na LOG pro nastavení řídicích pravidel.",
+          },
+          {
+            id: "task_status",
+            title: "Původní task k AB přepnut do stavu „nastavené boxy“.",
+          },
+        ],
+      },
+      {
+        title: "2. Změny a deaktivace AlzaBoxů",
+        summary: "Změny pořadí a bezpečné odebrání boxu z trasy.",
+        items: [
+          {
+            id: "route_change",
+            title: "Změna pořadí boxů na aktivní trase.",
+          },
+          {
+            id: "group_closed",
+            title: "Platnost stávající skupiny ukončena.",
+          },
+          {
+            id: "history_order",
+            title: "Vytvořena nová skupina, aby se nezměnilo pořadí na historických štítcích.",
+          },
+          {
+            id: "uninstall_box",
+            title: "Deinstalovaný box odebrán z nové skupiny.",
+          },
+        ],
+      },
+      {
+        title: "3. Nastavení nové trasy",
+        summary: "Krok za krokem od skupiny přes přepravní směr až po svoz.",
+        items: [
+          {
+            id: "route_group",
+            title: "Založena Skupina přepravních směrů ve formátu AB – Zkratka státu – Trasa.",
+          },
+          {
+            id: "carrier_direction",
+            title: "Založen Přepravní směr ve formátu Dopravce – AB – Trasa.",
+          },
+          {
+            id: "primary_carrier",
+            title:
+              "U přepravního směru vybrán primární dopravce, nastaveny atributy, vstupní depo DEFAULT a vypsána cache.",
+            note: "Pozor: když není vyplněné DEFAULT, rozbijeme trasování svozů a může to mít výrazný dopad na provoz.",
+          },
+          {
+            id: "pickup_copy",
+            title: "V nastavení svozů vytvořena kopie existující trasy a přiřazen nový Přepravní směr.",
+          },
+          {
+            id: "route_activity",
+            title: "Trasa má aktivitu = 3 a popis ve formátu AB – Sklad – Trasa.",
+          },
+          {
+            id: "route_days",
+            title: "Správně vyplněny dny svozu, zdrojová pobočka a limity dle zadání.",
+          },
+          {
+            id: "route_timing",
+            title: "Správně nastaven čas svozu, čas doručení a dodání.",
+          },
+          {
+            id: "old_route_validity",
+            title: "Na staré trase a starých boxech nastavena platnost „DO“ s hodinovou rezervou po posledním doručení.",
+          },
+          {
+            id: "pickup_row",
+            title: "Ve Výdejních místech vytvořen nový řádek pro trasu, přiřazen přepravní směr a přidány boxy.",
+          },
+        ],
+      },
+      {
+        title: "4. Zpětný tok a vratkovací pravidla",
+        summary: "Nastavení vratkovacích pravidel a speciálních tras.",
+        items: [
+          {
+            id: "return_goods",
+            title: "Nastavena vratkovací pravidla Alza zboží – LC.",
+          },
+          {
+            id: "return_claims",
+            title: "Nastavena vratkovací pravidla Alza reklamace – LC.",
+          },
+          {
+            id: "drop_rules",
+            title: "Nastavena vratkovací pravidla DROP zboží / DROP reklamace / BxB – TC.",
+          },
+          {
+            id: "special_routes",
+            title: "U speciálních tras z Chrášťan nastaven zpětný tok kompletně na jednom místě.",
+          },
+        ],
+      },
+      {
+        title: "5. Generování rout a finální kontrola",
+        summary: "Kontrola před generováním a ověření, že se routy propsaly správně.",
+        items: [
+          {
+            id: "check_before_generate",
+            title: "Před generováním rout kliknuto na „Zkontrolovat“.",
+          },
+          {
+            id: "error_column",
+            title: "Ve sloupci „Chyba popis“ nejsou žádná chybová hlášení.",
+          },
+          {
+            id: "generate_routes",
+            title: "Kliknuto na „Vygenerovat routy“.",
+          },
+          {
+            id: "routes_persisted",
+            title: "Routy se úspěšně propsaly.",
+          },
+        ],
+      },
+    ],
+  },
+  "drop-1-0": {
+    breadcrumb: "Drop 1.0",
+    eyebrow: "DROP 1.0",
+    title: "Checklist dropshipment 1.0",
+    description:
+      "Pracovní checklist pro nastavení dropshipment 1.0 v konzoli. Položky si můžeš odškrtávat přímo v prohlížeči a stav se ukládá lokálně.",
+    chip: "Rychlý vstup do správy obsahu a pracovních stavů.",
+    sections: [
+      {
+        title: "1. FÁZE NA TESTY",
+        summary: "Příprava testovacího stavu před spuštěním na web.",
+        items: [
+          {
+            id: "copy_carrier_route",
+            title:
+              "Kopírování svozu: Zkopírovat vzorový svoz z již nastaveného dropera se stejným dopravcem (např. satomar01 nebo boisservices01).",
+          },
+          {
+            id: "change_source_branch",
+            title: "LAD > Nastavení svozu: Změnit zdrojovou pobočku dle úkolu v Asaně.",
+          },
+          {
+            id: "edit_description",
+            title:
+              "LAD > Nastavení svozu: Upravit „Popis“ svozu (např. Zdrojová pobočka – Cílová pobočka).",
+          },
+          {
+            id: "edit_billing",
+            title:
+              "LAD > Nastavení svozu: Upravit „Fakturace limit“ (COT), čas svozu, „Doručení řidiči“ a „T&T“ podle zadání.",
+          },
+          {
+            id: "test_active_column",
+            title: "LAD > Nastavení svozů: Pro testy nastavit sloupec Aktivní = 2.",
+          },
+          {
+            id: "drop_states",
+            title:
+              "Dropshipment > Povolené státy: Vyfiltrovat sklad, zaškrtnout cílové státy (Aktivní na WEBu pro testy ZŮSTÁVÁ NEZAŠKRTNUTÉ).",
+          },
+          {
+            id: "drop_branches",
+            title:
+              "Dropshipment > Povolené pobočky: Vybrat sklad a zaškrtnout testovací pobočky (minimálně ČZ Budějovická a ČZ Kladno).",
+          },
+          {
+            id: "branches_active",
+            title: "Pobočky/Alzaboxy (Doprava na pobočky): U testovacích poboček zaškrtnout checkbox „Aktivní“.",
+          },
+        ],
+      },
+      {
+        title: "2. SPUŠTĚNÍ NA WEB",
+        summary: "Přepnutí do produkčního režimu podle typu dopravce.",
+        items: [
+          {
+            id: "standard_carriers",
+            title: "Standardní dopravci (DPD, TopTrans, GW, Zásilkovna, atd.):",
+          },
+          {
+            id: "branches_web_active",
+            title: "Pobočky: Zaškrtnout checkbox „Aktivní na webu“.",
+          },
+          {
+            id: "swaps_active",
+            title: "Svozy: Upravit COT, čas a platnost dle zadání. Nastavit Aktivní = 3.",
+          },
+          {
+            id: "virtual_swaps",
+            title:
+              "Svozy (Virtuál): Nikdy nekopírovat virtuální dopravu z jiné virtuální dopravy. Vždy kopírovat ze svozu DPD Standard pro virtuální dopravu → Smazat přepravní směr → Změnit Doprava ID na „Virtuální doprava“ → Změnit Detail dopravy ID na „Virtuální doprava CZ“.",
+          },
+          {
+            id: "carrier_add",
+            title:
+              "Dopravy > Dopravy: Přidat nový záznam (Ctrl+N) pro virtuální dopravu, nastavit cílovou dopravu dle dopravce, vyplnit pobočku dropera, zaškrtnout „Aktivní“.",
+          },
+          {
+            id: "drop_states_web",
+            title: "Dropshipment > Povolené státy: Aktivovat země dle zadání v Asaně.",
+          },
+          {
+            id: "drop_branches_web",
+            title:
+              "Dropshipment > Povolené pobočky: Zaškrtnout všechny povolené pobočky pro CZ a další země.",
+          },
+          {
+            id: "delivery_11",
+            title:
+              "Dropshipment > Delivery 1.1: U detailu DPD - AlzaBox zaškrtnout „Sloučení rezervace“ (u droperů ASM pro CZ doručení zapnout i „Přesměrování“).",
+          },
+        ],
+      },
+      {
+        title: "3. ÚPRAVY A POSUNY FAKTURACE",
+        summary: "Fakturace, víkendy, změny typu dopravy a poznámky.",
+        items: [
+          {
+            id: "billing_shift",
+            title:
+              "Posun limitu: Nastavit „Limit fakturace (dny)“ dle Excel kalkulačky. Vytvořit adekvátní počet svozů (odlišené kombinací dnů doručení, max. posun fakturace je 10 dnů).",
+          },
+          {
+            id: "weekend_swaps",
+            title:
+              "Víkendové svozy: Pokud se nastavují svozy na víkend, změnit sloupec „Doručení pouze prac. dny“ z hodnoty 2 na hodnotu 1.",
+          },
+          {
+            id: "asm_to_dsm",
+            title: "Změna ASM/ATM na DSM/DTM: Ukončit staré svozy přes datum a založit nové.",
+          },
+          {
+            id: "notes",
+            title: "Poznámky: Veškeré specifické anomálie zapsat do sloupce „Poznámka definice svozu“.",
+          },
+        ],
+      },
+      {
+        title: "4. UKONČENÍ SVOZŮ",
+        summary: "Bezpečné ukončení po přechodu nebo při vyřazení.",
+        items: [
+          {
+            id: "valid_until",
+            title: "Nastavit datum do sloupce „Platnost do“.",
+          },
+          {
+            id: "uncheck_web_active",
+            title: "Odškrtnout „Aktivní na webu“ v definici dropera (aby nešel objednat na webu).",
+          },
+        ],
+      },
+    ],
+  },
+};
+
+function getChecklistPage(pageId = CHECKLIST_DEFAULT_PAGE_ID) {
+  return CHECKLIST_PAGES[pageId] || CHECKLIST_PAGES[CHECKLIST_DEFAULT_PAGE_ID];
+}
+
+function getChecklistSections(pageId = CHECKLIST_DEFAULT_PAGE_ID) {
+  return getChecklistPage(pageId).sections;
+}
+
+function readChecklistPageId() {
+  try {
+    const value = localStorage.getItem(CHECKLIST_PAGE_KEY);
+    return value && CHECKLIST_PAGES[value] ? value : CHECKLIST_DEFAULT_PAGE_ID;
+  } catch {
+    return CHECKLIST_DEFAULT_PAGE_ID;
+  }
+}
+
+function saveChecklistPageId(pageId) {
+  try {
+    localStorage.setItem(CHECKLIST_PAGE_KEY, pageId);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function createDefaultChecklistState(pageId = CHECKLIST_DEFAULT_PAGE_ID) {
   const items = {};
-  for (const section of CHECKLIST_SECTIONS) {
+  for (const section of getChecklistSections(pageId)) {
     for (const item of section.items) {
       items[item.id] = false;
     }
@@ -229,7 +400,8 @@ const state = {
   items: [],
   users: [],
   search: "",
-  checklist: createDefaultChecklistState(),
+  checklistPageId: readChecklistPageId(),
+  checklist: createDefaultChecklistState(readChecklistPageId()),
   filters: {
     status: "all",
     priority: "all",
@@ -330,6 +502,12 @@ const recordsPanel = document.getElementById("recordsPanel");
 const checklistPanel = document.getElementById("checklistPanel");
 const adminPanel = document.getElementById("adminPanel");
 const checklistGroupsEl = document.getElementById("checklistGroups");
+const checklistBreadcrumbCurrentEl = document.getElementById("checklistBreadcrumbCurrent");
+const checklistPageButtons = document.querySelectorAll("[data-checklist-page]");
+const checklistPageEyebrowEl = document.getElementById("checklistPageEyebrow");
+const checklistPageTitleEl = document.getElementById("checklistPageTitle");
+const checklistPageDescriptionEl = document.getElementById("checklistPageDescription");
+const checklistIntroChipEl = document.getElementById("checklistIntroChip");
 const checklistPercentEl = document.getElementById("checklistPercent");
 const checklistCounterEl = document.getElementById("checklistCounter");
 const checklistCompletedStepsEl = document.getElementById("checklistCompletedSteps");
@@ -434,15 +612,15 @@ function formatDate(value) {
   }).format(date);
 }
 
-function checklistStorageId() {
+function checklistStorageId(pageId = state.checklistPageId) {
   const email = state.user?.email || "guest";
-  return `${CHECKLIST_STORAGE_KEY}.${email}`;
+  return `${CHECKLIST_STORAGE_KEY}.${email}.${pageId}`;
 }
 
-function loadChecklistState() {
-  const defaults = createDefaultChecklistState();
+function loadChecklistState(pageId = state.checklistPageId) {
+  const defaults = createDefaultChecklistState(pageId);
   try {
-    const raw = localStorage.getItem(checklistStorageId());
+    const raw = localStorage.getItem(checklistStorageId(pageId));
     if (!raw) return defaults;
     const parsed = JSON.parse(raw);
     const items = { ...defaults.items, ...(parsed?.items || {}) };
@@ -455,22 +633,23 @@ function loadChecklistState() {
   }
 }
 
-function saveChecklistState() {
+function saveChecklistState(pageId = state.checklistPageId) {
   try {
-    localStorage.setItem(checklistStorageId(), JSON.stringify(state.checklist));
+    localStorage.setItem(checklistStorageId(pageId), JSON.stringify(state.checklist));
   } catch {
     // Ignore storage failures.
   }
 }
 
 function getChecklistStats() {
-  const total = CHECKLIST_SECTIONS.reduce((count, section) => count + section.items.length, 0);
-  const completed = CHECKLIST_SECTIONS.reduce(
+  const sections = getChecklistSections();
+  const total = sections.reduce((count, section) => count + section.items.length, 0);
+  const completed = sections.reduce(
     (count, section) => count + section.items.filter((item) => Boolean(state.checklist.items[item.id])).length,
     0
   );
-  const totalSections = CHECKLIST_SECTIONS.length;
-  const completedSections = CHECKLIST_SECTIONS.filter((section) =>
+  const totalSections = sections.length;
+  const completedSections = sections.filter((section) =>
     section.items.every((item) => Boolean(state.checklist.items[item.id]))
   ).length;
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -487,7 +666,28 @@ function getChecklistStats() {
 function renderChecklist() {
   if (!checklistGroupsEl) return;
 
+  const page = getChecklistPage();
   const stats = getChecklistStats();
+  if (checklistBreadcrumbCurrentEl) {
+    checklistBreadcrumbCurrentEl.textContent = page.breadcrumb;
+  }
+  if (checklistPageEyebrowEl) {
+    checklistPageEyebrowEl.textContent = page.eyebrow;
+  }
+  if (checklistPageTitleEl) {
+    checklistPageTitleEl.textContent = page.title;
+  }
+  if (checklistPageDescriptionEl) {
+    checklistPageDescriptionEl.textContent = page.description;
+  }
+  if (checklistIntroChipEl) {
+    checklistIntroChipEl.textContent = page.chip;
+  }
+  checklistPageButtons.forEach((button) => {
+    const active = button.dataset.checklistPage === state.checklistPageId;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-selected", active ? "true" : "false");
+  });
   checklistPercentEl.textContent = `${stats.percent} %`;
   checklistCounterEl.textContent = `${stats.completed} / ${stats.total} hotovo`;
   if (checklistCompletedStepsEl) {
@@ -502,13 +702,13 @@ function renderChecklist() {
   checklistProgressBarEl.style.width = `${stats.percent}%`;
 
   if (stats.total === 0) {
-    checklistStatusTextEl.textContent = "Checklist zatím nemá žádné položky.";
+    checklistStatusTextEl.textContent = `Checklist ${page.title} zatím nemá žádné položky.`;
   } else if (stats.remaining === 0) {
-    checklistStatusTextEl.textContent = "Všechno je hotové. Trasa je připravená.";
+    checklistStatusTextEl.textContent = `Všechno je hotové. Checklist ${page.title} je připravený.`;
   } else if (stats.remaining === 1) {
-    checklistStatusTextEl.textContent = "Chybí už jen 1 bod ke splnění checklistu.";
+    checklistStatusTextEl.textContent = `Chybí už jen 1 bod ke splnění checklistu ${page.title}.`;
   } else {
-    checklistStatusTextEl.textContent = `Zbývá doplnit ${stats.remaining} bodů checklistu.`;
+    checklistStatusTextEl.textContent = `Zbývá doplnit ${stats.remaining} bodů checklistu ${page.title}.`;
   }
 
   checklistUpdatedAtEl.textContent = state.checklist.updatedAt
@@ -517,7 +717,7 @@ function renderChecklist() {
 
   checklistGroupsEl.innerHTML = "";
 
-  for (const section of CHECKLIST_SECTIONS) {
+  for (const section of getChecklistSections()) {
     const sectionNode = document.createElement("section");
     sectionNode.className = "checklist-group";
 
@@ -580,8 +780,19 @@ function renderChecklist() {
   }
 }
 
+function switchChecklistPage(pageId) {
+  if (!CHECKLIST_PAGES[pageId] || pageId === state.checklistPageId) {
+    return;
+  }
+
+  state.checklistPageId = pageId;
+  saveChecklistPageId(pageId);
+  state.checklist = loadChecklistState(pageId);
+  renderChecklist();
+}
+
 function resetChecklist() {
-  state.checklist = createDefaultChecklistState();
+  state.checklist = createDefaultChecklistState(state.checklistPageId);
   saveChecklistState();
   renderChecklist();
 }
@@ -1125,7 +1336,7 @@ function handleSessionExpired() {
   state.csrfToken = null;
   state.items = [];
   state.users = [];
-  state.checklist = createDefaultChecklistState();
+  state.checklist = createDefaultChecklistState(state.checklistPageId);
   clearUserSelection();
   state.appSection = "home";
   closeEditModal();
@@ -1222,7 +1433,8 @@ function enterApp(user, csrfToken = null, initialSection = getSectionFromHash() 
     state.csrfToken = csrfToken;
   }
   currentUserEmailEl.textContent = user.email;
-  state.checklist = loadChecklistState();
+  state.checklistPageId = readChecklistPageId();
+  state.checklist = loadChecklistState(state.checklistPageId);
   authView.classList.add("hidden");
   appView.classList.remove("hidden");
   resetSearch();
@@ -2250,6 +2462,12 @@ resetChecklistButton?.addEventListener("click", async () => {
   if (!confirmed) return;
   resetChecklist();
   showToast("Checklist byl vynulován.", "success");
+});
+
+checklistPageButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    switchChecklistPage(button.dataset.checklistPage);
+  });
 });
 
 async function start() {
