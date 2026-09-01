@@ -339,6 +339,117 @@ const CHECKLIST_PAGES = {
       },
     ],
   },
+  "drop-2-0": {
+    breadcrumb: "Drop 2.0",
+    eyebrow: "DROP 2.0",
+    title: "Checklist dropshipment 2.0",
+    description:
+      "Pracovní checklist pro nastavení dropshipment 2.0 v konzoli. Položky si můžeš odškrtávat přímo v prohlížeči a stav se ukládá lokálně.",
+    sections: [
+      {
+        title: "LAD > Pobočky/alzaboxy > Pobočky",
+        summary: "První krok: droper a šablona pobočky.",
+        items: [
+          {
+            id: "drop2_enable_template",
+            title: "U dropera zaškrtnout „Používá šablonu“",
+          },
+          {
+            id: "drop2_activate_expedition_template",
+            title: "U „Expedition template XY“ zaškrtnout „Aktivní“",
+          },
+        ],
+      },
+      {
+        title: "LAD > Pobočky/alzaboxy > Skupina poboček",
+        summary: "Nastavení skupiny a platnosti podle tasku.",
+        items: [
+          {
+            id: "drop2_clear_source_branch_cache",
+            title: "Vyčistit cache pro sloupec „zdrojová pobočka“",
+          },
+          {
+            id: "drop2_insert_dropper",
+            title: "Vložit dropera",
+          },
+          {
+            id: "drop2_set_valid_from",
+            title: "Nastavit „Platnost od“ podle tasku",
+          },
+        ],
+      },
+      {
+        title: "Dropshipment > Povolené státy",
+        summary: "Povolení států pro dropery i template.",
+        items: [
+          {
+            id: "drop2_allow_cz_sk",
+            title: "Povolit CZ a SK u droperů i templatu",
+          },
+          {
+            id: "drop2_add_hu",
+            title: "Přidat HU, pokud je potřeba",
+          },
+        ],
+      },
+      {
+        title: "Dropshipment > Povolené pobočky",
+        summary: "Doplnění všech relevantních poboček.",
+        items: [
+          {
+            id: "drop2_cz_all_branches",
+            title: "CZ – všechny pobočky",
+          },
+          {
+            id: "drop2_sk_all_branches",
+            title: "SK – doplnit všechny, pokud chybí",
+          },
+          {
+            id: "drop2_hu_all_branches",
+            title: "HU – doplnit všechny, pokud chybí",
+          },
+        ],
+      },
+      {
+        title: "LAD > Svozy > Nastavení svozů",
+        summary: "Vytvoření svozu, dohledání template a případně nový přepravní směr.",
+        items: [
+          {
+            id: "drop2_create_pickup",
+            title: "Vytvořit nový svoz podle zadání",
+          },
+          {
+            id: "drop2_find_source_template",
+            title: "Vyhledat ve zdrojové pobočce podle „Expedition template #%“",
+          },
+          {
+            id: "drop2_set_delivery_time",
+            title: "Nastavit čas doručení na 21:01",
+          },
+          {
+            id: "drop2_create_transport_direction",
+            title: "(Volitelně) Vytvořit nový přepravní směr, pokud jde o novou trasu",
+            note: "Použij jen v případě, že daná trasa ještě neexistuje.",
+          },
+        ],
+      },
+      {
+        title: "LAD > Svozy > Ukončení svozů",
+        summary: "Ukončení starých svozů a nastavení platnosti do dne před novou šablonou.",
+        items: [
+          {
+            id: "drop2_end_dropper_pickups",
+            title: "Ukončit na droperovi svozy pro pobočky a alzaboxy",
+          },
+          {
+            id: "drop2_set_valid_until",
+            title: "Nastavit „Platnost do“ na den před „Platnost od“ nové šablony",
+          },
+        ],
+      },
+    ],
+  },
+
 };
 
 function getChecklistPage(pageId = CHECKLIST_DEFAULT_PAGE_ID) {
