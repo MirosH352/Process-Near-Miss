@@ -40,7 +40,6 @@ const CHECKLIST_PAGES = {
     title: "AlzaBoxy a trasy",
     description:
       "Checklist pro spuštění nového AlzaBoxu, změny pořadí a deinstalace boxů, nastavení nové trasy, vratkové pravidlo a finální kontrolu rout.",
-    chip: "Rychlý vstup do správy obsahu a pracovních stavů.",
     sections: [
       {
         title: "1. Spuštění nového AlzaBoxu do existující trasy",
@@ -214,7 +213,6 @@ const CHECKLIST_PAGES = {
     title: "Checklist dropshipment 1.0",
     description:
       "Pracovní checklist pro nastavení dropshipment 1.0 v konzoli. Položky si můžeš odškrtávat přímo v prohlížeči a stav se ukládá lokálně.",
-    chip: "Rychlý vstup do správy obsahu a pracovních stavů.",
     sections: [
       {
         title: "1. FÁZE NA TESTY",
@@ -507,7 +505,6 @@ const checklistPageButtons = document.querySelectorAll("[data-checklist-page]");
 const checklistPageEyebrowEl = document.getElementById("checklistPageEyebrow");
 const checklistPageTitleEl = document.getElementById("checklistPageTitle");
 const checklistPageDescriptionEl = document.getElementById("checklistPageDescription");
-const checklistIntroChipEl = document.getElementById("checklistIntroChip");
 const checklistPercentEl = document.getElementById("checklistPercent");
 const checklistCounterEl = document.getElementById("checklistCounter");
 const checklistCompletedStepsEl = document.getElementById("checklistCompletedSteps");
@@ -642,7 +639,7 @@ function saveChecklistState(pageId = state.checklistPageId) {
 }
 
 function getChecklistStats() {
-  const sections = getChecklistSections();
+  const sections = getChecklistSections(state.checklistPageId);
   const total = sections.reduce((count, section) => count + section.items.length, 0);
   const completed = sections.reduce(
     (count, section) => count + section.items.filter((item) => Boolean(state.checklist.items[item.id])).length,
@@ -666,7 +663,7 @@ function getChecklistStats() {
 function renderChecklist() {
   if (!checklistGroupsEl) return;
 
-  const page = getChecklistPage();
+  const page = getChecklistPage(state.checklistPageId);
   const stats = getChecklistStats();
   if (checklistBreadcrumbCurrentEl) {
     checklistBreadcrumbCurrentEl.textContent = page.breadcrumb;
@@ -679,9 +676,6 @@ function renderChecklist() {
   }
   if (checklistPageDescriptionEl) {
     checklistPageDescriptionEl.textContent = page.description;
-  }
-  if (checklistIntroChipEl) {
-    checklistIntroChipEl.textContent = page.chip;
   }
   checklistPageButtons.forEach((button) => {
     const active = button.dataset.checklistPage === state.checklistPageId;
@@ -717,7 +711,7 @@ function renderChecklist() {
 
   checklistGroupsEl.innerHTML = "";
 
-  for (const section of getChecklistSections()) {
+  for (const section of getChecklistSections(state.checklistPageId)) {
     const sectionNode = document.createElement("section");
     sectionNode.className = "checklist-group";
 
