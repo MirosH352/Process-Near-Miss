@@ -420,6 +420,8 @@ const state = {
   detailItem: null,
   confirmResolver: null,
   expandedBoardStatuses: new Set(),
+  expandedChecklistSections: new Set(),
+  expandedChecklistPageId: null,
 };
 
 const authView = document.getElementById("authView");
@@ -513,6 +515,9 @@ const checklistTotalStepsEl = document.getElementById("checklistTotalSteps");
 const checklistProgressBarEl = document.getElementById("checklistProgressBar");
 const checklistStatusTextEl = document.getElementById("checklistStatusText");
 const checklistUpdatedAtEl = document.getElementById("checklistUpdatedAt");
+const checklistToggleAllButton = document.getElementById("checklistToggleAll");
+const checklistSectionNavEl = document.getElementById("checklistSectionNav");
+const checklistNextIncompleteButton = document.getElementById("checklistNextIncomplete");
 const resetChecklistButton = document.getElementById("resetChecklistButton");
 const toastRegion = document.getElementById("toastRegion");
 const homeTiles = document.querySelectorAll("[data-home-target]");
@@ -660,11 +665,94 @@ function getChecklistStats() {
   };
 }
 
+function getChecklistSectionStats(section) {
+  const completed = section.items.filter((item) => Boolean(state.checklist.items[item.id])).length;
+  return {
+    completed,
+    total: section.items.length,
+    complete: section.items.length > 0 && completed === section.items.length,
+  };
+}
+
+function ensureChecklistSectionState(sections) {
+  if (state.expandedChecklistPageId === state.checklistPageId) return;
+
+  state.expandedChecklistPageId = state.checklistPageId;
+  state.expandedChecklistSections = new Set();
+  const firstIncomplete = sections.findIndex((section) => !getChecklistSectionStats(section).complete);
+  if (firstIncomplete >= 0) {
+    state.expandedChecklistSections.add(firstIncomplete);
+  } else if (sections.length > 0) {
+    state.expandedChecklistSections.add(0);
+  }
+}
+
+function setChecklistSectionExpanded(index, expanded) {
+  if (expanded) {
+    state.expandedChecklistSections.add(index);
+  } else {
+    state.expandedChecklistSections.delete(index);
+  }
+  renderChecklist();
+}
+
+function scrollToChecklistSection(index) {
+  const sectionNode = document.getElementById(`checklist-section-${index}`);
+  sectionNode?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function focusNextIncompleteChecklistItem() {
+  const sections = getChecklistSections(state.checklistPageId);
+  for (let sectionIndex = 0; sectionIndex < sections.length; sectionIndex += 1) {
+    const section = sections[sectionIndex];
+    const itemIndex = section.items.findIndex((item) => !state.checklist.items[item.id]);
+    if (itemIndex < 0) continue;
+
+    state.expandedChecklistSections.add(sectionIndex);
+    renderChecklist();
+    requestAnimationFrame(() => {
+      const itemNode = document.getElementById(`checklist-item-${sectionIndex}-${itemIndex}`);
+      itemNode?.scrollIntoView({ behavior: "smooth", block: "center" });
+      itemNode?.focus({ preventScroll: true });
+    });
+    return;
+  }
+}
+
+function renderChecklistSectionNav(sections) {
+  if (!checklistSectionNavEl) return;
+  checklistSectionNavEl.innerHTML = "";
+
+  sections.forEach((section, index) => {
+    const sectionStats = getChecklistSectionStats(section);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `checklist-section-link${sectionStats.complete ? " is-complete" : ""}`;
+    button.setAttribute("aria-controls", `checklist-section-${index}`);
+    button.innerHTML = `
+      <span class="checklist-section-link-number">${index + 1}</span>
+      <span class="checklist-section-link-copy">
+        <strong>${section.title.replace(/^\d+\.\s*/, "")}</strong>
+        <span>${sectionStats.completed}/${sectionStats.total}</span>
+      </span>
+      <span class="checklist-section-link-status" aria-hidden="true">${sectionStats.complete ? "✓" : ""}</span>
+    `;
+    button.addEventListener("click", () => {
+      state.expandedChecklistSections.add(index);
+      renderChecklist();
+      requestAnimationFrame(() => scrollToChecklistSection(index));
+    });
+    checklistSectionNavEl.appendChild(button);
+  });
+}
+
 function renderChecklist() {
   if (!checklistGroupsEl) return;
 
   const page = getChecklistPage(state.checklistPageId);
   const stats = getChecklistStats();
+  const sections = getChecklistSections(state.checklistPageId);
+  ensureChecklistSectionState(sections);
   if (checklistBreadcrumbCurrentEl) {
     checklistBreadcrumbCurrentEl.textContent = page.breadcrumb;
   }
@@ -708,39 +796,73 @@ function renderChecklist() {
   checklistUpdatedAtEl.textContent = state.checklist.updatedAt
     ? `Naposledy uloženo: ${formatDate(state.checklist.updatedAt)}`
     : "Ještě neuloženo";
+  checklistStatusTextEl.closest(".checklist-meta-card")?.classList.toggle("is-complete", stats.remaining === 0);
+
+  renderChecklistSectionNav(sections);
+  const allSectionsExpanded = sections.length > 0 && sections.every((_, index) => state.expandedChecklistSections.has(index));
+  if (checklistToggleAllButton) {
+    checklistToggleAllButton.textContent = allSectionsExpanded ? "Sbalit vše" : "Rozbalit vše";
+    checklistToggleAllButton.setAttribute("aria-expanded", allSectionsExpanded ? "true" : "false");
+  }
+  if (checklistNextIncompleteButton) {
+    checklistNextIncompleteButton.hidden = stats.remaining === 0;
+  }
 
   checklistGroupsEl.innerHTML = "";
 
-  for (const section of getChecklistSections(state.checklistPageId)) {
+  sections.forEach((section, sectionIndex) => {
+    const sectionStats = getChecklistSectionStats(section);
+    const sectionExpanded = state.expandedChecklistSections.has(sectionIndex);
     const sectionNode = document.createElement("section");
-    sectionNode.className = "checklist-group";
+    sectionNode.id = `checklist-section-${sectionIndex}`;
+    sectionNode.className = `checklist-group${sectionExpanded ? " is-open" : " is-collapsed"}${sectionStats.complete ? " is-complete" : ""}`;
 
-    const header = document.createElement("div");
+    const header = document.createElement("button");
+    header.type = "button";
     header.className = "checklist-group-head";
+    header.setAttribute("aria-expanded", sectionExpanded ? "true" : "false");
+    header.setAttribute("aria-controls", `checklist-items-${sectionIndex}`);
     const titleWrap = document.createElement("div");
     titleWrap.className = "checklist-group-copy";
+    const sectionNumber = document.createElement("span");
+    sectionNumber.className = "checklist-section-number";
+    sectionNumber.textContent = String(sectionIndex + 1).padStart(2, "0");
     const title = document.createElement("h3");
-    title.textContent = section.title;
-    titleWrap.appendChild(title);
+    title.textContent = section.title.replace(/^\d+\.\s*/, "");
+    const titleLine = document.createElement("span");
+    titleLine.className = "checklist-group-title-line";
+    titleLine.append(sectionNumber, title);
+    titleWrap.appendChild(titleLine);
     if (section.summary) {
       const summary = document.createElement("p");
       summary.className = "checklist-group-summary";
       summary.textContent = section.summary;
       titleWrap.appendChild(summary);
     }
-    const counter = document.createElement("span");
-    const sectionCompleted = section.items.filter((item) => Boolean(state.checklist.items[item.id])).length;
-    counter.textContent = `${sectionCompleted} / ${section.items.length}`;
-    header.append(titleWrap, counter);
+    const progress = document.createElement("span");
+    progress.className = "checklist-group-progress";
+    progress.innerHTML = `
+      <strong>${sectionStats.completed} / ${sectionStats.total}</strong>
+      <span class="checklist-group-progress-track"><span style="width: ${sectionStats.total ? (sectionStats.completed / sectionStats.total) * 100 : 0}%"></span></span>
+      <span class="checklist-group-chevron" aria-hidden="true"></span>
+    `;
+    header.append(titleWrap, progress);
+    header.addEventListener("click", () => setChecklistSectionExpanded(sectionIndex, !state.expandedChecklistSections.has(sectionIndex)));
     sectionNode.appendChild(header);
 
+    const body = document.createElement("div");
+    body.className = "checklist-group-body";
+    body.hidden = !sectionExpanded;
     const list = document.createElement("div");
     list.className = "checklist-items";
+    list.id = `checklist-items-${sectionIndex}`;
 
-    for (const item of section.items) {
+    section.items.forEach((item, itemIndex) => {
       const checked = Boolean(state.checklist.items[item.id]);
       const label = document.createElement("label");
       label.className = "checklist-item";
+      label.id = `checklist-item-${sectionIndex}-${itemIndex}`;
+      label.tabIndex = -1;
       label.dataset.checked = checked ? "true" : "false";
 
       const checkbox = document.createElement("input");
@@ -767,11 +889,12 @@ function renderChecklist() {
 
       label.append(checkbox, content);
       list.appendChild(label);
-    }
+    });
 
-    sectionNode.appendChild(list);
+    body.appendChild(list);
+    sectionNode.appendChild(body);
     checklistGroupsEl.appendChild(sectionNode);
-  }
+  });
 }
 
 function switchChecklistPage(pageId) {
@@ -2463,6 +2586,15 @@ checklistPageButtons.forEach((button) => {
     switchChecklistPage(button.dataset.checklistPage);
   });
 });
+
+checklistToggleAllButton?.addEventListener("click", () => {
+  const sections = getChecklistSections(state.checklistPageId);
+  const shouldExpand = sections.some((_, index) => !state.expandedChecklistSections.has(index));
+  state.expandedChecklistSections = shouldExpand ? new Set(sections.map((_, index) => index)) : new Set();
+  renderChecklist();
+});
+
+checklistNextIncompleteButton?.addEventListener("click", focusNextIncompleteChecklistItem);
 
 async function start() {
   updateViewModeUI();
