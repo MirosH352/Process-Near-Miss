@@ -616,6 +616,8 @@ const checklistPageButtons = document.querySelectorAll("[data-checklist-page]");
 const checklistPageEyebrowEl = document.getElementById("checklistPageEyebrow");
 const checklistPageTitleEl = document.getElementById("checklistPageTitle");
 const checklistPageDescriptionEl = document.getElementById("checklistPageDescription");
+const checklistMainCounterEl = document.getElementById("checklistMainCounter");
+const checklistMainProgressBarEl = document.getElementById("checklistMainProgressBar");
 const checklistPercentEl = document.getElementById("checklistPercent");
 const checklistCounterEl = document.getElementById("checklistCounter");
 const checklistCompletedStepsEl = document.getElementById("checklistCompletedSteps");
@@ -624,6 +626,9 @@ const checklistTotalStepsEl = document.getElementById("checklistTotalSteps");
 const checklistProgressBarEl = document.getElementById("checklistProgressBar");
 const checklistStatusTextEl = document.getElementById("checklistStatusText");
 const checklistUpdatedAtEl = document.getElementById("checklistUpdatedAt");
+const checklistToggleAllButton = document.getElementById("checklistToggleAll");
+const checklistSectionNavEl = document.getElementById("checklistSectionNav");
+const checklistNextIncompleteButton = document.getElementById("checklistNextIncomplete");
 const resetChecklistButton = document.getElementById("resetChecklistButton");
 const toastRegion = document.getElementById("toastRegion");
 const homeTiles = document.querySelectorAll("[data-home-target]");
@@ -771,11 +776,82 @@ function getChecklistStats() {
   };
 }
 
+function ensureChecklistSectionState(sections) {
+  if (state.expandedChecklistPageId === state.checklistPageId) return;
+  state.expandedChecklistPageId = state.checklistPageId;
+  state.expandedChecklistSections = new Set();
+  const firstIncomplete = sections.findIndex((section) => !getChecklistSectionStats(section).complete);
+  if (firstIncomplete >= 0) {
+    state.expandedChecklistSections.add(firstIncomplete);
+  } else if (sections.length > 0) {
+    state.expandedChecklistSections.add(0);
+  }
+}
+
+function setChecklistSectionExpanded(index, expanded) {
+  if (expanded) {
+    state.expandedChecklistSections.add(index);
+  } else {
+    state.expandedChecklistSections.delete(index);
+  }
+  renderChecklist();
+}
+
+function scrollToChecklistSection(index) {
+  const sectionNode = document.getElementById(`checklist-section-${index}`);
+  sectionNode?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function focusNextIncompleteChecklistItem() {
+  const sections = getChecklistSections(state.checklistPageId);
+  for (const [sectionIndex, section] of sections.entries()) {
+    const itemIndex = section.items.findIndex((item) => !state.checklist.items[item.id]);
+    if (itemIndex < 0) continue;
+    state.expandedChecklistSections.add(sectionIndex);
+    renderChecklist();
+    requestAnimationFrame(() => {
+      const itemNode = document.getElementById(`checklist-item-${sectionIndex}-${itemIndex}`);
+      itemNode?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return;
+  }
+}
+
+function renderChecklistSectionNav(sections, currentSectionIndex = -1) {
+  if (!checklistSectionNavEl) return;
+  checklistSectionNavEl.innerHTML = "";
+
+  sections.forEach((section, index) => {
+    const sectionStats = getChecklistSectionStats(section);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `checklist-section-link${sectionStats.complete ? " is-complete" : ""}${index === currentSectionIndex ? " is-current" : ""}`;
+    button.setAttribute("aria-controls", `checklist-section-${index}`);
+    button.innerHTML = `
+      <span class="checklist-section-link-number">${String(index + 1).padStart(2, "0")}</span>
+      <span class="checklist-section-link-copy">
+        <strong>${section.title.replace(/^\d+\.\s*/, "")}</strong>
+        <span>${sectionStats.completed}/${sectionStats.total}</span>
+      </span>
+      <span class="checklist-section-link-status" aria-hidden="true">${sectionStats.complete ? "✓" : ""}</span>
+    `;
+    button.addEventListener("click", () => {
+      state.expandedChecklistSections.add(index);
+      renderChecklist();
+      requestAnimationFrame(() => scrollToChecklistSection(index));
+    });
+    checklistSectionNavEl.appendChild(button);
+  });
+}
+
 function renderChecklist() {
   if (!checklistGroupsEl) return;
 
   const page = getChecklistPage(state.checklistPageId);
   const stats = getChecklistStats();
+  const sections = getChecklistSections(state.checklistPageId);
+  const currentSectionIndex = sections.findIndex((section) => !getChecklistSectionStats(section).complete);
+  ensureChecklistSectionState(sections);
   if (checklistBreadcrumbCurrentEl) {
     checklistBreadcrumbCurrentEl.textContent = page.breadcrumb;
   }
@@ -795,6 +871,9 @@ function renderChecklist() {
   });
   checklistPercentEl.textContent = `${stats.percent} %`;
   checklistCounterEl.textContent = `${stats.completed} / ${stats.total} hotovo`;
+  if (checklistMainCounterEl) {
+    checklistMainCounterEl.textContent = `${stats.completed} / ${stats.total} dokončeno · ${stats.percent} %`;
+  }
   if (checklistCompletedStepsEl) {
     checklistCompletedStepsEl.textContent = String(stats.completed);
   }
@@ -805,6 +884,9 @@ function renderChecklist() {
     checklistTotalStepsEl.textContent = String(stats.total);
   }
   checklistProgressBarEl.style.width = `${stats.percent}%`;
+  if (checklistMainProgressBarEl) {
+    checklistMainProgressBarEl.style.width = `${stats.percent}%`;
+  }
 
   if (stats.total === 0) {
     checklistStatusTextEl.textContent = `Checklist ${page.title} zatím nemá žádné položky.`;
@@ -819,39 +901,76 @@ function renderChecklist() {
   checklistUpdatedAtEl.textContent = state.checklist.updatedAt
     ? `Naposledy uloženo: ${formatDate(state.checklist.updatedAt)}`
     : "Ještě neuloženo";
+  checklistStatusTextEl.closest(".checklist-meta-card")?.classList.toggle("is-complete", stats.remaining === 0);
+
+  renderChecklistSectionNav(sections, currentSectionIndex);
+  const allSectionsExpanded = sections.length > 0 && sections.every((_, index) => state.expandedChecklistSections.has(index));
+  if (checklistToggleAllButton) {
+    checklistToggleAllButton.textContent = allSectionsExpanded ? "Sbalit vše" : "Rozbalit vše";
+    checklistToggleAllButton.setAttribute("aria-expanded", allSectionsExpanded ? "true" : "false");
+  }
+  if (checklistNextIncompleteButton) {
+    checklistNextIncompleteButton.hidden = stats.remaining === 0;
+  }
 
   checklistGroupsEl.innerHTML = "";
 
-  for (const section of getChecklistSections(state.checklistPageId)) {
+  sections.forEach((section, sectionIndex) => {
+    const sectionStats = getChecklistSectionStats(section);
+    const sectionExpanded = state.expandedChecklistSections.has(sectionIndex);
     const sectionNode = document.createElement("section");
-    sectionNode.className = "checklist-group";
+    sectionNode.id = `checklist-section-${sectionIndex}`;
+    sectionNode.className = `checklist-group${sectionExpanded ? " is-open" : " is-collapsed"}${sectionStats.complete ? " is-complete" : ""}${sectionIndex === currentSectionIndex ? " is-current" : ""}`;
 
-    const header = document.createElement("div");
+    const header = document.createElement("button");
+    header.type = "button";
     header.className = "checklist-group-head";
+    header.setAttribute("aria-expanded", sectionExpanded ? "true" : "false");
+    header.setAttribute("aria-controls", `checklist-items-${sectionIndex}`);
     const titleWrap = document.createElement("div");
     titleWrap.className = "checklist-group-copy";
+    const titleLine = document.createElement("div");
+    titleLine.className = "checklist-group-title-line";
+    const sectionNumber = document.createElement("span");
+    sectionNumber.className = "checklist-section-number";
+    sectionNumber.textContent = String(sectionIndex + 1).padStart(2, "0");
     const title = document.createElement("h3");
-    title.textContent = section.title;
-    titleWrap.appendChild(title);
+    title.textContent = section.title.replace(/^\d+\.\s*/, "");
+    titleLine.append(sectionNumber, title);
+    titleWrap.appendChild(titleLine);
     if (section.summary) {
       const summary = document.createElement("p");
       summary.className = "checklist-group-summary";
       summary.textContent = section.summary;
       titleWrap.appendChild(summary);
     }
-    const counter = document.createElement("span");
-    const sectionCompleted = section.items.filter((item) => Boolean(state.checklist.items[item.id])).length;
-    counter.textContent = `${sectionCompleted} / ${section.items.length}`;
-    header.append(titleWrap, counter);
+
+    const meta = document.createElement("span");
+    meta.className = "checklist-group-head-meta";
+    const status = document.createElement("span");
+    status.className = `checklist-group-status${sectionStats.complete ? " is-complete" : sectionIndex === currentSectionIndex ? " is-current" : ""}`;
+    status.textContent = sectionStats.complete ? `✓ ${sectionStats.completed} / ${sectionStats.total}` : `${sectionStats.completed} / ${sectionStats.total}`;
+    const chevron = document.createElement("span");
+    chevron.className = "checklist-group-chevron";
+    chevron.setAttribute("aria-hidden", "true");
+    meta.append(status, chevron);
+    header.append(titleWrap, meta);
+    header.addEventListener("click", () => setChecklistSectionExpanded(sectionIndex, !state.expandedChecklistSections.has(sectionIndex)));
     sectionNode.appendChild(header);
 
+    const body = document.createElement("div");
+    body.className = "checklist-group-body";
+    body.hidden = !sectionExpanded;
     const list = document.createElement("div");
     list.className = "checklist-items";
+    list.id = `checklist-items-${sectionIndex}`;
 
-    for (const item of section.items) {
+    section.items.forEach((item, itemIndex) => {
       const checked = Boolean(state.checklist.items[item.id]);
       const label = document.createElement("label");
       label.className = "checklist-item";
+      label.id = `checklist-item-${sectionIndex}-${itemIndex}`;
+      label.tabIndex = -1;
       label.dataset.checked = checked ? "true" : "false";
 
       const checkbox = document.createElement("input");
@@ -878,11 +997,12 @@ function renderChecklist() {
 
       label.append(checkbox, content);
       list.appendChild(label);
-    }
+    });
 
-    sectionNode.appendChild(list);
+    body.appendChild(list);
+    sectionNode.appendChild(body);
     checklistGroupsEl.appendChild(sectionNode);
-  }
+  });
 }
 
 function switchChecklistPage(pageId) {
@@ -1499,6 +1619,7 @@ function setAppSection(section) {
   state.appSection = allowedSections.has(section) ? section : "home";
 
   appView.classList.toggle("home-mode", state.appSection === "home");
+  appView.classList.toggle("checklist-mode", state.appSection === "checklist");
   homePanel.classList.toggle("hidden", state.appSection !== "home");
   dashboardHeader.classList.toggle("hidden", state.appSection === "home");
   recordsPanel.classList.toggle("hidden", state.appSection !== "records");
@@ -1518,6 +1639,7 @@ function renderAuthState() {
   authView.classList.toggle("hidden", false);
   appView.classList.toggle("hidden", true);
   appView.classList.remove("home-mode");
+  appView.classList.remove("checklist-mode");
   state.appSection = "home";
   resetSearch();
   homePanel.classList.add("hidden");
@@ -2568,6 +2690,15 @@ resetChecklistButton?.addEventListener("click", async () => {
   resetChecklist();
   showToast("Checklist byl vynulován.", "success");
 });
+
+checklistToggleAllButton?.addEventListener("click", () => {
+  const sections = getChecklistSections(state.checklistPageId);
+  const shouldExpand = sections.some((_, index) => !state.expandedChecklistSections.has(index));
+  state.expandedChecklistSections = shouldExpand ? new Set(sections.map((_, index) => index)) : new Set();
+  renderChecklist();
+});
+
+checklistNextIncompleteButton?.addEventListener("click", focusNextIncompleteChecklistItem);
 
 checklistPageButtons.forEach((button) => {
   button.addEventListener("click", () => {

@@ -391,6 +391,15 @@
                 nastavení nové trasy, vratkové pravidlo a finální kontrolu rout.
               </p>
             </div>
+            <div class="checklist-hero-progress">
+              <div class="checklist-progress-label checklist-progress-label-inline">
+                <span>Průběh checklistu</span>
+                <strong id="checklistMainCounter">0 / 0 dokončeno · 0 %</strong>
+              </div>
+              <div class="checklist-progress" aria-hidden="true">
+                <div id="checklistMainProgressBar" class="checklist-progress-bar"></div>
+              </div>
+            </div>
           </div>
 
           <div class="checklist-layout">
@@ -408,55 +417,37 @@
             </div>
 
             <aside class="checklist-sidebar">
-              <div class="checklist-summary-grid">
-                <article class="checklist-metric-card checklist-metric-primary">
+              <article class="checklist-sidebar-card">
+                <div class="checklist-sidebar-progress">
+                  <p class="eyebrow">PRŮBĚH CHECKLISTU</p>
                   <strong id="checklistPercent">0 %</strong>
-                  <span>Průběh checklistu</span>
-                </article>
-                <article class="checklist-metric-card">
-                  <strong id="checklistCompletedSteps">0</strong>
-                  <span>hotových kroků</span>
-                </article>
-                <article class="checklist-metric-card">
-                  <strong id="checklistCompletedSections">0/0</strong>
-                  <span>sekcí dokončeno</span>
-                </article>
-                <article class="checklist-metric-card">
-                  <strong id="checklistTotalSteps">0</strong>
-                  <span>celkem položek</span>
-                </article>
-              </div>
-
-              <div class="checklist-progress-block">
-                <div class="checklist-progress-label">
-                  <span>Průběh checklistu</span>
-                  <strong id="checklistCounter">0 / 0 hotovo</strong>
+                  <span id="checklistCounter">0 / 0 hotovo</span>
+                  <div class="checklist-progress" aria-hidden="true">
+                    <div id="checklistProgressBar" class="checklist-progress-bar"></div>
+                  </div>
                 </div>
-                <div class="checklist-progress" aria-hidden="true">
-                  <div id="checklistProgressBar" class="checklist-progress-bar"></div>
+
+                <div class="checklist-meta-card">
+                  <span id="checklistStatusText">Checklist je připravený.</span>
+                  <span id="checklistUpdatedAt">Ještě neuloženo</span>
                 </div>
-              </div>
 
-              <div class="checklist-meta-card">
-                <span id="checklistStatusText">Checklist je připravený.</span>
-                <span id="checklistUpdatedAt">Ještě neuloženo</span>
-              </div>
-
-              <div class="checklist-sidebar-section">
-                <div class="checklist-sidebar-section-head">
-                  <span class="eyebrow">SEKCE</span>
-                  <span>Postup</span>
+                <div class="checklist-sidebar-section">
+                  <div class="checklist-sidebar-section-head">
+                    <span class="eyebrow">SEKCE</span>
+                    <span>Postup</span>
+                  </div>
+                  <nav id="checklistSectionNav" class="checklist-section-nav" aria-label="Přehled sekcí"></nav>
                 </div>
-                <nav id="checklistSectionNav" class="checklist-section-nav" aria-label="Přehled sekcí"></nav>
-              </div>
 
-              <button type="button" class="primary checklist-next-button" id="checklistNextIncomplete">
-                Další nesplněný bod
-              </button>
+                <button type="button" class="primary checklist-next-button" id="checklistNextIncomplete">
+                  Další nesplněný bod
+                </button>
 
-              <button type="button" class="icon-button secondary checklist-reset-button" id="resetChecklistButton">
-                Resetovat checklist
-              </button>
+                <button type="button" class="icon-button secondary checklist-reset-button" id="resetChecklistButton">
+                  Resetovat checklist
+                </button>
+              </article>
             </aside>
           </div>
         </section>
