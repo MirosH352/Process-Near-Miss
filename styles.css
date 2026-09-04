@@ -895,7 +895,8 @@ h3 {
   align-items: center;
   gap: 0.75rem;
   margin-left: auto;
-  flex-wrap: wrap;
+  min-width: 0;
+  flex-wrap: nowrap;
   justify-content: flex-end;
 }
 
@@ -904,7 +905,8 @@ h3 {
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 0.7rem;
-  min-width: min(290px, 100%);
+  width: 260px;
+  min-width: 0;
   padding: 0.6rem 0.8rem;
   border-radius: 16px;
   border: 1px solid rgba(203, 213, 225, 0.9);
@@ -1024,6 +1026,7 @@ h3 {
 
 .user-menu {
   position: relative;
+  min-width: 0;
 }
 
 .user-menu > summary {
@@ -1045,6 +1048,7 @@ h3 {
   background: #fff;
   color: var(--color-text-primary);
   cursor: pointer;
+  max-width: 250px;
   transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
 
@@ -1166,6 +1170,8 @@ h3 {
 .user-meta {
   display: grid;
   gap: 0.05rem;
+  min-width: 0;
+  overflow: hidden;
   text-align: left;
 }
 
