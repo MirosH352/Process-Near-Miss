@@ -10,6 +10,8 @@ import sqlite3
 import secrets
 import threading
 import unicodedata
+import urllib.error
+import urllib.request
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
@@ -31,6 +33,7 @@ SESSION_DAYS = int(os.environ.get("SESSION_DAYS", "7"))
 SESSION_SECURE = os.environ.get("SESSION_SECURE", "0").lower() in {"1", "true", "yes"}
 APP_ORIGIN = os.environ.get("APP_ORIGIN", "").strip().rstrip("/")
 TEAMS_OUTGOING_WEBHOOK_SECRET = os.environ.get("TEAMS_OUTGOING_WEBHOOK_SECRET", "").strip()
+TEAMS_INCOMING_WEBHOOK_URL = os.environ.get("TEAMS_INCOMING_WEBHOOK_URL", "").strip()
 LOGIN_RATE_LIMIT_MAX_ATTEMPTS = int(os.environ.get("LOGIN_RATE_LIMIT_MAX_ATTEMPTS", "10"))
 LOGIN_RATE_LIMIT_WINDOW_SECONDS = int(os.environ.get("LOGIN_RATE_LIMIT_WINDOW_SECONDS", "600"))
 LOGIN_RATE_LIMIT_BLOCK_SECONDS = int(os.environ.get("LOGIN_RATE_LIMIT_BLOCK_SECONDS", "900"))
@@ -894,6 +897,51 @@ def public_app_origin() -> str:
 
 def entry_detail_url(entry_id: int) -> str:
     return f"{public_app_origin()}/?entry={entry_id}"
+
+
+def notify_teams_new_entry(entry: dict) -> None:
+    """Notify the configured Teams channel without affecting entry creation."""
+    if not TEAMS_INCOMING_WEBHOOK_URL:
+        return
+
+    title = str(entry.get("title") or "Nový záznam")
+    description = build_plain_description_excerpt(entry.get("description", ""), limit=240)
+    facts = [
+        {"name": "ID", "value": f"#{entry.get('id')}"},
+        {"name": "Oblast", "value": str(entry.get("area_label") or AREA_EMPTY_LABEL)},
+        {"name": "Stav", "value": str(entry.get("status_label") or "Nový")},
+        {"name": "Priorita", "value": str(entry.get("severity_label") or "-")},
+    ]
+    if description:
+        facts.append({"name": "Popis", "value": description})
+
+    payload = {
+        "@type": "MessageCard",
+        "@context": "https://schema.org/extensions",
+        "summary": f"Nový záznam #{entry.get('id')}",
+        "themeColor": "F26B38",
+        "title": f"Nový záznam: {title}",
+        "sections": [{"facts": facts, "markdown": True}],
+        "potentialAction": [
+            {
+                "@type": "OpenUri",
+                "name": "Otevřít záznam",
+                "targets": [{"os": "default", "uri": entry_detail_url(int(entry["id"]))}],
+            }
+        ],
+    }
+    request = urllib.request.Request(
+        TEAMS_INCOMING_WEBHOOK_URL,
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=8) as response:
+            if response.status >= 300:
+                raise RuntimeError(f"HTTP {response.status}")
+    except (OSError, urllib.error.URLError, RuntimeError) as exc:
+        print(f"[teams] new-entry notification failed: {exc}", flush=True)
 
 
 def split_search_terms(query: str) -> list[str]:
@@ -1882,6 +1930,7 @@ class AppHandler(BaseHTTPRequestHandler):
             try:
                 data = read_json(self)
                 item = create_entry(data, user["id"])
+                threading.Thread(target=notify_teams_new_entry, args=(item,), daemon=True).start()
                 json_response(self, item, HTTPStatus.CREATED)
             except ValueError as exc:
                 json_response(self, {"error": str(exc)}, HTTPStatus.BAD_REQUEST)
