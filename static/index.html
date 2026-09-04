@@ -87,6 +87,15 @@
           </button>
 
           <div class="topbar-actions">
+            <div class="topbar-incident-status" id="activeIncidentSummary" aria-live="polite">
+              <span class="topbar-incident-icon" data-icon="alert" aria-hidden="true"></span>
+              <span class="topbar-incident-copy">
+                <span class="toolbar-label">Aktivní incident</span>
+                <strong id="activeIncidentCount">0</strong>
+                <span id="activeIncidentSummaryText">Žádný aktivní incident.</span>
+              </span>
+            </div>
+
             <button type="button" class="primary header-action" id="openEntryDrawer">
               <span class="button-icon" data-icon="plus"></span>
               <span>Nový záznam</span>
@@ -285,6 +294,24 @@
               </button>
             </div>
           </div>
+        </section>
+
+        <section class="card dashboard-card active-incidents-card">
+          <div class="section-head active-incidents-head">
+            <div>
+              <h2>Aktivní incidenty</h2>
+              <p>Přehled otevřených incidentů a kritických událostí, které ještě vyžadují pozornost.</p>
+            </div>
+            <div class="records-header-meta">
+              <span id="activeIncidentsCount" class="records-count">0 aktivních</span>
+            </div>
+          </div>
+
+          <div id="activeIncidentsEmpty" class="records-empty">
+            Zatím nejsou evidovány žádné aktivní incidenty.
+          </div>
+
+          <div id="activeIncidentsList" class="active-incidents-list"></div>
         </section>
 
         <section class="card dashboard-card board-card">

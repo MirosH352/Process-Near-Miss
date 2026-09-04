@@ -582,6 +582,12 @@ const priorityFilterEl = document.getElementById("priorityFilter");
 const typeFilterEl = document.getElementById("typeFilter");
 const recordsToolbarCountEl = document.getElementById("recordsToolbarCount");
 const recordsCountEl = document.getElementById("recordsCount");
+const activeIncidentCountEl = document.getElementById("activeIncidentCount");
+const activeIncidentSummaryEl = document.getElementById("activeIncidentSummary");
+const activeIncidentSummaryTextEl = document.getElementById("activeIncidentSummaryText");
+const activeIncidentsCountEl = document.getElementById("activeIncidentsCount");
+const activeIncidentsListEl = document.getElementById("activeIncidentsList");
+const activeIncidentsEmptyEl = document.getElementById("activeIncidentsEmpty");
 const totalCountEl = document.getElementById("totalCount");
 const openCountEl = document.getElementById("openCount");
 const resolvedCountEl = document.getElementById("resolvedCount");
@@ -1367,12 +1373,91 @@ function computeStats(items) {
   return { total, open, resolved, critical };
 }
 
+function getActiveIncidents(items) {
+  return items
+    .filter(
+      (item) =>
+        ["incident", "critical"].includes(item.severity) && !["resolved", "closed"].includes(item.status)
+    )
+    .sort((a, b) => {
+      const severityDifference = priorityRank(b.severity) - priorityRank(a.severity);
+      if (severityDifference !== 0) return severityDifference;
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+    });
+}
+
+function formatActiveIncidentCount(count) {
+  return formatCountLabel(count, {
+    one: "{count} aktivní incident",
+    few: "{count} aktivní incidenty",
+    many: "{count} aktivních incidentů",
+  });
+}
+
 function updateStats(items) {
   const stats = computeStats(items);
   totalCountEl.textContent = stats.total;
   openCountEl.textContent = stats.open;
   resolvedCountEl.textContent = stats.resolved;
   criticalCountEl.textContent = stats.critical;
+}
+
+function renderActiveIncidents(items) {
+  const count = items.length;
+  if (activeIncidentsCountEl) {
+    activeIncidentsCountEl.textContent = formatActiveIncidentCount(count);
+  }
+  if (activeIncidentCountEl) {
+    activeIncidentCountEl.textContent = String(count);
+  }
+  if (activeIncidentSummaryEl) {
+    activeIncidentSummaryEl.classList.toggle("is-active", count > 0);
+  }
+  if (activeIncidentSummaryTextEl) {
+    activeIncidentSummaryTextEl.textContent =
+      count > 0
+        ? count === 1
+          ? `Nejbližší případ: ${items[0].title}`
+          : `První záznam: ${items[0].title}`
+        : "Žádný aktivní incident.";
+  }
+
+  if (!activeIncidentsListEl || !activeIncidentsEmptyEl) {
+    return;
+  }
+
+  activeIncidentsListEl.innerHTML = "";
+  activeIncidentsEmptyEl.hidden = count > 0;
+
+  if (count === 0) {
+    return;
+  }
+
+  for (const item of items) {
+    const article = document.createElement("article");
+    article.className = `active-incident-card severity-${item.severity} status-${item.status}`;
+    article.dataset.id = item.id;
+    article.innerHTML = `
+      <div class="active-incident-head">
+        <div class="badges">
+          <span class="badge priority-badge priority-${item.severity}">${SEVERITY_LABELS[item.severity]}</span>
+          <span class="badge status-badge status-${item.status}">${STATUS_META[item.status].label}</span>
+        </div>
+        <strong class="active-incident-title"></strong>
+      </div>
+      <p class="active-incident-description"></p>
+      <div class="active-incident-meta">
+        <span>Oblast: ${item.area_label}</span>
+        <span>Vytvořeno: ${formatDate(item.created_at)}</span>
+        <span>Aktualizováno: ${formatDate(item.updated_at)}</span>
+      </div>
+    `;
+
+    article.querySelector(".active-incident-title").textContent = item.title;
+    article.querySelector(".active-incident-description").textContent = item.description || "Bez popisu.";
+    bindRecordOpen(article, item);
+    activeIncidentsListEl.appendChild(article);
+  }
 }
 
 function setViewMode(viewMode) {
@@ -1812,7 +1897,9 @@ function renderUsers() {
 
 function render() {
   const visibleItems = getVisibleItems();
+  const activeIncidents = getActiveIncidents(state.items);
   updateStats(state.items);
+  renderActiveIncidents(activeIncidents);
   renderBoard(visibleItems);
   renderTable(visibleItems);
   renderChecklist();
