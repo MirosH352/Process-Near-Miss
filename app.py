@@ -905,7 +905,8 @@ def notify_teams_new_entry(entry: dict) -> None:
         return
 
     title = str(entry.get("title") or "Nový záznam")
-    description = build_plain_description_excerpt(entry.get("description", ""), limit=240)
+    description = " ".join(str(entry.get("description") or "").strip().split())
+    issue_url = entry_detail_url(int(entry["id"]))
     facts = [
         {"name": "ID", "value": f"#{entry.get('id')}"},
         {"name": "Oblast", "value": str(entry.get("area_label") or AREA_EMPTY_LABEL)},
@@ -921,12 +922,13 @@ def notify_teams_new_entry(entry: dict) -> None:
         "summary": f"Nový záznam #{entry.get('id')}",
         "themeColor": "F26B38",
         "title": f"Nový záznam: {title}",
+        "text": f"[Otevřít issue #{entry.get('id')}]({issue_url})",
         "sections": [{"facts": facts, "markdown": True}],
         "potentialAction": [
             {
                 "@type": "OpenUri",
                 "name": "Otevřít záznam",
-                "targets": [{"os": "default", "uri": entry_detail_url(int(entry["id"]))}],
+                "targets": [{"os": "default", "uri": issue_url}],
             }
         ],
     }
