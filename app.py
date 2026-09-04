@@ -1025,27 +1025,35 @@ def build_description_excerpt(description: str, terms: list[str], window: int = 
     return excerpt
 
 
+def build_plain_description_excerpt(description: str, limit: int = 180) -> str:
+    """Return a readable description preview when no exact term can be highlighted."""
+    text = " ".join(str(description or "").strip().split())
+    if len(text) <= limit:
+        return text
+    return f"{text[:limit].rsplit(' ', 1)[0]}…"
+
+
 def format_match_summary(details: dict[str, list[str]], description: str = "") -> str:
     parts: list[str] = []
     title_terms = normalize_terms_for_display(details.get("title_terms", []))
     if title_terms:
-        parts.append(f"název: {', '.join(title_terms)}")
+        parts.append(f"v názvu se objevuje „{', '.join(title_terms)}“")
 
     description_terms = normalize_terms_for_display(details.get("description_terms", []))
     if description_terms:
-        parts.append(f"popis: {', '.join(description_terms)}")
+        excerpt = build_description_excerpt(description, description_terms)
+        detail = f"v popisu se objevuje „{', '.join(description_terms)}“"
+        if excerpt:
+            detail += f" (úryvek: „{excerpt}“)"
+        parts.append(detail)
 
     area_terms = normalize_terms_for_display(details.get("area_terms", []))
     if area_terms:
-        parts.append(f"oblast: {', '.join(area_terms)}")
+        parts.append(f"stejná oblast: {', '.join(area_terms)}")
 
     reporter_terms = normalize_terms_for_display(details.get("reporter_terms", []))
     if reporter_terms:
         parts.append(f"zadavatel: {', '.join(reporter_terms)}")
-
-    type_terms = normalize_terms_for_display(details.get("type_terms", []))
-    if type_terms:
-        parts.append(f"typ: {', '.join(type_terms)}")
 
     severity_terms = normalize_terms_for_display(details.get("severity_terms", []))
     if severity_terms:
@@ -1055,10 +1063,10 @@ def format_match_summary(details: dict[str, list[str]], description: str = "") -
     if status_terms:
         parts.append(f"stav: {', '.join(status_terms)}")
 
-    excerpt_terms = description_terms or title_terms
-    excerpt = build_description_excerpt(description, excerpt_terms)
-    if excerpt:
-        parts.append(f"úryvek: {excerpt}")
+    if not description_terms and description:
+        excerpt = build_plain_description_excerpt(description)
+        if excerpt:
+            parts.append(f"popis záznamu: „{excerpt}“")
 
     return "; ".join(parts)
 
@@ -1214,7 +1222,8 @@ def build_teams_reply(query: str, limit: int = 3) -> dict:
                 f"**{idx}. #{item['id']} {item['title']}**",
                 f"- Oblast: {item['area_label']}",
                 f"- Stav: {item['status_label']} | Priorita: {item['severity_label']}",
-                f"- Proč je podobný: {reason_text}",
+                f"- Co odpovídá dotazu: {reason_text}",
+                f"- Popis záznamu: {build_plain_description_excerpt(item.get('description', '')) or 'Bez popisu.'}",
                 f"- Detail: [otevřít issue]({detail_url})",
                 "",
             ]
