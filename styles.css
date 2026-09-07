@@ -890,13 +890,23 @@ h3 {
   text-transform: uppercase;
 }
 
+.secondary.crisis-shortcut {
+  flex-shrink: 0;
+  border-radius: var(--radius-control);
+  font-weight: 700;
+  color: #9a3412;
+  border-color: #fed7aa;
+  background: #fff7ed;
+  white-space: nowrap;
+}
+
 .topbar-actions {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   margin-left: auto;
   min-width: 0;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   justify-content: flex-end;
 }
 

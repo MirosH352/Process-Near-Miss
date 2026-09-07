@@ -96,6 +96,11 @@
               </span>
             </div>
 
+            <button type="button" class="secondary header-action crisis-shortcut" id="openCrisisChecklist">
+              <span class="button-icon" data-icon="alert" aria-hidden="true"></span>
+              <span>Krize CZTC1</span>
+            </button>
+
             <button type="button" class="primary header-action" id="openEntryDrawer">
               <span class="button-icon" data-icon="plus"></span>
               <span>Nový záznam</span>
@@ -458,7 +463,8 @@
                 </div>
 
                 <div class="checklist-meta-card">
-                  <span id="checklistStatusText">Checklist je připravený.</span>
+                  <strong id="checklistSharing" hidden>Sdílený postup pro všechny</strong>
+                  <span id="checklistStatusText" role="status">Checklist je připravený.</span>
                   <span id="checklistUpdatedAt">Ještě neuloženo</span>
                 </div>
 

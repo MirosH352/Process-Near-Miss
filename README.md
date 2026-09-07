@@ -11,6 +11,30 @@ Frontend a Python backend pro evidenci incidentu s prihlasenim pres email a hesl
 - Editace, mazani a zmena stavu zaznamu
 - Kanban i tabulkove zobrazeni
 
+## Checklist Krize CZTC1
+
+- Tlacitko `Krize CZTC1` v horni liste otevre krizovy checklist primo i z hlavni stranky.
+- Postup tohoto checklistu je spolecny pro vsechny prihlasene uzivatele a uklada se do databaze.
+- Otevrena stranka nacita zmeny ostatnich kazdych 5 sekund. Reset se vztahuje na vsechny.
+- Ostatni checklisty zustavaji osobni a ukladaji se lokalne v prohlizeci.
+- Tabulka `shared_checklist_items` se vytvori automaticky pri startu serveru v SQLite i PostgreSQL.
+- Sdileny postup zacina prazdny; drivejsi osobni odskrtnuti se automaticky neimportuji.
+
+Overeni sdileni nad docasnou SQLite databazi:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Test v prohlizeci vyzaduje Node.js, modul `playwright`, Python a Microsoft Edge:
+
+```bash
+node tests/shared-checklist.browser.cjs
+```
+
+Promenne `PYTHON` a `BROWSER_CHANNEL` mohou zmenit interpreter a prohlizec.
+Oba testy pouzivaji vlastni docasne databaze a testovaci ucty.
+
 ## Lokalne
 
 Spust aplikaci:

@@ -32,6 +32,8 @@ const PERSON_OPTIONS = [
 const CHECKLIST_DEFAULT_PAGE_ID = "alzaboxy-a-trasy";
 const CHECKLIST_STORAGE_KEY = "near-miss-tracker.checklist";
 const CHECKLIST_PAGE_KEY = "near-miss-tracker.checklist.page";
+const SHARED_CHECKLIST_ID = "incident-ved-docasne";
+const SHARED_CHECKLIST_PATH = `/api/checklists/${SHARED_CHECKLIST_ID}`;
 
 const CHECKLIST_PAGES = {
   "incident-ved-docasne": {
@@ -625,6 +627,7 @@ const state = {
   search: "",
   checklistPageId: readChecklistPageId(),
   checklist: createDefaultChecklistState(readChecklistPageId()),
+  sharedChecklistSync: createSharedChecklistSync(),
   filters: {
     status: "all",
     priority: "all",
@@ -747,6 +750,7 @@ const checklistCompletedSectionsEl = document.getElementById("checklistCompleted
 const checklistTotalStepsEl = document.getElementById("checklistTotalSteps");
 const checklistProgressBarEl = document.getElementById("checklistProgressBar");
 const checklistStatusTextEl = document.getElementById("checklistStatusText");
+const checklistSharingEl = document.getElementById("checklistSharing");
 const checklistUpdatedAtEl = document.getElementById("checklistUpdatedAt");
 const checklistToggleAllButton = document.getElementById("checklistToggleAll");
 const checklistSectionNavEl = document.getElementById("checklistSectionNav");
@@ -854,6 +858,7 @@ function checklistStorageId(pageId = state.checklistPageId) {
 
 function loadChecklistState(pageId = state.checklistPageId) {
   const defaults = createDefaultChecklistState(pageId);
+  if (isSharedChecklist(pageId)) return defaults;
   try {
     const raw = localStorage.getItem(checklistStorageId(pageId));
     if (!raw) return defaults;
@@ -869,10 +874,86 @@ function loadChecklistState(pageId = state.checklistPageId) {
 }
 
 function saveChecklistState(pageId = state.checklistPageId) {
+  if (isSharedChecklist(pageId)) return;
   try {
     localStorage.setItem(checklistStorageId(pageId), JSON.stringify(state.checklist));
   } catch {
     // Ignore storage failures.
+  }
+}
+
+function createSharedChecklistSync() {
+  return { ready: false, loading: false, saving: false, error: "", requestId: 0 };
+}
+
+function isSharedChecklist(pageId = state.checklistPageId) {
+  return pageId === SHARED_CHECKLIST_ID;
+}
+
+function canEditSharedChecklist() {
+  const sync = state.sharedChecklistSync;
+  return sync.ready && !sync.saving && !sync.error;
+}
+
+async function refreshSharedChecklist() {
+  if (!state.user || !isSharedChecklist() || state.appSection !== "checklist" || document.hidden) return;
+  const sync = state.sharedChecklistSync;
+  if (sync.loading || sync.saving) return;
+  const requestId = ++sync.requestId;
+  const isCurrent = () => state.sharedChecklistSync === sync && sync.requestId === requestId && state.user && isSharedChecklist();
+  sync.loading = true;
+  if (!sync.ready) renderChecklist();
+  try {
+    const result = await apiProtected(SHARED_CHECKLIST_PATH, { signal: AbortSignal.timeout(10000) });
+    if (!isCurrent()) return;
+    sync.loading = false;
+    const changed = !sync.ready || Boolean(sync.error) || JSON.stringify(result) !== JSON.stringify(state.checklist);
+    state.checklist = result;
+    sync.ready = true;
+    sync.error = "";
+    if (changed) renderChecklist();
+  } catch {
+    if (!isCurrent()) return;
+    sync.loading = false;
+    sync.error = "Sdílený postup se nepodařilo načíst. Připojení se automaticky obnovuje.";
+    renderChecklist();
+  } finally {
+    if (isCurrent()) sync.loading = false;
+  }
+}
+
+async function updateSharedChecklist(items) {
+  if (!state.user || !isSharedChecklist() || !canEditSharedChecklist()) return false;
+  const sync = state.sharedChecklistSync;
+  // A pending poll must not overwrite a newer save response.
+  const requestId = ++sync.requestId;
+  const isCurrent = () => state.sharedChecklistSync === sync && sync.requestId === requestId && state.user && isSharedChecklist();
+  sync.loading = false;
+  sync.saving = true;
+  renderChecklist();
+  try {
+    const result = await apiProtected(SHARED_CHECKLIST_PATH, {
+      method: "PATCH",
+      body: JSON.stringify({ items }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!isCurrent()) return false;
+    state.checklist = result;
+    sync.ready = true;
+    sync.error = "";
+    return true;
+  } catch {
+    if (isCurrent()) {
+      sync.error = "Uložení se nepodařilo potvrdit. Ověřuji aktuální sdílený postup.";
+      showToast(sync.error, "error");
+    }
+    return false;
+  } finally {
+    if (isCurrent()) {
+      sync.saving = false;
+      renderChecklist();
+      if (sync.error) void refreshSharedChecklist();
+    }
   }
 }
 
@@ -983,6 +1064,12 @@ function renderChecklist() {
   if (!checklistGroupsEl) return;
 
   const page = getChecklistPage(state.checklistPageId);
+  const shared = isSharedChecklist();
+  const sync = state.sharedChecklistSync;
+  const sharedDisabled = shared && !canEditSharedChecklist();
+  checklistGroupsEl.setAttribute("aria-busy", String(shared && (sync.loading || sync.saving)));
+  resetChecklistButton.disabled = sharedDisabled;
+  resetChecklistButton.textContent = shared ? "Resetovat pro všechny" : "Resetovat checklist";
   const stats = getChecklistStats();
   const sections = getChecklistSections(state.checklistPageId);
   const currentSectionIndex = sections.findIndex((section) => !getChecklistSectionStats(section).complete);
@@ -1034,7 +1121,17 @@ function renderChecklist() {
     checklistStatusTextEl.textContent = `Zbývá doplnit ${stats.remaining} bodů checklistu ${page.title}.`;
   }
 
-  checklistUpdatedAtEl.textContent = state.checklist.updatedAt
+  if (shared) {
+    if (sync.error) {
+      checklistStatusTextEl.textContent = sync.error;
+    } else if (sync.saving) {
+      checklistStatusTextEl.textContent = "Ukládám změnu pro všechny…";
+    } else if (!sync.ready) {
+      checklistStatusTextEl.textContent = "Načítám sdílený postup…";
+    }
+  }
+  checklistSharingEl.hidden = !shared;
+  checklistUpdatedAtEl.textContent = shared && !sync.ready ? "Čekám na data ze serveru" : state.checklist.updatedAt
     ? `Naposledy uloženo: ${formatDate(state.checklist.updatedAt)}`
     : "Ještě neuloženo";
   checklistStatusTextEl.closest(".checklist-meta-card")?.classList.toggle("is-complete", stats.remaining === 0);
@@ -1121,8 +1218,15 @@ function renderChecklist() {
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.checked = checked;
+      checkbox.disabled = sharedDisabled;
       checkbox.setAttribute("aria-label", item.title);
-      checkbox.addEventListener("change", () => {
+      checkbox.addEventListener("change", async () => {
+        if (shared) {
+          const nextChecked = checkbox.checked;
+          checkbox.checked = checked;
+          await updateSharedChecklist({ [item.id]: nextChecked });
+          return;
+        }
         state.checklist.items[item.id] = checkbox.checked;
         state.checklist.updatedAt = new Date().toISOString();
         saveChecklistState();
@@ -1156,15 +1260,21 @@ function switchChecklistPage(pageId) {
   }
 
   state.checklistPageId = pageId;
+  state.sharedChecklistSync = createSharedChecklistSync();
   saveChecklistPageId(pageId);
   state.checklist = loadChecklistState(pageId);
   renderChecklist();
+  void refreshSharedChecklist();
 }
 
-function resetChecklist() {
+async function resetChecklist() {
+  if (isSharedChecklist()) {
+    return updateSharedChecklist(createDefaultChecklistState(SHARED_CHECKLIST_ID).items);
+  }
   state.checklist = createDefaultChecklistState(state.checklistPageId);
   saveChecklistState();
   renderChecklist();
+  return true;
 }
 
 function formatPerson(value) {
@@ -1781,6 +1891,7 @@ async function askConfirmation(message, confirmLabel = "Potvrdit") {
 }
 
 function handleSessionExpired() {
+  state.sharedChecklistSync = createSharedChecklistSync();
   state.user = null;
   state.csrfToken = null;
   state.items = [];
@@ -1857,6 +1968,7 @@ function setAppSection(section) {
   });
 
   syncSectionHash(state.appSection);
+  void refreshSharedChecklist();
 }
 
 function renderAuthState() {
@@ -1879,6 +1991,7 @@ function renderAuthState() {
 }
 
 function enterApp(user, csrfToken = null, initialSection = getSectionFromHash() || "home") {
+  state.sharedChecklistSync = createSharedChecklistSync();
   state.user = user;
   if (csrfToken) {
     state.csrfToken = csrfToken;
@@ -2453,6 +2566,11 @@ homeButton?.addEventListener("click", () => {
   setAppSection("home");
 });
 
+document.getElementById("openCrisisChecklist")?.addEventListener("click", () => {
+  switchChecklistPage(SHARED_CHECKLIST_ID);
+  setAppSection("checklist");
+});
+
 homeTiles.forEach((tile) => {
   tile.addEventListener("click", async () => {
     if (tile.classList.contains("hidden")) return;
@@ -2911,10 +3029,17 @@ sortButtons.forEach((button) => {
 });
 
 resetChecklistButton?.addEventListener("click", async () => {
-  const confirmed = await askConfirmation("Opravdu resetovat celý checklist?", "Resetovat");
-  if (!confirmed) return;
-  resetChecklist();
-  showToast("Checklist byl vynulován.", "success");
+  const pageId = state.checklistPageId;
+  const user = state.user;
+  const shared = isSharedChecklist();
+  const message = shared
+    ? "Opravdu resetovat checklist Krize CZTC1 pro všechny uživatele?"
+    : "Opravdu resetovat celý checklist?";
+  const confirmed = await askConfirmation(message, shared ? "Resetovat pro všechny" : "Resetovat");
+  if (!confirmed || state.checklistPageId !== pageId || state.user !== user) return;
+  if (await resetChecklist()) {
+    showToast(shared ? "Checklist byl vynulován pro všechny." : "Checklist byl vynulován.", "success");
+  }
 });
 
 checklistPageButtons.forEach((button) => {
@@ -2947,6 +3072,10 @@ async function start() {
     setLoginMessage(error.message, "error");
   }
 }
+
+window.setInterval(() => void refreshSharedChecklist(), 5000);
+document.addEventListener("visibilitychange", () => void refreshSharedChecklist());
+window.addEventListener("online", () => void refreshSharedChecklist());
 
 start();
 
