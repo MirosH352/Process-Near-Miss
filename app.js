@@ -35,11 +35,10 @@ const CHECKLIST_PAGE_KEY = "near-miss-tracker.checklist.page";
 
 const CHECKLIST_PAGES = {
   "incident-ved-docasne": {
-    breadcrumb: "Incident VED (dočasné)",
+    breadcrumb: "Krize CZTC1",
     eyebrow: "DOČASNÁ STRÁNKA · KRIZOVÝ MEETING VED",
-    title: "Incident VED",
-    description:
-      "Checklist opatření z krizového meetingu VED. Odškrtávejte až po provedení daného kroku. Postup se ukládá lokálně v tomto prohlížeči pro přihlášený účet.",
+    title: "Krize CZTC1",
+    description: "",
     sections: [
       {
         title: "1. Trade 2.0",
@@ -999,6 +998,7 @@ function renderChecklist() {
   }
   if (checklistPageDescriptionEl) {
     checklistPageDescriptionEl.textContent = page.description;
+    checklistPageDescriptionEl.hidden = !page.description;
   }
   checklistPageButtons.forEach((button) => {
     const active = button.dataset.checklistPage === state.checklistPageId;
