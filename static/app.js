@@ -34,6 +34,121 @@ const CHECKLIST_STORAGE_KEY = "near-miss-tracker.checklist";
 const CHECKLIST_PAGE_KEY = "near-miss-tracker.checklist.page";
 
 const CHECKLIST_PAGES = {
+  "incident-ved-docasne": {
+    breadcrumb: "Incident VED (dočasné)",
+    eyebrow: "DOČASNÁ STRÁNKA · KRIZOVÝ MEETING VED",
+    title: "Incident VED",
+    description:
+      "Checklist opatření z krizového meetingu VED. Odškrtávejte až po provedení daného kroku. Postup se ukládá lokálně v tomto prohlížeči pro přihlášený účet.",
+    sections: [
+      {
+        title: "1. Trade 2.0",
+        summary: "Kompletní přechod do Trade 1.0 přes CZLC4.",
+        items: [
+          {
+            id: "ved_trade_switch",
+            title: "Kompletně přepnout Trade 2.0 do Trade 1.0 přes CZLC4.",
+          },
+          {
+            id: "ved_cztc1_ab_stop",
+            title: "Vypnout expedici z CZTC1 do AB.",
+          },
+        ],
+      },
+      {
+        title: "2. Box2Box",
+        summary: "Zachovat provoz a realizovat ho v CZLC4.",
+        items: [
+          {
+            id: "ved_box2box_keep",
+            title: "Zachovat Box2Box aktivní, nevypínat.",
+          },
+          {
+            id: "ved_box2box_czlc4",
+            title: "Zajistit realizaci Box2Box v CZLC4.",
+          },
+        ],
+      },
+      {
+        title: "3. Zpětný tok",
+        summary: "Přepnout zpětný tok z dep, POB i directových AB zpět do CZLC4.",
+        items: [
+          {
+            id: "ved_returns_depots",
+            title: "Přepnout zpětný tok z dep zpět do CZLC4.",
+          },
+          {
+            id: "ved_returns_pob",
+            title: "Přepnout zpětný tok z POB zpět do CZLC4.",
+          },
+          {
+            id: "ved_returns_ab_direct",
+            title: "Přepnout zpětný tok z directových AB zpět do CZLC4.",
+          },
+        ],
+      },
+      {
+        title: "4. Expedice z LCU a directy z CZLC4",
+        summary: "Přímá expedice na depa, režim D+1 a zpomalení crossu.",
+        items: [
+          {
+            id: "ved_lcu_depots_direct",
+            title: "Nastavit expedici na depa rovnou z LCU.",
+          },
+          {
+            id: "ved_lcu_depots_d1",
+            title: "Přepnout expedici z LCU na depa do D+1.",
+          },
+          {
+            id: "ved_czlc4_direct_d1",
+            title: "Přepnout directy z CZLC4 do D+1.",
+          },
+          {
+            id: "ved_lcu_czlc4_cross_slow",
+            title: "Zpomalit cross z LCU do CZLC4, aby se tradovalo správně.",
+          },
+        ],
+      },
+      {
+        title: "5. Crossy z SK",
+        summary: "Vypnout směr na CZTC1 a rozdělit auta mezi CZLC4 a LCU.",
+        items: [
+          {
+            id: "ved_sk_cztc1_stop",
+            title: "Vypnout crossy z SK do CZTC1.",
+          },
+          {
+            id: "ved_sk_czlc4_car",
+            title: "Nasměrovat jedno auto z SK na CZLC4.",
+          },
+          {
+            id: "ved_sk_lcu_car",
+            title: "Nasměrovat jedno auto z SK na LCU.",
+          },
+        ],
+      },
+      {
+        title: "6. Crossy z POB",
+        summary: "Vypnutí crossů z POB.",
+        items: [
+          {
+            id: "ved_pob_cross_stop",
+            title: "Vypnout crossy z POB.",
+          },
+        ],
+      },
+      {
+        title: "7. DPD redirect na dropech v 1.0",
+        summary: "Přesměrování pouze do AlzaBoxů Alzy.",
+        items: [
+          {
+            id: "ved_dpd_redirect_alza_only",
+            title: "Zajistit, aby DPD redirect na dropech v 1.0 nesměřoval do jiných AB než Alzy.",
+          },
+        ],
+      },
+    ],
+  },
   "alzaboxy-a-trasy": {
     breadcrumb: "Checklist",
     eyebrow: "ALZABOXY A TRASY",
