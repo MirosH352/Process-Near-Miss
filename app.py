@@ -13,7 +13,6 @@ import unicodedata
 import urllib.error
 import urllib.request
 from collections import Counter
-from contextlib import closing
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -43,16 +42,6 @@ ENTRY_TYPES = {"bug", "near_miss"}
 SEVERITIES = {"low", "medium", "high", "incident", "critical"}
 STATUSES = {"new", "in_progress", "resolved", "closed"}
 USER_ROLES = {"admin", "user"}
-
-SHARED_CHECKLIST_ID = "incident-ved-docasne"
-SHARED_CHECKLIST_ITEMS = (
-    "ved_trade_switch", "ved_cztc1_ab_stop", "ved_box2box_keep", "ved_box2box_czlc4",
-    "ved_returns_depots", "ved_returns_pob", "ved_returns_ab_direct",
-    "ved_lcu_depots_direct", "ved_lcu_depots_d1", "ved_czlc4_direct_d1",
-    "ved_lcu_czlc4_cross_slow", "ved_sk_cztc1_stop", "ved_sk_czlc4_car",
-    "ved_sk_lcu_car", "ved_pob_cross_stop", "ved_dpd_redirect_alza_only",
-)
-SHARED_CHECKLIST_PATH = f"/api/checklists/{SHARED_CHECKLIST_ID}"
 
 STATUS_LABELS = {
     "new": "Nový",
@@ -582,57 +571,6 @@ def init_db() -> None:
             ensure_column(conn, "entries", "problem_reporter", "TEXT")
             ensure_column(conn, "entries", "culprit", "TEXT")
             migrate_entries_table(conn)
-
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS shared_checklist_items (
-                checklist_id TEXT NOT NULL,
-                item_id TEXT NOT NULL,
-                checked INTEGER NOT NULL DEFAULT 0 CHECK (checked IN (0, 1)),
-                updated_at TEXT NOT NULL,
-                PRIMARY KEY (checklist_id, item_id)
-            )
-            """
-        )
-
-
-def shared_checklist_state(conn) -> dict:
-    rows = conn.execute(
-        "SELECT item_id, checked, updated_at FROM shared_checklist_items WHERE checklist_id = ?",
-        (SHARED_CHECKLIST_ID,),
-    ).fetchall()
-    items = dict.fromkeys(SHARED_CHECKLIST_ITEMS, False)
-    for row in rows:
-        if row["item_id"] in items:
-            items[row["item_id"]] = bool(row["checked"])
-    return {"items": items, "updatedAt": max((row["updated_at"] for row in rows), default=None)}
-
-
-def get_shared_checklist() -> dict:
-    with closing(connect()) as conn, conn:
-        return shared_checklist_state(conn)
-
-
-def update_shared_checklist(data: dict) -> dict:
-    items = data.get("items")
-    if set(data) != {"items"} or not isinstance(items, dict) or not items:
-        raise ValueError("Vyplňte body checklistu ke změně.")
-    if any(item_id not in SHARED_CHECKLIST_ITEMS or type(checked) is not bool
-           for item_id, checked in items.items()):
-        raise ValueError("Neplatný bod nebo stav checklistu.")
-    with closing(connect()) as conn, conn:
-        # Update only submitted items; other users' changes must remain intact.
-        for item_id, checked in sorted(items.items()):
-            conn.execute(
-                """
-                INSERT INTO shared_checklist_items (checklist_id, item_id, checked, updated_at)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT (checklist_id, item_id) DO UPDATE
-                SET checked = excluded.checked, updated_at = excluded.updated_at
-                """,
-                (SHARED_CHECKLIST_ID, item_id, int(checked), now_iso()),
-            )
-        return shared_checklist_state(conn)
 
 
 def now_dt() -> datetime:
@@ -1823,12 +1761,6 @@ class AppHandler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         path = urlparse(self.path).path
-        if path == SHARED_CHECKLIST_PATH:
-            if require_user(self) is None:
-                return
-            json_response(self, get_shared_checklist())
-            return
-
         if path == "/api/bootstrap/status":
             json_response(self, {"needs_bootstrap": user_count() == 0})
             return
@@ -2052,17 +1984,6 @@ class AppHandler(BaseHTTPRequestHandler):
 
     def do_PATCH(self) -> None:
         path = urlparse(self.path).path
-        if path == SHARED_CHECKLIST_PATH:
-            body = read_body(self)
-            user = require_user(self)
-            if user is None or not require_csrf(self, user):
-                return
-            try:
-                json_response(self, update_shared_checklist(parse_json_body(body)))
-            except ValueError as exc:
-                json_response(self, {"error": str(exc)}, HTTPStatus.BAD_REQUEST)
-            return
-
         if path == "/api/auth/me":
             user = require_user(self)
             if user is None:
