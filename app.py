@@ -2131,7 +2131,7 @@ def main() -> None:
     host = os.environ.get("HOST", "0.0.0.0")
     port = int(os.environ.get("PORT", "8000"))
     server = ThreadingHTTPServer((host, port), AppHandler)
-    print(f"Near miss tracker běží na http://{host}:{port}")
+    print(f"Process Homepage běží na http://{host}:{port}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

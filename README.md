@@ -1,6 +1,9 @@
-# Evidence chyb a near missu
+# Process Homepage
 
-Frontend a Python backend pro evidenci incidentu s prihlasenim pres email a heslo, serverovou session a administracnim uctem.
+Společný rozcestník procesních nástrojů, které usnadňují každodenní práci týmu.
+Zahrnuje evidenci incidentů a Near Miss událostí, pracovní checklisty a Check APP pro kontrolu dat.
+Aplikace se postupně rozšiřuje o další pomocníky a nástroje podle potřeb týmu.
+Frontend a Python backend používají přihlášení emailem a heslem, serverové session a správu účtů.
 
 ## Co aplikace umi
 
@@ -10,6 +13,8 @@ Frontend a Python backend pro evidenci incidentu s prihlasenim pres email a hesl
 - Evidence chyb a near missu
 - Editace, mazani a zmena stavu zaznamu
 - Kanban i tabulkove zobrazeni
+- Pracovní checklisty pro AlzaBoxy, trasy a dropshipment
+- Check APP pro porovnání pořadí z Excelu a konzole s exportem výsledků do CSV
 
 ## Lokalne
 
