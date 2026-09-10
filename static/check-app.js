@@ -5,6 +5,11 @@
   const form = el("checkForm"), resultPanel = el("checkResults");
   let result = null, page = 0, worker = null, timer = null;
   const PAGE_SIZE = 100;
+  function updateFileNames() {
+    for (const source of ["Expected", "Actual"]) {
+      el(`check${source}Filename`).textContent = el(`check${source}File`).files[0]?.name || "Soubor není vybraný";
+    }
+  }
   function message(text, error = false) {
     el("checkMessage").textContent = text;
     el("checkMessage").classList.toggle("error", error);
@@ -17,6 +22,7 @@
     form.removeAttribute("aria-busy");
   }
   function invalidate() {
+    updateFileNames();
     stop(); result = null; page = 0;
     resultPanel.classList.add("hidden");
     el("checkResultRows").replaceChildren();
@@ -35,7 +41,7 @@
     el("checkActualText").required = !useFile;
   }
   function reset() {
-    invalidate(); form.reset(); modeChanged();
+    invalidate(); form.reset(); modeChanged(); updateFileNames();
     el("checkFilter").value = "all"; el("checkSearch").value = "";
   }
   function renderRows() {

@@ -8,6 +8,11 @@ test('numeric normalization, AB filtering, case, missing and extra codes', () =>
   const b = table([['AB001', 1], ['AB2', 2.5], ['AB3', 8], ['AB5', 9]]);
   assert.equal(a.ignored, 1);
   assert.deepEqual(core.compare(a, b).counts, { ok: 2, mismatch: 1, missing: 1, extra: 1, duplicate: 0 });
+  const result = core.compare(a, b);
+  assert.equal(result.rows.find(row => row.code === 'AB3').detail, 'Pořadí na trase: Excel = 3, konzole = 8.');
+  assert.ok(core.toCSV(result.rows).includes('Pořadí na trase: Excel = 3, konzole = 8.'));
+  const blankVsZero = core.compare(table([['AB1', '']]), table([['AB1', 0]]));
+  assert.equal(blankVsZero.rows[0].detail, 'Pořadí na trase: Excel = (prázdné), konzole = 0.');
 });
 test('time corrections are ignored and aliases/diacritics are recognized', () => {
   const a = core.fromText('Identifikator zakazky;Poradi zakazek;Korekce casu\nAB1;1;0');

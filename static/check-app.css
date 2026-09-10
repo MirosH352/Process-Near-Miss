@@ -19,8 +19,11 @@
 .check-source h3 { margin: .55rem 0; font-size: 1.1rem; }
 .check-source label, .check-result-toolbar label { display: grid; gap: .4rem; margin: .8rem 0 .4rem; font-size: .82rem; font-weight: 600; }
 .check-source input, .check-source textarea, .check-source select { width: 100%; min-width: 0; }
-.check-source input[type=file] { padding: .65rem; background: white; font-size: .85rem; }
-.check-source input::file-selector-button { border: 0; background: #e8efff; color: #1d4ed8; border-radius: 6px; padding: .5rem .7rem; margin-right: .6rem; cursor: pointer; }
+.check-file-picker { position: relative; display: flex; align-items: center; flex-wrap: wrap; gap: .65rem; margin-top: .8rem; padding: .65rem; border: 1px solid var(--color-border); border-radius: 10px; background: white; }
+.check-source .check-file-label { display: inline-block; margin: 0; padding: .6rem .8rem; border-radius: 6px; background: #e8efff; color: #1d4ed8; cursor: pointer; }
+.check-source .check-file-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.check-file-picker:focus-within { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.check-filename { min-width: 0; overflow-wrap: anywhere; font-size: .82rem; color: var(--color-text-secondary); }
 .check-source textarea { min-height: 140px; resize: vertical; font-family: inherit; font-size: .85rem; }
 .check-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem; }
 #checkAppPanel .secondary { padding: .7rem 1rem; border: 1px solid #dbe3ee; border-radius: 10px; font-size: .85rem; font-weight: 600; cursor: pointer; }

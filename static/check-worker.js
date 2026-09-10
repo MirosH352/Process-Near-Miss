@@ -41,7 +41,7 @@ async function readSource(source, label) {
 self.onmessage = async ({ data }) => {
   try {
     const expected = await readSource(data.expected, "Excel");
-    const actual = await readSource(data.actual, "Aplikace");
+    const actual = await readSource(data.actual, "Konzole");
     const result = CheckCore.compare(expected, actual);
     self.postMessage({ result, sources: [expected, actual].map((s) => ({ count: s.records.length, ignored: s.ignored, sheet: s.sheet })) });
   } catch (error) { self.postMessage({ error: error.message || "Soubor se nepodařilo přečíst." }); }

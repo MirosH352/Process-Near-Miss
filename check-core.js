@@ -111,17 +111,20 @@
       const a = left.get(code) || [], b = right.get(code) || [];
       let status = "ok", detail = "Pořadí souhlasí.";
       if (a.length > 1 || b.length > 1) {
-        status = "duplicate"; detail = `Kód se opakuje: Excel ${a.length}×, aplikace ${b.length}×. Zkontrolujte duplicity.`;
-      } else if (!a.length) { status = "extra"; detail = "Řádek je jen v aplikaci."; }
+        status = "duplicate"; detail = `Kód se opakuje: Excel ${a.length}×, konzole ${b.length}×. Zkontrolujte duplicity.`;
+      } else if (!a.length) { status = "extra"; detail = "Řádek je jen v konzoli."; }
       else if (!b.length) { status = "missing"; detail = "Řádek je jen v Excelu."; }
-      else if (comparable(a[0]) !== comparable(b[0])) { status = "mismatch"; detail = "Pořadí na trase se liší."; }
+      else if (comparable(a[0]) !== comparable(b[0])) {
+        status = "mismatch";
+        detail = `Pořadí na trase: Excel = ${a[0] || "(prázdné)"}, konzole = ${b[0] || "(prázdné)"}.`;
+      }
       counts[status]++;
       return { code, expected: a.join(" / "), actual: b.join(" / "), status, detail };
     });
     return { rows, counts };
   }
 
-  const labels = { ok: "OK", mismatch: "NESHODA", missing: "CHYBÍ V APLIKACI", extra: "NAVÍC V APLIKACI", duplicate: "DUPLICITA" };
+  const labels = { ok: "OK", mismatch: "NESHODA", missing: "CHYBÍ V KONZOLI", extra: "NAVÍC V KONZOLI", duplicate: "DUPLICITA" };
   function toCSV(rows) {
     const escape = (value) => {
       let text = String(value ?? "");
@@ -129,7 +132,7 @@
       if (/^[\s]*[=+\-@]/.test(text)) text = "'" + text;
       return '"' + text.replace(/"/g, '""') + '"';
     };
-    return "\uFEFF" + [["Kód dopravce", "Pořadí Excel", "Pořadí aplikace", "Stav", "Rozdíly"],
+    return "\uFEFF" + [["Kód dopravce", "Pořadí Excel", "Pořadí konzole", "Stav", "Rozdíly"],
       ...rows.map((r) => [r.code, r.expected, r.actual, labels[r.status], r.detail])]
       .map((row) => row.map(escape).join(";")).join("\r\n");
   }

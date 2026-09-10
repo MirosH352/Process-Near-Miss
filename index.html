@@ -153,7 +153,7 @@
 
               <button type="button" class="card home-tile home-tile-checkapp" data-home-target="check-app" role="listitem">
                 <span class="home-tile-icon" aria-hidden="true"><span data-icon="check"></span></span>
-                <span class="home-tile-copy"><strong>Check APP</strong><span>Porovnání pořadí AlzaBoxů z Excelu a aplikace.</span></span>
+                <span class="home-tile-copy"><strong>Check APP</strong><span>Porovnání pořadí AlzaBoxů z Excelu a konzole.</span></span>
                 <span class="home-tile-arrow" aria-hidden="true" data-icon="arrow-right"></span>
               </button>
 
@@ -494,7 +494,7 @@
         <div class="card check-card">
           <div class="check-heading">
             <div><p class="eyebrow">KONTROLA ALZABOXŮ</p><h2 id="checkAppTitle">Check APP</h2>
-              <p class="lead">Porovnejte pořadí na trase z Excelu s daty z aplikace.</p></div>
+              <p class="lead">Porovnejte pořadí na trase z Excelu s daty z konzole.</p></div>
             <span class="check-local-note">Soubory zůstávají ve vašem prohlížeči</span>
           </div>
           <p class="check-help">Položky se párují podle kódu AB a číslic. Korekce času se neporovnává. Zpracovat lze nejvýše 50 000 řádků a 10 MB na soubor.</p>
@@ -504,22 +504,28 @@
                 <span class="check-step">01 · OČEKÁVANÉ POŘADÍ</span>
                 <h3>Referenční Excel</h3>
                 <p class="check-help">Vyberte soubor se správným pořadím na trase.</p>
-                <label for="checkExpectedFile">Soubor z Excelu</label>
-                <input id="checkExpectedFile" type="file" accept=".xlsx,.xls,.csv,.tsv,.txt" required />
+                <div class="check-file-picker">
+                  <label for="checkExpectedFile" class="check-file-label">Načíst Excel</label>
+                  <input id="checkExpectedFile" class="check-file-input" type="file" accept=".xlsx,.xls,.csv,.tsv,.txt" aria-describedby="checkExpectedFilename" required />
+                  <span id="checkExpectedFilename" class="check-filename">Soubor není vybraný</span>
+                </div>
                 <p class="check-source-info" id="checkExpectedInfo">XLSX, XLS, CSV, TSV nebo TXT. List rozpoznáme automaticky.</p>
               </div>
               <div class="check-source">
                 <span class="check-step">02 · KONTROLOVANÁ DATA</span>
-                <h3>Data z aplikace</h3>
+                <h3>Data z konzole</h3>
                 <label for="checkActualMode">Způsob vložení</label>
-                <select id="checkActualMode"><option value="text">Vložit zkopírovanou tabulku</option><option value="file">Načíst export ze souboru</option></select>
+                <select id="checkActualMode"><option value="text">Vložit zkopírovanou tabulku</option><option value="file">Načíst export z konzole</option></select>
                 <div id="checkTextSource">
-                  <label for="checkActualText">Tabulka z aplikace</label>
+                  <label for="checkActualText">Tabulka z konzole</label>
                   <textarea id="checkActualText" rows="6" placeholder="Sem vložte tabulku pomocí Ctrl+V, ideálně včetně záhlaví." required spellcheck="false"></textarea>
                 </div>
                 <div id="checkFileSource" class="hidden">
-                  <label for="checkActualFile">Export z aplikace</label>
-                  <input id="checkActualFile" type="file" accept=".xlsx,.xls,.csv,.tsv,.txt" disabled />
+                  <div class="check-file-picker">
+                    <label for="checkActualFile" class="check-file-label">Načíst export z konzole</label>
+                    <input id="checkActualFile" class="check-file-input" type="file" accept=".xlsx,.xls,.csv,.tsv,.txt" aria-describedby="checkActualFilename" disabled />
+                    <span id="checkActualFilename" class="check-filename">Soubor není vybraný</span>
+                  </div>
                 </div>
                 <p class="check-source-info" id="checkActualInfo">Podporujeme také textový výpis z původní Check APP.</p>
               </div>
@@ -539,7 +545,7 @@
           <div class="check-result-toolbar"><label for="checkFilter">Zobrazit<select id="checkFilter"><option value="all">Všechny položky</option><option value="issues">Pouze problémy</option><option value="ok">Pouze shody</option></select></label>
             <label for="checkSearch">Vyhledat AB kód<input id="checkSearch" type="search" placeholder="Např. AB1234" /></label></div>
           <div class="check-table-wrap" tabindex="0" role="region" aria-label="Výsledky porovnání">
-            <table class="check-table"><thead><tr><th scope="col">Kód dopravce</th><th scope="col">Pořadí Excel</th><th scope="col">Pořadí aplikace</th><th scope="col">Stav</th><th scope="col">Podrobnosti</th></tr></thead><tbody id="checkResultRows"></tbody></table>
+            <table class="check-table"><thead><tr><th scope="col">Kód dopravce</th><th scope="col">Pořadí Excel</th><th scope="col">Pořadí konzole</th><th scope="col">Stav</th><th scope="col">Podrobnosti</th></tr></thead><tbody id="checkResultRows"></tbody></table>
           </div>
           <div class="check-pagination"><button type="button" class="secondary" id="checkPrev">Předchozí</button><span id="checkPageInfo" aria-live="polite"></span><button type="button" class="secondary" id="checkNext">Další</button></div>
         </div>
