@@ -1,0 +1,54 @@
+.home-tile-checkapp .home-tile-icon { background: #0f766e; }
+.app-shell.check-app-mode .dashboard-header { grid-template-columns: 1fr; }
+.app-shell.check-app-mode .dashboard-header .kpi-grid,
+.app-shell.check-app-mode .dashboard-header .header-title-row,
+.app-shell.check-app-mode .dashboard-intro > .eyebrow { display: none; }
+.app-shell.check-app-mode .app-content { width: min(1440px, calc(100% - 32px)); }
+#checkAppPanel { display: grid; gap: 1rem; min-width: 0; }
+#checkAppPanel.hidden { display: none; }
+.check-card { padding: 1.5rem; min-width: 0; }
+.check-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.check-heading h2 { margin: .35rem 0 0; font-size: 2rem; letter-spacing: -.04em; }
+.check-heading h3 { margin: .4rem 0; font-size: 1.2rem; }
+.check-local-note { color: #0f766e; background: #edf9f4; border: 1px solid #d0ebdf; padding: .6rem .8rem; border-radius: 10px; font-size: .8rem; }
+.check-help, .check-source-info { font-size: .82rem; color: #56657b; line-height: 1.6; }
+.check-source-info { margin: .6rem 0 0; overflow-wrap: anywhere; }
+.check-input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.25rem; }
+.check-source { min-width: 0; border: 1px solid var(--color-border); background: #f9fbfe; border-radius: 14px; padding: 1.25rem; }
+.check-step { color: #0f766e; font-size: .7rem; font-weight: 750; letter-spacing: .1em; }
+.check-source h3 { margin: .55rem 0; font-size: 1.1rem; }
+.check-source label, .check-result-toolbar label { display: grid; gap: .4rem; margin: .8rem 0 .4rem; font-size: .82rem; font-weight: 600; }
+.check-source input, .check-source textarea, .check-source select { width: 100%; min-width: 0; }
+.check-source input[type=file] { padding: .65rem; background: white; font-size: .85rem; }
+.check-source input::file-selector-button { border: 0; background: #e8efff; color: #1d4ed8; border-radius: 6px; padding: .5rem .7rem; margin-right: .6rem; cursor: pointer; }
+.check-source textarea { min-height: 140px; resize: vertical; font-family: inherit; font-size: .85rem; }
+.check-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem; }
+#checkAppPanel .secondary { padding: .7rem 1rem; border: 1px solid #dbe3ee; border-radius: 10px; font-size: .85rem; font-weight: 600; cursor: pointer; }
+#checkAppPanel .secondary:hover:not(:disabled) { background: #f1f5fa; }
+#checkMessage:empty { display: none; }
+#checkMessage.error { color: #b91c1c; }
+.check-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .7rem; margin: 1.25rem 0; }
+.check-stat { display: grid; gap: .35rem; padding: 1rem; border: 1px solid var(--color-border); border-radius: 12px; background: #f9fbfe; }
+.check-stat strong { font-size: 1.6rem; }
+.check-stat span { font-size: .65rem; font-weight: 750; letter-spacing: .035em; }
+.check-status-ok { color: #15803d; }
+.check-status-mismatch, .check-status-missing { color: #b91c1c; }
+.check-status-extra, .check-status-duplicate { color: #92400e; }
+.check-result-toolbar { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.check-result-toolbar label { min-width: 200px; margin: 0; }
+.check-table-wrap { overflow: auto; border: 1px solid var(--color-border); border-radius: 10px; max-height: 620px; }
+.check-table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: .8rem; }
+.check-table th { position: sticky; top: 0; background: #f1f5fa; text-align: left; font-size: .75rem; white-space: nowrap; z-index: 1; }
+.check-table th, .check-table td { padding: .85rem; border-bottom: 1px solid var(--color-border); }
+.check-table td { max-width: 320px; overflow-wrap: anywhere; }
+.check-table .check-status { font-weight: 750; font-size: .72rem; }
+.check-table tbody tr:last-child td { border-bottom: 0; }
+.check-pagination { display: flex; align-items: center; justify-content: space-between; gap: .8rem; margin-top: 1rem; font-size: .8rem; }
+#checkAppPanel button:disabled { opacity: .5; cursor: default; }
+@media (max-width: 760px) {
+  .check-input-grid { grid-template-columns: 1fr; }
+  .check-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .check-card, .check-source { padding: 1rem; }
+  .check-pagination { flex-wrap: wrap; }
+  .check-result-toolbar label { min-width: 0; width: 100%; }
+}

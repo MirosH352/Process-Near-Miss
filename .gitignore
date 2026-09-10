@@ -1,3 +1,4 @@
 near_miss.sqlite3
 __pycache__/
 *.pyc
+.check-preview/

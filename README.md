@@ -63,7 +63,25 @@ Po prvnim nasazeni otevri aplikaci a zaloz prvniho admina pres bootstrap formula
 
 Soubor `start.bat` spusti lokalni server a otevre aplikaci v prohlizeci.
 
-## Teams integrace
+## Check APP
+
+Stránka `#check-app` je dostupná z rozcestníku a hlavní navigace všem přihlášeným uživatelům.
+Porovnává pořadí na trase podle kódu `AB` následovaného číslicemi. Korekce času se stejně jako
+v desktopové Check APP neporovnává. Duplicitní kódy jsou označeny k ruční kontrole.
+
+- Referenční data: XLSX, XLS, CSV, TSV nebo TXT. V Excelu se automaticky vybere nejlépe odpovídající list.
+- Druhý vstup: export ve stejných formátech nebo tabulka vložená přes Ctrl+V, včetně původního textového výpisu.
+- Filtry výsledků, hledání AB kódu, stránkování po 100 položkách a export celého reportu CSV.
+- Čtení a porovnání běží pouze v prohlížeči ve Web Workeru. Data se neodesílají ani neukládají do databáze,
+  localStorage nebo na server. Odhlášení, vymazání dat a obnovení stránky je odstraní z UI.
+- Limit 10 MB na vstup, 50 000 datových řádků, 200 sloupců v Excelu a 60 sekund na zpracování.
+- Knihovna SheetJS CE 0.20.3 je přiložena v `vendor/` včetně licence Apache-2.0. Načítá se až při porovnání.
+  Nasazení používá současnou službu Render; nepotřebuje nové proměnné prostředí ani migraci databáze.
+
+Testy: `node tests/check-core.test.cjs` a `node tests/check-worker.test.cjs`.
+Testovací sešity pro ruční kontrolu vytvoří `node tests/check-worker.test.cjs --fixtures` do ignorované složky `.check-preview/`.
+
+## Teams integrace – nastavení
 
 Projekt ted obsahuje callback pro **Microsoft Teams Outgoing Webhook** na adrese `/api/teams/outgoing-webhook`.
 

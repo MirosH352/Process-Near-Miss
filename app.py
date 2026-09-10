@@ -1798,6 +1798,20 @@ class AppHandler(BaseHTTPRequestHandler):
             self.serve_file(STATIC_DIR / "app.js", "application/javascript; charset=utf-8")
             return
 
+        if path == "/check-app.css":
+            self.serve_file(STATIC_DIR / "check-app.css", "text/css; charset=utf-8")
+            return
+
+        check_scripts = {
+            "/check-app.js": "check-app.js",
+            "/check-core.js": "check-core.js",
+            "/check-worker.js": "check-worker.js",
+            "/vendor/xlsx.full.min.js": "vendor/xlsx.full.min.js",
+        }
+        if path in check_scripts:
+            self.serve_file(STATIC_DIR / check_scripts[path], "application/javascript; charset=utf-8")
+            return
+
         if path == "/web.png":
             self.serve_file(STATIC_DIR / "web.png", "image/png")
             return

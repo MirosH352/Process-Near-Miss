@@ -618,6 +618,7 @@ const appTabButtons = document.querySelectorAll(".app-tab-button");
 const recordsPanel = document.getElementById("recordsPanel");
 const checklistPanel = document.getElementById("checklistPanel");
 const adminPanel = document.getElementById("adminPanel");
+const checkAppPanel = document.getElementById("checkAppPanel");
 const checklistGroupsEl = document.getElementById("checklistGroups");
 const checklistBreadcrumbCurrentEl = document.getElementById("checklistBreadcrumbCurrent");
 const checklistPageButtons = document.querySelectorAll("[data-checklist-page]");
@@ -1093,12 +1094,12 @@ function writeViewMode(viewMode) {
 
 function getSectionFromHash() {
   const rawHash = window.location.hash.replace(/^#/, "").trim().toLowerCase();
-  const allowed = new Set(["home", "records", "checklist", "admin"]);
+  const allowed = new Set(["home", "records", "checklist", "check-app", "admin"]);
   return allowed.has(rawHash) ? rawHash : null;
 }
 
 function syncSectionHash(section) {
-  const normalized = ["home", "records", "checklist", "admin"].includes(section) ? section : "home";
+  const normalized = ["home", "records", "checklist", "check-app", "admin"].includes(section) ? section : "home";
   const nextHash = `#${normalized}`;
   if (window.location.hash === nextHash) {
     return;
@@ -1667,6 +1668,7 @@ async function askConfirmation(message, confirmLabel = "Potvrdit") {
 }
 
 function handleSessionExpired() {
+  window.CheckApp.reset();
   state.user = null;
   state.csrfToken = null;
   state.items = [];
@@ -1722,7 +1724,7 @@ function updateRoleVisibility() {
 
 function setAppSection(section) {
   const isAdmin = state.user?.role === "admin";
-  const allowedSections = new Set(["home", "records", "checklist"]);
+  const allowedSections = new Set(["home", "records", "checklist", "check-app"]);
   if (isAdmin) {
     allowedSections.add("admin");
   }
@@ -1730,11 +1732,13 @@ function setAppSection(section) {
 
   appView.classList.toggle("home-mode", state.appSection === "home");
   appView.classList.toggle("checklist-mode", state.appSection === "checklist");
+  appView.classList.toggle("check-app-mode", state.appSection === "check-app");
   homePanel.classList.toggle("hidden", state.appSection !== "home");
   dashboardHeader.classList.toggle("hidden", state.appSection === "home");
   recordsPanel.classList.toggle("hidden", state.appSection !== "records");
   checklistPanel.classList.toggle("hidden", state.appSection !== "checklist");
   adminPanel.classList.toggle("hidden", state.appSection !== "admin");
+  checkAppPanel.classList.toggle("hidden", state.appSection !== "check-app");
 
   appTabButtons.forEach((button) => {
     const active = button.dataset.appTab === state.appSection;
@@ -1746,10 +1750,12 @@ function setAppSection(section) {
 }
 
 function renderAuthState() {
+  window.CheckApp.reset();
   authView.classList.toggle("hidden", false);
   appView.classList.toggle("hidden", true);
   appView.classList.remove("home-mode");
   appView.classList.remove("checklist-mode");
+  appView.classList.remove("check-app-mode");
   state.appSection = "home";
   resetSearch();
   homePanel.classList.add("hidden");
@@ -1757,6 +1763,7 @@ function renderAuthState() {
   recordsPanel.classList.remove("hidden");
   checklistPanel.classList.add("hidden");
   adminPanel.classList.add("hidden");
+  checkAppPanel.classList.add("hidden");
   if (state.needsBootstrap) {
     showBootstrapMode();
   } else {
