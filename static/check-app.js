@@ -5,9 +5,25 @@
   const form = el("checkForm"), resultPanel = el("checkResults");
   let result = null, page = 0, worker = null, timer = null;
   const PAGE_SIZE = 100;
+  function updateWorkflow() {
+    const expectedReady = Boolean(el("checkExpectedFile").files[0]);
+    const actualReady = el("checkActualMode").value === "file"
+      ? Boolean(el("checkActualFile").files[0]) : Boolean(el("checkActualText").value.trim());
+    const current = result ? 3 : !expectedReady ? 0 : !actualReady ? 1 : 2;
+    ["Expected", "Actual", "Compare", "Result"].forEach((step, index) => {
+      const item = el(`checkWorkflow${step}`);
+      item.classList.toggle("is-current", index === current);
+      item.classList.toggle("is-complete", index < current);
+      if (index === current) item.setAttribute("aria-current", "step");
+      else item.removeAttribute("aria-current");
+    });
+  }
   function updateFileNames() {
     for (const source of ["Expected", "Actual"]) {
-      el(`check${source}Filename`).textContent = el(`check${source}File`).files[0]?.name || "Soubor není vybraný";
+      const input = el(`check${source}File`), file = input.files[0];
+      el(`check${source}Filename`).textContent = file?.name || "Soubor není vybraný";
+      input.closest(".check-file-picker").classList.toggle("has-file", Boolean(file));
+      input.labels[0].textContent = file ? "Změnit soubor" : source === "Expected" ? "Vybrat referenční soubor" : "Vybrat export z konzole";
     }
   }
   function message(text, error = false) {
@@ -30,6 +46,7 @@
     el("checkExpectedInfo").textContent = "XLSX, XLS, CSV, TSV nebo TXT. List rozpoznáme automaticky.";
     el("checkActualInfo").textContent = "Podporujeme také textový výpis z původní Check APP.";
     message("");
+    updateWorkflow();
   }
   function modeChanged() {
     const useFile = el("checkActualMode").value === "file";
@@ -39,6 +56,7 @@
     el("checkActualFile").required = useFile;
     el("checkActualText").disabled = useFile;
     el("checkActualText").required = !useFile;
+    updateWorkflow();
   }
   function reset() {
     invalidate(); form.reset(); modeChanged(); updateFileNames();
@@ -56,7 +74,10 @@
       for (const value of [row.code, row.expected || "—", row.actual || "—", CheckCore.labels[row.status], row.detail]) {
         const td = document.createElement("td"); td.textContent = value; tr.append(td);
       }
-      tr.children[3].className = `check-status check-status-${row.status}`;
+      const status = document.createElement("span");
+      status.className = `check-status check-status-${row.status}`;
+      status.textContent = CheckCore.labels[row.status];
+      tr.children[3].replaceChildren(status);
       body.append(tr);
     }
     if (!rows.length) {
@@ -83,6 +104,7 @@
     page = 0; el("checkFilter").value = "all"; el("checkSearch").value = "";
     resultPanel.classList.remove("hidden"); renderRows();
     message(`Porovnání dokončeno. Zkontrolováno ${result.rows.length.toLocaleString("cs-CZ")} AB kódů.`);
+    updateWorkflow();
   }
   form.addEventListener("input", invalidate);
   form.addEventListener("change", invalidate);

@@ -6,7 +6,7 @@ const STATUS_OPTIONS = [
   ["resolved", "Vyřešeno"],
   ["closed", "Uzavřeno"],
 ];
-const KANBAN_PREVIEW_LIMIT = 3;
+const KANBAN_PREVIEW_LIMIT = 2;
 
 const STATUS_META = {
   new: { label: "Nový", hint: "Nové záznamy, které čekají na zpracování." },
@@ -515,6 +515,7 @@ const state = {
     status: "all",
     priority: "all",
     type: "all",
+    area: "all",
   },
   sort: {
     key: "created_at",
@@ -537,7 +538,6 @@ const state = {
 
 const authView = document.getElementById("authView");
 const appView = document.getElementById("appView");
-const homePanel = document.getElementById("homePanel");
 const dashboardHeader = document.getElementById("workspaceHeader");
 const bootstrapForm = document.getElementById("bootstrapForm");
 const loginForm = document.getElementById("loginForm");
@@ -550,6 +550,7 @@ const passwordForm = document.getElementById("passwordForm");
 const passwordMessageEl = document.getElementById("passwordMessage");
 const userForm = document.getElementById("userForm");
 const usersMessageEl = document.getElementById("usersMessage");
+const userCreateMessageEl = document.getElementById("userCreateMessage");
 const usersTableBody = document.getElementById("usersTableBody");
 const usersCountEl = document.getElementById("usersCount");
 const usersSection = document.getElementById("usersSection");
@@ -646,6 +647,10 @@ const sortButtons = document.querySelectorAll(".sort-button");
 const currentUserAvatarEl = document.querySelector(".user-avatar");
 
 const ICONS = {
+  document: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 12h6M9 16h6"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  database: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v7c0 4 16 4 16 0V5M4 12v7c0 4 16 4 16 0v-7"/></svg>',
+  megaphone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 10 14-5v14L4 14zm3 5 2 6h3l-2-5M21 9v6"/></svg>',
   logo:
     '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5" fill="currentColor" opacity="0.18"/><path d="M8 13.2 11.1 10l2.1 2.1L16.9 8.4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 7.75h8.25" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.55"/></svg>',
   user:
@@ -1123,7 +1128,7 @@ function syncBodyLock() {
   const profileOpen = !profileModal.classList.contains("hidden");
   const confirmOpen = !confirmModal.classList.contains("hidden");
   const detailOpen = !detailModal.classList.contains("hidden");
-  const drawerOpen = !createDrawer.classList.contains("hidden");
+  const drawerOpen = !createDrawer.classList.contains("hidden") || !document.getElementById("userCreateDrawer").classList.contains("hidden");
   document.body.classList.toggle("modal-open", editOpen || userEditOpen || profileOpen || confirmOpen || detailOpen || drawerOpen);
 }
 
@@ -1148,8 +1153,22 @@ function setBootstrapMessage(text, kind = "info") {
 }
 
 function setUsersMessage(text, kind = "info") {
-  usersMessageEl.textContent = text;
-  usersMessageEl.dataset.kind = kind;
+  const drawer = document.getElementById("userCreateDrawer");
+  const createDrawerOpen = drawer && !drawer.classList.contains("hidden");
+  const target = createDrawerOpen && userCreateMessageEl ? userCreateMessageEl : usersMessageEl;
+  const other = target === usersMessageEl ? userCreateMessageEl : usersMessageEl;
+
+  if (!text) {
+    if (usersMessageEl) usersMessageEl.textContent = "";
+    if (userCreateMessageEl) userCreateMessageEl.textContent = "";
+    return;
+  }
+
+  if (target) {
+    target.textContent = text;
+    target.dataset.kind = kind;
+  }
+  if (other) other.textContent = "";
 }
 
 function setUserEditMessage(text, kind = "info") {
@@ -1313,6 +1332,7 @@ function matchesFilters(item) {
   if (state.filters.status !== "all" && item.status !== state.filters.status) return false;
   if (state.filters.priority !== "all" && item.severity !== state.filters.priority) return false;
   if (state.filters.type !== "all" && item.entry_type !== state.filters.type) return false;
+  if (state.filters.area !== "all" && (item.area || "") !== state.filters.area) return false;
   return true;
 }
 
@@ -1430,6 +1450,7 @@ function renderActiveIncidents(items) {
 
   activeIncidentsListEl.innerHTML = "";
   activeIncidentsEmptyEl.hidden = count > 0;
+  activeIncidentsEmptyEl.closest(".active-incidents-card").classList.toggle("has-incidents", count > 0);
 
   if (count === 0) {
     return;
@@ -1676,6 +1697,7 @@ function handleSessionExpired() {
   state.checklist = createDefaultChecklistState(state.checklistPageId);
   clearUserSelection();
   state.appSection = "home";
+  closeUserCreateDrawer();
   closeEditModal();
   closeUserEditModal();
   closeProfileModal();
@@ -1730,18 +1752,18 @@ function setAppSection(section) {
   }
   state.appSection = allowedSections.has(section) ? section : "home";
 
-  appView.classList.toggle("home-mode", state.appSection === "home");
+  const isOverview = ["home", "records"].includes(state.appSection);
+  closeUserCreateDrawer();
   appView.classList.toggle("checklist-mode", state.appSection === "checklist");
   appView.classList.toggle("check-app-mode", state.appSection === "check-app");
-  homePanel.classList.toggle("hidden", state.appSection !== "home");
-  dashboardHeader.classList.toggle("hidden", state.appSection === "home");
-  recordsPanel.classList.toggle("hidden", state.appSection !== "records");
+  dashboardHeader.classList.toggle("hidden", !isOverview);
+  recordsPanel.classList.toggle("hidden", !isOverview);
   checklistPanel.classList.toggle("hidden", state.appSection !== "checklist");
   adminPanel.classList.toggle("hidden", state.appSection !== "admin");
   checkAppPanel.classList.toggle("hidden", state.appSection !== "check-app");
 
   appTabButtons.forEach((button) => {
-    const active = button.dataset.appTab === state.appSection;
+    const active = button.dataset.appTab === state.appSection || (button.dataset.appTab === "records" && isOverview);
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-selected", active ? "true" : "false");
   });
@@ -1758,7 +1780,6 @@ function renderAuthState() {
   appView.classList.remove("check-app-mode");
   state.appSection = "home";
   resetSearch();
-  homePanel.classList.add("hidden");
   dashboardHeader.classList.add("hidden");
   recordsPanel.classList.remove("hidden");
   checklistPanel.classList.add("hidden");
@@ -1777,6 +1798,7 @@ function enterApp(user, csrfToken = null, initialSection = getSectionFromHash() 
     state.csrfToken = csrfToken;
   }
   currentUserEmailEl.textContent = user.email;
+  document.getElementById("currentUserLabel").textContent = user.name || user.display_name || user.role_label || user.role;
   state.checklistPageId = readChecklistPageId();
   state.checklist = loadChecklistState(state.checklistPageId);
   authView.classList.add("hidden");
@@ -1904,6 +1926,7 @@ function renderUsers() {
 }
 
 function render() {
+  syncAreaFilter();
   const visibleItems = getVisibleItems();
   const activeIncidents = getActiveIncidents(state.items);
   updateStats(state.items);
@@ -1917,6 +1940,7 @@ function render() {
 }
 
 function bindEntryActions(container, item) {
+  groupEntryActions(container, item);
   const moveButton = container.querySelector(".move-button");
   const editButton = container.querySelector(".edit-button");
   const deleteButton = container.querySelector(".delete-button");
@@ -1977,7 +2001,7 @@ function bindRecordOpen(container, item) {
   const openDetail = () => openDetailModal(item);
 
   container.addEventListener("click", (event) => {
-    if (event.target.closest("button, a, input, select, textarea, label")) return;
+    if (event.target.closest("button, a, input, select, textarea, label, [popover]")) return;
     openDetail();
   });
 
@@ -2011,11 +2035,9 @@ function cardTemplate(item, columnStatus = item.status) {
       </div>
     </div>
     <p class="entry-description"></p>
-    <div class="entry-meta">
-      <span class="entry-meta-inline">Zadavatel: ${formatPerson(item.problem_reporter)}</span>
-    </div>
     <div class="entry-footer">
       <div class="timestamps">
+        <span class="entry-person"><span class="initial-avatar" aria-hidden="true"></span><span class="entry-person-name"></span></span>
         <span class="created-at"></span>
         <span class="updated-at"></span>
       </div>
@@ -2031,7 +2053,12 @@ function cardTemplate(item, columnStatus = item.status) {
   article.querySelector(".entry-description").textContent = item.description || "Bez popisu.";
   article.querySelector(".entry-title").title = item.title;
   article.querySelector(".entry-description").title = item.description || "Bez popisu.";
-  article.querySelector(".created-at").textContent = `Vytvořeno: ${formatDate(item.created_at)}`;
+  const creator = item.created_by_label || "Systém";
+  article.querySelector(".entry-person-name").textContent = creator;
+  article.querySelector(".entry-person").title = `Vytvořil: ${creator} · Zadavatel: ${formatPerson(item.problem_reporter)}`;
+  article.querySelector(".initial-avatar").textContent = creator.slice(0, 2).toLocaleUpperCase("cs-CZ");
+  article.querySelector(".created-at").textContent = new Date(item.created_at).toLocaleDateString("cs-CZ");
+  article.querySelector(".created-at").title = `Vytvořeno: ${formatDate(item.created_at)} · Aktualizováno: ${formatDate(item.updated_at)}`;
   article.querySelector(".updated-at").textContent = `Aktualizováno: ${formatDate(item.updated_at)}`;
   hydrateIcons(article);
 
@@ -2147,7 +2174,7 @@ function columnTemplate(status, items) {
   column.innerHTML = `
     <header class="kanban-column-head">
       <div>
-        <h3>${STATUS_META[status].label}</h3>
+        <h3>${status === "new" ? "Nové" : STATUS_META[status].label}</h3>
         <p>${STATUS_META[status].hint}</p>
       </div>
       <span class="kanban-count">${items.length}</span>
@@ -2200,7 +2227,7 @@ function columnTemplate(status, items) {
   if (sortedItems.length === 0) {
     const empty = document.createElement("div");
     empty.className = "kanban-empty";
-    empty.textContent = "V tomto stavu zatím nejsou žádné záznamy.";
+    empty.innerHTML = `<span class="empty-icon" data-icon="document" aria-hidden="true"></span><strong>Žádné záznamy</strong><p>V této kategorii zatím nejsou žádné záznamy.</p>`;
     dropzone.appendChild(empty);
   }
 
@@ -2416,6 +2443,8 @@ userForm.addEventListener("submit", async (event) => {
     await loadUsers();
     renderUsers();
     setUsersMessage("Nový účet byl vytvořen.", "success");
+    closeUserCreateDrawer();
+    showToast("Nový účet byl vytvořen.", "success");
   } catch (error) {
     if (error.status !== 401) {
       setUsersMessage(error.message, "error");
@@ -2843,3 +2872,75 @@ async function start() {
 
 start();
 
+
+// Presentation helpers shared by the existing dashboard and account screens.
+function syncAreaFilter() {
+  const select = document.getElementById("areaFilter");
+  const areas = [...new Set(state.items.map(item => item.area || ""))].sort((a,b) => a.localeCompare(b, "cs-CZ"));
+  const options = [new Option("Všechny", "all"), ...areas.map(area => new Option(area || "Nevyplněno", area))];
+  if (state.filters.area !== "all" && !areas.includes(state.filters.area)) options.push(new Option(state.filters.area || "Nevyplněno", state.filters.area));
+  select.replaceChildren(...options);
+  select.value = state.filters.area;
+}
+document.getElementById("areaFilter").addEventListener("change", event => {
+  state.filters.area = event.target.value;
+  render();
+});
+document.querySelectorAll("[data-show-all]").forEach(button => button.addEventListener("click", () => {
+  setViewMode("table");
+  recordsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+}));
+function groupEntryActions(container, item) {
+  const actions = container.querySelector(".entry-actions, .table-actions");
+  if (!actions) return;
+  const trigger = document.createElement("button");
+  trigger.type = "button"; trigger.className = "record-menu-trigger"; trigger.textContent = "⋮";
+  trigger.setAttribute("aria-label", "Akce záznamu " + item.title);
+  trigger.setAttribute("aria-expanded", "false");
+  const panel = document.createElement("div"); panel.className = "record-menu-panel";
+  panel.setAttribute("popover", "auto");
+  panel.id = "record-actions-" + item.id + (container.tagName === "TR" ? "-table" : "-board");
+  trigger.setAttribute("aria-controls", panel.id);
+  actions.querySelectorAll("button").forEach(button => {
+    const icon = button.dataset.icon;
+    button.removeAttribute("data-icon");
+    button.innerHTML = (ICONS[icon] || "");
+    const label = document.createElement("span");
+    label.textContent = button.classList.contains("move-button") ? "Přesunout: " + STATUS_META[nextStatus(item.status)].label : button.getAttribute("aria-label");
+    button.appendChild(label); panel.appendChild(button);
+  });
+  actions.replaceChildren(trigger, panel);
+  trigger.addEventListener("click", () => {
+    if (panel.matches(":popover-open")) { panel.hidePopover(); return; }
+    panel.showPopover();
+    const rect = trigger.getBoundingClientRect();
+    panel.style.left = Math.max(8, Math.min(rect.right - panel.offsetWidth, window.innerWidth - panel.offsetWidth - 8)) + "px";
+    panel.style.top = Math.max(8, Math.min(rect.bottom + 6, window.innerHeight - panel.offsetHeight - 8)) + "px";
+  });
+  panel.addEventListener("toggle", event => trigger.setAttribute("aria-expanded", event.newState === "open" ? "true" : "false"));
+  panel.addEventListener("click", event => { if (event.target.closest("button")) panel.hidePopover(); });
+}
+function closeUserCreateDrawer() {
+  const drawer = document.getElementById("userCreateDrawer");
+  if (drawer.classList.contains("hidden")) return;
+  drawer.classList.add("hidden"); drawer.setAttribute("aria-hidden", "true"); syncBodyLock();
+  document.getElementById("openUserDrawer").focus();
+}
+document.getElementById("openUserDrawer").addEventListener("click", () => {
+  if (state.user?.role !== "admin") return;
+  const drawer = document.getElementById("userCreateDrawer");
+  setUsersMessage(""); drawer.classList.remove("hidden"); drawer.setAttribute("aria-hidden", "false");
+  syncBodyLock(); userForm.elements.email.focus();
+});
+document.querySelectorAll("[data-close-user-drawer]").forEach(button => button.addEventListener("click", closeUserCreateDrawer));
+document.addEventListener("keydown", event => {
+  const drawer = document.getElementById("userCreateDrawer");
+  if (drawer.classList.contains("hidden")) return;
+  if (event.key === "Escape") closeUserCreateDrawer();
+  if (event.key === "Tab") {
+    const controls = [...drawer.querySelectorAll("button:not(:disabled), input, select")];
+    const first = controls[0], last = controls.at(-1);
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }
+});
