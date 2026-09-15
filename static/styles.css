@@ -1103,7 +1103,7 @@ h3 {
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr);
   gap: 0.9rem;
-  align-items: center;
+  align-items: start;
   padding: 0.9rem;
   border-radius: 18px;
   border: 1px solid var(--color-border);
@@ -1145,6 +1145,15 @@ h3 {
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.65rem;
+}
+
+.avatar-actions .icon-button {
+  width: auto;
+  min-width: 0;
+  min-height: 36px;
+  height: auto;
+  padding: 0.55rem 0.8rem;
+  white-space: nowrap;
 }
 
 .file-field {
