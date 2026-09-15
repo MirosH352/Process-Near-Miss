@@ -98,6 +98,9 @@
             <button type="button" class="app-tab-button" data-app-tab="check-app" role="tab" aria-selected="false">
               <span data-icon="database" aria-hidden="true"></span><span>Kontrola AB</span>
             </button>
+            <button type="button" class="app-tab-button" data-app-tab="assistant" role="tab" aria-selected="false">
+              <span data-icon="message" aria-hidden="true"></span><span>Asistent</span>
+            </button>
             <button type="button" class="app-tab-button" data-app-tab="instalace" role="tab" aria-selected="false">
               <span data-icon="tool" aria-hidden="true"></span><span>Instalace</span>
             </button>
@@ -478,6 +481,42 @@
             <table class="check-table"><thead><tr><th scope="col">Kód dopravce</th><th scope="col">Pořadí Excel</th><th scope="col">Pořadí konzole</th><th scope="col">Stav</th><th scope="col">Podrobnosti</th></tr></thead><tbody id="checkResultRows"></tbody></table>
           </div>
           <div class="check-pagination"><button type="button" class="secondary" id="checkPrev">Předchozí</button><span id="checkPageInfo" aria-live="polite"></span><button type="button" class="secondary" id="checkNext">Další</button></div>
+        </div>
+      </section>
+
+      <section id="assistantPanel" class="app-panel assistant-panel hidden" aria-labelledby="assistantTitle">
+        <div class="assistant-layout">
+          <section class="card dashboard-card assistant-chat-card">
+            <div class="section-head assistant-head">
+              <div>
+                <p class="eyebrow">SCHVÁLENÁ NÁPOVĚDA</p>
+                <h2 id="assistantTitle"><span class="section-icon" data-icon="message" aria-hidden="true"></span>Asistent řešení problémů</h2>
+                <p>Popiš, co se děje. Asistent odpoví pouze z ručně připravených postupů.</p>
+              </div>
+            </div>
+
+            <div id="assistantMessages" class="assistant-messages" aria-live="polite"></div>
+
+            <form id="assistantForm" class="assistant-form">
+              <label class="sr-only" for="assistantInput">Popis problému</label>
+              <textarea id="assistantInput" rows="3" placeholder="Např. nejde odeslat nový záznam, chybí povinné pole nebo Kontrola AB nenačetla Excel"></textarea>
+              <button type="submit" class="primary">
+                <span class="button-icon" data-icon="search" aria-hidden="true"></span>
+                <span>Najít postup</span>
+              </button>
+            </form>
+          </section>
+
+          <aside class="card dashboard-card assistant-guide-card">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">ZNALOSTNÍ BÁZE</p>
+                <h2>Co umí teď</h2>
+                <p>První sada postupů je ukázková. Později ji nahradíme vašimi reálnými chybami a řešeními.</p>
+              </div>
+            </div>
+            <div id="assistantKnowledgeList" class="assistant-knowledge-list"></div>
+          </aside>
         </div>
       </section>
 

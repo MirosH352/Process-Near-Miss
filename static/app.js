@@ -32,6 +32,130 @@ const PERSON_OPTIONS = [
 const CHECKLIST_DEFAULT_PAGE_ID = "alzaboxy-a-trasy";
 const CHECKLIST_STORAGE_KEY = "near-miss-tracker.checklist";
 const CHECKLIST_PAGE_KEY = "near-miss-tracker.checklist.page";
+const ASSISTANT_MATCH_THRESHOLD = 4;
+
+const ASSISTANT_KNOWLEDGE_BASE = [
+  {
+    id: "hidden-want-to-go-home",
+    title: "Chci domů",
+    symptoms: ["chci domů", "chci domu"],
+    cause: "já taky bro",
+    solution: "já taky bro",
+    escalation: "já taky bro",
+    tags: ["Skryté"],
+    hidden: true,
+    shortAnswer: "já taky bro",
+  },
+  {
+    id: "hidden-night-starts",
+    title: "Začíná noc",
+    symptoms: ["začíná noc", "zacina noc"],
+    cause: "Drž hubu!",
+    solution: "Drž hubu!",
+    escalation: "Drž hubu!",
+    tags: ["Skryté"],
+    hidden: true,
+    shortAnswer: "Drž hubu!",
+  },
+  {
+    id: "delivery-postcode-restriction",
+    title: "Produkt nelze přepravit kvůli omezení doručení na PSČ",
+    symptoms: [
+      "produkt nelze přepravit",
+      "produkty nelze přepravit",
+      "omezení doručení na psč",
+      "omezeni doruceni na psc",
+      "nelze přepravit z důvodu omezení doručení",
+      "výdejní místo",
+      "vydejni misto",
+      "alzabox",
+      "parcelshop",
+      "ppl",
+    ],
+    cause:
+      "Nejčastěji jde o chybně nastavené výdejní místo. U AlzaBoxu bývá špatná nebo chybějící trasa, případně trasa nemá funkční aktivní svoz. U externího boxu může jít o chybu exportu, kdy je box aktivní v konzoli, ale u dopravce už aktivní není, nebo není správně namapovaný v routech.",
+    solution:
+      "Nejdřív určete typ výdejního místa. Pokud jde o AlzaBox, zkontrolujte, zda má přiřazenou skupinu výdejních míst. Pokud ano, pokračujte kontrolou svozu a přepravního směru svozu. Pokud jde o box externí firmy, ověřte, zda se zobrazuje jako dostupný na webu dopravce, zda je dostupný na webu Alza a zda je namapovaný v routech.",
+    escalation:
+      "Eskalujte, pokud AlzaBox nemá jasně dohledatelnou trasu nebo aktivní svoz, případně pokud se stav externího boxu liší mezi konzolí, webem dopravce a Alza webem.",
+    tags: ["Výdejní místa", "AlzaBox", "Externí boxy"],
+  },
+  {
+    id: "missing-expedition-route",
+    title: "Nebyla vygenerována expediční trasa",
+    symptoms: [
+      "nebyla vygenerována expediční trasa",
+      "nebyla vygenerovana expedicni trasa",
+      "produkt nebyla vygenerována expediční trasa",
+      "kritická chyba expediční trasa",
+      "kriticka chyba expedicni trasa",
+      "svoz nenašel cestu",
+      "svoz nenasel cestu",
+      "cílové místo",
+      "cilove misto",
+      "delivery matrix",
+      "expediční trasa",
+      "expedicni trasa",
+    ],
+    cause:
+      "Chyba vzniká při špatně nastaveném svozu. Systém tím říká, že svoz nenašel cestu do cílového místa v objednávce.",
+    solution:
+      "Zkontrolujte, jak je nastavený svoz na cílové místo v objednávce. Potom ověřte v delivery matrix, zda je zmíněný svoz opravdu vygenerovaný.",
+    escalation:
+      "Eskalujte, pokud svoz v delivery matrix chybí, cílové místo nemá jasnou cestu nebo jde o objednávku s kritickým provozním dopadem.",
+    tags: ["Svozy", "Expediční trasy", "Delivery matrix"],
+  },
+  {
+    id: "missed-customer-delivery-date",
+    title: "Zmeškaný termín dodání zákazníkovi",
+    symptoms: [
+      "zmeškaný termín dodání zákazníkovi",
+      "zmeskany termin dodani zakaznikovi",
+      "dodat od",
+      "termín doručení",
+      "termin doruceni",
+      "fakturace zakázky",
+      "fakturace zakazky",
+      "nestíhá svoz",
+      "nestiha svoz",
+      "doklad nestihne",
+    ],
+    cause:
+      "Chyba nastává, když fakturace zakázky neproběhne do termínu doručení nebo daný svoz nestíhá doručit v nastaveném termínu.",
+    solution:
+      "Na zakázce upravte pole Dodat od na hodnotu Nejdříve, případně vyberte budoucí datum, které doklad ještě stihne.",
+    escalation:
+      "Eskalujte, pokud není jasné, jaké budoucí datum svoz reálně stihne, nebo pokud změna termínu může mít dopad na zákazníka či navazující proces.",
+    tags: ["Zakázky", "Doručení", "Svozy"],
+  },
+  {
+    id: "orders-fall-to-wrong-generated-route",
+    title: "Na vygenerovanou trasu padají objednávky z jiných tras",
+    symptoms: [
+      "na vygenerovanou trasu padají objednávky z jiných tras",
+      "na vygenerovanou trasu padaji objednavky z jinych tras",
+      "objednávky padají z jiných tras",
+      "objednavky padaji z jinych tras",
+      "špatné trasování objednávek",
+      "spatne trasovani objednavek",
+      "chybějící default",
+      "chybejici default",
+      "vstupní depo default",
+      "vstupni depo default",
+      "přepravní směr default",
+      "prepravni smer default",
+      "expediční svozy na ab",
+      "expedicni svozy na ab",
+    ],
+    cause:
+      "Pravděpodobnou příčinou je chybějící hodnota DEFAULT na přepravním směru, zejména u nově vytvořených nebo upravovaných přepravních směrů.",
+    solution:
+      "Zkontrolujte nově vytvořené přepravní směry a přepravní směry, na kterých se dělala úprava. U expedičních svozů na AB ověřte, že je vstupní depo vyplněné hodnotou DEFAULT.",
+    escalation:
+      "Eskalujte okamžitě, pokud DEFAULT chybí. Nevyplněná hodnota může kriticky ohrozit trasování všech tras z daného LC.",
+    tags: ["Trasy", "Přepravní směry", "DEFAULT"],
+  },
+];
 
 const CHECKLIST_PAGES = {
   "alzaboxy-a-trasy": {
@@ -621,6 +745,11 @@ const checklistPanel = document.getElementById("checklistPanel");
 const adminPanel = document.getElementById("adminPanel");
 const checkAppPanel = document.getElementById("checkAppPanel");
 const installationPanel = document.getElementById("installationPanel");
+const assistantPanel = document.getElementById("assistantPanel");
+const assistantForm = document.getElementById("assistantForm");
+const assistantInput = document.getElementById("assistantInput");
+const assistantMessagesEl = document.getElementById("assistantMessages");
+const assistantKnowledgeListEl = document.getElementById("assistantKnowledgeList");
 const checklistGroupsEl = document.getElementById("checklistGroups");
 const checklistBreadcrumbCurrentEl = document.getElementById("checklistBreadcrumbCurrent");
 const checklistPageButtons = document.querySelectorAll("[data-checklist-page]");
@@ -666,6 +795,8 @@ const ICONS = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 8 1.5 1.5L12 7"/><path d="M8 12h8"/><path d="m8 15 1.5 1.5L12 14"/></svg>',
   tool:
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.5 5.5L3.8 17.2a2.1 2.1 0 1 0 3 3l5.4-5.4a4 4 0 0 0 5.5-5.5l-2.9 2.9-2.9-2.9 2.8-3Z"/></svg>',
+  message:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-6.2A8 8 0 1 1 21 12Z"/><path d="M8 10h8M8 14h5"/></svg>',
   users:
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21a5 5 0 0 0-10 0"/><circle cx="12" cy="8" r="3.5"/><path d="M20 21a4.25 4.25 0 0 0-3.2-4.1"/><path d="M16.5 6.5a2.5 2.5 0 1 1 0 5"/><path d="M4 21a4.25 4.25 0 0 1 3.2-4.1"/></svg>',
   "arrow-right":
@@ -1102,12 +1233,12 @@ function writeViewMode(viewMode) {
 
 function getSectionFromHash() {
   const rawHash = window.location.hash.replace(/^#/, "").trim().toLowerCase();
-  const allowed = new Set(["home", "records", "checklist", "check-app", "instalace", "admin"]);
+  const allowed = new Set(["home", "records", "checklist", "check-app", "assistant", "instalace", "admin"]);
   return allowed.has(rawHash) ? rawHash : null;
 }
 
 function syncSectionHash(section) {
-  const normalized = ["home", "records", "checklist", "check-app", "instalace", "admin"].includes(section) ? section : "home";
+  const normalized = ["home", "records", "checklist", "check-app", "assistant", "instalace", "admin"].includes(section) ? section : "home";
   const nextHash = `#${normalized}`;
   if (window.location.hash === nextHash) {
     return;
@@ -1761,7 +1892,7 @@ function updateRoleVisibility() {
 
 function setAppSection(section) {
   const isAdmin = state.user?.role === "admin";
-  const allowedSections = new Set(["home", "records", "checklist", "check-app", "instalace"]);
+  const allowedSections = new Set(["home", "records", "checklist", "check-app", "assistant", "instalace"]);
   if (isAdmin) {
     allowedSections.add("admin");
   }
@@ -1776,6 +1907,7 @@ function setAppSection(section) {
   checklistPanel.classList.toggle("hidden", state.appSection !== "checklist");
   adminPanel.classList.toggle("hidden", state.appSection !== "admin");
   checkAppPanel.classList.toggle("hidden", state.appSection !== "check-app");
+  assistantPanel.classList.toggle("hidden", state.appSection !== "assistant");
   installationPanel.classList.toggle("hidden", state.appSection !== "instalace");
 
   appTabButtons.forEach((button) => {
@@ -1785,6 +1917,10 @@ function setAppSection(section) {
   });
 
   syncSectionHash(state.appSection);
+  if (state.appSection === "assistant") {
+    renderAssistantKnowledgeList();
+    renderAssistantWelcome();
+  }
 }
 
 function renderAuthState() {
@@ -1801,6 +1937,7 @@ function renderAuthState() {
   checklistPanel.classList.add("hidden");
   adminPanel.classList.add("hidden");
   checkAppPanel.classList.add("hidden");
+  assistantPanel.classList.add("hidden");
   installationPanel.classList.add("hidden");
   if (state.needsBootstrap) {
     showBootstrapMode();
@@ -1940,6 +2077,173 @@ function renderUsers() {
   }
 
   syncUserSelectionUI();
+}
+
+function normalizeAssistantText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function tokenizeAssistantText(value) {
+  return normalizeAssistantText(value)
+    .split(/[^a-z0-9]+/i)
+    .filter((word) => word.length >= 3);
+}
+
+function getAssistantSearchText(item) {
+  return [item.title, item.cause, item.solution, item.escalation, ...(item.symptoms || []), ...(item.tags || [])].join(" ");
+}
+
+function scoreAssistantItem(query, item) {
+  const normalizedQuery = normalizeAssistantText(query);
+  const searchText = normalizeAssistantText(getAssistantSearchText(item));
+  const tokens = tokenizeAssistantText(query);
+  let score = 0;
+
+  for (const symptom of item.symptoms || []) {
+    if (normalizedQuery.includes(normalizeAssistantText(symptom))) {
+      score += 4;
+    }
+  }
+
+  for (const token of tokens) {
+    if (searchText.includes(token)) {
+      score += 1;
+    }
+  }
+
+  return score;
+}
+
+function findAssistantMatches(query) {
+  return ASSISTANT_KNOWLEDGE_BASE.map((item) => ({
+    item,
+    score: scoreAssistantItem(query, item),
+  }))
+    .filter((match) => match.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+}
+
+function createAssistantMessage(role, text) {
+  const message = document.createElement("article");
+  message.className = `assistant-message assistant-message-${role}`;
+  const bubble = document.createElement("div");
+  bubble.className = "assistant-bubble";
+  bubble.textContent = text;
+  message.appendChild(bubble);
+  return message;
+}
+
+function appendAssistantMessage(role, text) {
+  assistantMessagesEl.appendChild(createAssistantMessage(role, text));
+  assistantMessagesEl.scrollTop = assistantMessagesEl.scrollHeight;
+}
+
+function appendAssistantResult(matches) {
+  const primary = matches[0];
+  const confident = primary && primary.score >= ASSISTANT_MATCH_THRESHOLD;
+  const message = document.createElement("article");
+  message.className = "assistant-message assistant-message-bot";
+  const bubble = document.createElement("div");
+  bubble.className = "assistant-bubble assistant-result";
+
+  const title = document.createElement("strong");
+  title.textContent = confident ? primary.item.title : "Nemám přesný schválený postup";
+  bubble.appendChild(title);
+
+  if (confident && primary.item.shortAnswer) {
+    title.textContent = primary.item.shortAnswer;
+    message.appendChild(bubble);
+    assistantMessagesEl.appendChild(message);
+    assistantMessagesEl.scrollTop = assistantMessagesEl.scrollHeight;
+    return;
+  }
+
+  if (!confident) {
+    const note = document.createElement("p");
+    note.textContent =
+      matches.length > 0
+        ? "Našel jsem jen podobná témata. Ber je jako vodítko, ne jako potvrzené řešení pro tento případ."
+        : "V aktuální znalostní bázi pro tento popis nic nemám. Přidej prosím nový postup nebo problém eskaluj.";
+    bubble.appendChild(note);
+  }
+
+  if (confident) {
+    const cause = document.createElement("p");
+    cause.textContent = `Pravděpodobná příčina: ${primary.item.cause}`;
+    const solution = document.createElement("p");
+    solution.textContent = `Doporučený postup: ${primary.item.solution}`;
+    const escalation = document.createElement("p");
+    escalation.textContent = `Kdy eskalovat: ${primary.item.escalation}`;
+    bubble.append(cause, solution, escalation);
+  }
+
+  const relatedMatches = confident ? matches.slice(1) : matches;
+  if (relatedMatches.length > 0) {
+    const related = document.createElement("div");
+    related.className = "assistant-related";
+    const relatedTitle = document.createElement("span");
+    relatedTitle.textContent = confident ? "Další možná témata" : "Podobná témata";
+    related.appendChild(relatedTitle);
+    const list = document.createElement("ul");
+    relatedMatches.forEach(({ item }) => {
+      const listItem = document.createElement("li");
+      listItem.textContent = item.title;
+      list.appendChild(listItem);
+    });
+    related.appendChild(list);
+    bubble.appendChild(related);
+  }
+
+  message.appendChild(bubble);
+  assistantMessagesEl.appendChild(message);
+  assistantMessagesEl.scrollTop = assistantMessagesEl.scrollHeight;
+}
+
+function renderAssistantWelcome() {
+  if (assistantMessagesEl.children.length > 0) return;
+  appendAssistantMessage(
+    "bot",
+    "Popiš problém vlastními slovy. Když najdu shodu ve schválených postupech, ukážu příčinu, řešení a kdy věc eskalovat."
+  );
+}
+
+function renderAssistantKnowledgeList() {
+  if (!assistantKnowledgeListEl || assistantKnowledgeListEl.children.length > 0) return;
+  ASSISTANT_KNOWLEDGE_BASE.filter((item) => !item.hidden).forEach((item) => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "assistant-knowledge-item";
+    card.setAttribute("aria-label", `Odeslat dotaz: ${item.title}`);
+    const title = document.createElement("strong");
+    title.textContent = item.title;
+    const tags = document.createElement("span");
+    tags.textContent = item.tags.join(" / ");
+    card.append(title, tags);
+    card.addEventListener("click", () => {
+      submitAssistantQuery(item.title);
+    });
+    assistantKnowledgeListEl.appendChild(card);
+  });
+}
+
+function submitAssistantQuery(query) {
+  if (!query) {
+    assistantInput.focus();
+    return;
+  }
+  appendAssistantMessage("user", query);
+  appendAssistantResult(findAssistantMatches(query));
+  assistantInput.value = "";
+  assistantInput.focus();
+}
+
+function handleAssistantSubmit(event) {
+  event.preventDefault();
+  submitAssistantQuery(assistantInput.value.trim());
 }
 
 function render() {
@@ -2873,6 +3177,8 @@ checklistToggleAllButton?.addEventListener("click", () => {
 });
 
 checklistNextIncompleteButton?.addEventListener("click", focusNextIncompleteChecklistItem);
+
+assistantForm?.addEventListener("submit", handleAssistantSubmit);
 
 async function start() {
   updateViewModeUI();
