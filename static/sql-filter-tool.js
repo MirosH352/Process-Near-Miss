@@ -100,8 +100,8 @@ class SqlFilterTool extends HTMLElement {
 
     this.filters = {
       appliances: {
-        paid: "(**[Segment 3] IN** ('Vestavné lednice', 'Vestavné mrazáky', 'Vestavné sušičky', 'Vestavné myčky standardní', 'Vestavné myčky úzké', 'Vestavné pračky', 'Vestavné vinotéky', 'Vestavné mikrovlnné trouby')  **and [Segment 3]** <> 'Plynové desky' **AND [Název produktu] NOT LIKE&#x20;**'%digestoř%' **AND** (**[Jméno Ext] NOT LIKE&#x20;**'%plyn%' **or ISNULL**(**[Jméno Ext]**, '') = '') **AND [SEO Prefix] NOT IN** ('Set trouba, deska a myčka', 'Set trouba, varná deska a mikrovlnná trouba') **AND ISNULL**(**[Produkt]**, '') **NOT IN** ('AMISET101') **OR [Produkt] IN** ('SIEPS001', 'BOKAV001', 'BOTR059', 'Mie437', 'Mie436', 'ELMAK001', 'BOTR017', 'SIMTR11', 'WHVK001', 'BECHL162') **OR [Segment 2] IN** ('Vestavné ohřívací zásuvky', 'Vestavné kávovary')) **AND [Webový příznak]** > 0 **AND [Produkt] NOT IN** ()",
-        free: "**[Produkt] IN** ()"
+        paid: "([Segment 3] IN ('Vestavné lednice', 'Vestavné mrazáky', 'Vestavné sušičky', 'Vestavné myčky standardní', 'Vestavné myčky úzké', 'Vestavné pračky', 'Vestavné vinotéky', 'Vestavné mikrovlnné trouby')  and [Segment 3] <> 'Plynové desky' AND [Název produktu] NOT LIKE '%digestoř%' AND ([Jméno Ext] NOT LIKE '%plyn%' or ISNULL([Jméno Ext], '') = '') AND [SEO Prefix] NOT IN ('Set trouba, deska a myčka', 'Set trouba, varná deska a mikrovlnná trouba') AND ISNULL([Produkt], '') NOT IN ('AMISET101') OR [Produkt] IN ('SIEPS001', 'BOKAV001', 'BOTR059', 'Mie437', 'Mie436', 'ELMAK001', 'BOTR017', 'SIMTR11', 'WHVK001', 'BECHL162') OR [Segment 2] IN ('Vestavné ohřívací zásuvky', 'Vestavné kávovary')) AND [Webový příznak] > 0 AND [Produkt] NOT IN ()",
+        free: "[Produkt] IN ()"
       },
       tv: {
         paid: "[Segment 1] = 'Televize' AND ISNULL([Webový příznak], 0) <> -1 AND [Produkt] NOT IN ()",
@@ -153,6 +153,10 @@ class SqlFilterTool extends HTMLElement {
       .map((code) => code.trim().replace(/^'+|'+$/g, ""))
       .filter(Boolean)
       .filter((code, index, list) => list.indexOf(code) === index);
+  }
+
+  cleanSql(sql) {
+    return sql.replace(/\*\*/g, "").replace(/&#x20;/gi, " ");
   }
 
   findProductListBounds(sql, mode) {
@@ -284,11 +288,11 @@ class SqlFilterTool extends HTMLElement {
 
     try {
       const paidEdit = mode === "add"
-        ? this.addCodes(this.paidTemplate.value, "notIn", codes)
-        : this.removeCodes(this.paidTemplate.value, "notIn", codes);
+        ? this.addCodes(this.cleanSql(this.paidTemplate.value), "notIn", codes)
+        : this.removeCodes(this.cleanSql(this.paidTemplate.value), "notIn", codes);
       const freeEdit = mode === "add"
-        ? this.addCodes(this.freeTemplate.value, "in", codes)
-        : this.removeCodes(this.freeTemplate.value, "in", codes);
+        ? this.addCodes(this.cleanSql(this.freeTemplate.value), "in", codes)
+        : this.removeCodes(this.cleanSql(this.freeTemplate.value), "in", codes);
 
       this.paidOutput.value = paidEdit.sql;
       this.freeOutput.value = freeEdit.sql;
