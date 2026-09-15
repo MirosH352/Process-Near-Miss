@@ -1802,6 +1802,10 @@ class AppHandler(BaseHTTPRequestHandler):
             self.serve_file(STATIC_DIR / "check-app.css", "text/css; charset=utf-8")
             return
 
+        if path == "/sql-filter-tool.css":
+            self.serve_file(STATIC_DIR / "sql-filter-tool.css", "text/css; charset=utf-8")
+            return
+
         check_scripts = {
             "/check-app.js": "check-app.js",
             "/check-core.js": "check-core.js",
