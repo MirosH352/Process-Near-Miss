@@ -114,7 +114,9 @@ label,
 }
 
 .sft-segmented-filter-type {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr) minmax(142px, 1.35fr);
+  gap: 6px;
+  padding: 5px;
 }
 
 .sft-segmented input {
@@ -138,6 +140,13 @@ label,
   font-weight: 650;
   text-align: center;
   transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.sft-segmented-filter-type label {
+  min-height: 44px;
+  padding: 9px 10px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .sft-segmented input:checked + label {
@@ -345,11 +354,30 @@ summary:hover {
     flex-direction: column;
   }
 
+  .sft-segmented-filter-type {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sft-segmented-filter-type label[for="sft-type-semicolon"] {
+    grid-column: 1 / -1;
+  }
+
   .sft-panel-header,
   .sft-panel-body,
   summary,
   .sft-template-grid {
     padding-left: 16px;
     padding-right: 16px;
+  }
+}
+
+@media (max-width: 460px) {
+  .sft-segmented-filter-type,
+  .sft-segmented {
+    grid-template-columns: 1fr;
+  }
+
+  .sft-segmented-filter-type label[for="sft-type-semicolon"] {
+    grid-column: auto;
   }
 }
