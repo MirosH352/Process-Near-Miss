@@ -1806,6 +1806,7 @@ class AppHandler(BaseHTTPRequestHandler):
             "/check-app.js": "check-app.js",
             "/check-core.js": "check-core.js",
             "/check-worker.js": "check-worker.js",
+            "/sql-filter-tool.js": "sql-filter-tool.js",
             "/vendor/xlsx.full.min.js": "vendor/xlsx.full.min.js",
         }
         if path in check_scripts:

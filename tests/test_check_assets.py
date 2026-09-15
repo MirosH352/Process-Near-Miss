@@ -24,7 +24,7 @@ class CheckAssetsTest(unittest.TestCase):
         cls.thread.join()
 
     def test_check_assets_are_served_with_correct_content_types(self):
-        for filename in ["check-app.css", "check-app.js", "check-core.js", "check-worker.js", "vendor/xlsx.full.min.js"]:
+        for filename in ["check-app.css", "check-app.js", "check-core.js", "check-worker.js", "sql-filter-tool.js", "vendor/xlsx.full.min.js"]:
             with self.subTest(filename=filename), urlopen(self.base + "/" + filename) as response:
                 self.assertEqual(response.status, 200)
                 self.assertEqual(response.read(), (app.ROOT / filename).read_bytes())
@@ -37,7 +37,7 @@ class CheckAssetsTest(unittest.TestCase):
             self.assertEqual(error.exception.code, status)
 
     def test_static_mirror_matches_served_files(self):
-        for filename in ["index.html", "styles.css", "app.js", "check-app.css", "check-app.js", "check-core.js", "check-worker.js", "vendor/xlsx.full.min.js"]:
+        for filename in ["index.html", "styles.css", "app.js", "check-app.css", "check-app.js", "check-core.js", "check-worker.js", "sql-filter-tool.js", "vendor/xlsx.full.min.js"]:
             self.assertEqual((app.ROOT / filename).read_bytes(), (app.ROOT / "static" / filename).read_bytes(), filename)
 
 
