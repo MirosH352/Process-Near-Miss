@@ -620,6 +620,7 @@ const recordsPanel = document.getElementById("recordsPanel");
 const checklistPanel = document.getElementById("checklistPanel");
 const adminPanel = document.getElementById("adminPanel");
 const checkAppPanel = document.getElementById("checkAppPanel");
+const installationPanel = document.getElementById("installationPanel");
 const checklistGroupsEl = document.getElementById("checklistGroups");
 const checklistBreadcrumbCurrentEl = document.getElementById("checklistBreadcrumbCurrent");
 const checklistPageButtons = document.querySelectorAll("[data-checklist-page]");
@@ -663,6 +664,8 @@ const ICONS = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6.5h14"/><path d="M5 12h14"/><path d="M5 17.5h14"/><circle cx="7" cy="6.5" r="1"/><circle cx="7" cy="12" r="1"/><circle cx="7" cy="17.5" r="1"/></svg>',
   checklist:
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 8 1.5 1.5L12 7"/><path d="M8 12h8"/><path d="m8 15 1.5 1.5L12 14"/></svg>',
+  tool:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.5 5.5L3.8 17.2a2.1 2.1 0 1 0 3 3l5.4-5.4a4 4 0 0 0 5.5-5.5l-2.9 2.9-2.9-2.9 2.8-3Z"/></svg>',
   users:
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21a5 5 0 0 0-10 0"/><circle cx="12" cy="8" r="3.5"/><path d="M20 21a4.25 4.25 0 0 0-3.2-4.1"/><path d="M16.5 6.5a2.5 2.5 0 1 1 0 5"/><path d="M4 21a4.25 4.25 0 0 1 3.2-4.1"/></svg>',
   "arrow-right":
@@ -1099,12 +1102,12 @@ function writeViewMode(viewMode) {
 
 function getSectionFromHash() {
   const rawHash = window.location.hash.replace(/^#/, "").trim().toLowerCase();
-  const allowed = new Set(["home", "records", "checklist", "check-app", "admin"]);
+  const allowed = new Set(["home", "records", "checklist", "check-app", "instalace", "admin"]);
   return allowed.has(rawHash) ? rawHash : null;
 }
 
 function syncSectionHash(section) {
-  const normalized = ["home", "records", "checklist", "check-app", "admin"].includes(section) ? section : "home";
+  const normalized = ["home", "records", "checklist", "check-app", "instalace", "admin"].includes(section) ? section : "home";
   const nextHash = `#${normalized}`;
   if (window.location.hash === nextHash) {
     return;
@@ -1746,7 +1749,7 @@ function updateRoleVisibility() {
 
 function setAppSection(section) {
   const isAdmin = state.user?.role === "admin";
-  const allowedSections = new Set(["home", "records", "checklist", "check-app"]);
+  const allowedSections = new Set(["home", "records", "checklist", "check-app", "instalace"]);
   if (isAdmin) {
     allowedSections.add("admin");
   }
@@ -1761,6 +1764,7 @@ function setAppSection(section) {
   checklistPanel.classList.toggle("hidden", state.appSection !== "checklist");
   adminPanel.classList.toggle("hidden", state.appSection !== "admin");
   checkAppPanel.classList.toggle("hidden", state.appSection !== "check-app");
+  installationPanel.classList.toggle("hidden", state.appSection !== "instalace");
 
   appTabButtons.forEach((button) => {
     const active = button.dataset.appTab === state.appSection || (button.dataset.appTab === "records" && isOverview);
@@ -1785,6 +1789,7 @@ function renderAuthState() {
   checklistPanel.classList.add("hidden");
   adminPanel.classList.add("hidden");
   checkAppPanel.classList.add("hidden");
+  installationPanel.classList.add("hidden");
   if (state.needsBootstrap) {
     showBootstrapMode();
   } else {

@@ -98,6 +98,9 @@
             <button type="button" class="app-tab-button" data-app-tab="check-app" role="tab" aria-selected="false">
               <span data-icon="database" aria-hidden="true"></span><span>Check APP</span>
             </button>
+            <button type="button" class="app-tab-button" data-app-tab="instalace" role="tab" aria-selected="false">
+              <span data-icon="tool" aria-hidden="true"></span><span>Instalace</span>
+            </button>
             <button type="button" class="app-tab-button hidden" data-app-tab="admin" role="tab" aria-selected="false">
               <span data-icon="users" aria-hidden="true"></span><span>Správa účtů</span>
             </button>
@@ -476,6 +479,17 @@
           </div>
           <div class="check-pagination"><button type="button" class="secondary" id="checkPrev">Předchozí</button><span id="checkPageInfo" aria-live="polite"></span><button type="button" class="secondary" id="checkNext">Další</button></div>
         </div>
+      </section>
+
+      <section id="installationPanel" class="app-panel hidden" aria-labelledby="installationTitle">
+        <div class="check-heading check-page-heading">
+          <div>
+            <p class="eyebrow">INSTALACE</p>
+            <h2 id="installationTitle">Instalace</h2>
+            <p class="lead">Nástroj pro úpravu SQL filtrů služby zdarma podle produktových kódů.</p>
+          </div>
+        </div>
+        <sql-filter-tool></sql-filter-tool>
       </section>
 
       <div id="adminPanel" class="app-panel hidden">
@@ -1004,6 +1018,7 @@
 
     <script src="./check-core.js" defer></script>
     <script src="./check-app.js" defer></script>
+    <script src="./sql-filter-tool.js" defer></script>
     <script src="./app.js" defer></script>
   </body>
 </html>
