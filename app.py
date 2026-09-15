@@ -30,8 +30,12 @@ SESSION_COOKIE_NAME = "near_miss_session"
 CSRF_HEADER_NAME = "X-CSRF-Token"
 PASSWORD_HASH_ITERATIONS = 210000
 SESSION_DAYS = int(os.environ.get("SESSION_DAYS", "7"))
-SESSION_SECURE = os.environ.get("SESSION_SECURE", "0").lower() in {"1", "true", "yes"}
 APP_ORIGIN = os.environ.get("APP_ORIGIN", "").strip().rstrip("/")
+SESSION_SECURE = (
+    os.environ.get("SESSION_SECURE", "0").lower() in {"1", "true", "yes"}
+    or APP_ORIGIN.lower().startswith("https://")
+    or os.environ.get("RENDER_EXTERNAL_URL", "").strip().lower().startswith("https://")
+)
 TEAMS_OUTGOING_WEBHOOK_SECRET = os.environ.get("TEAMS_OUTGOING_WEBHOOK_SECRET", "").strip()
 TEAMS_INCOMING_WEBHOOK_URL = os.environ.get("TEAMS_INCOMING_WEBHOOK_URL", "").strip()
 LOGIN_RATE_LIMIT_MAX_ATTEMPTS = int(os.environ.get("LOGIN_RATE_LIMIT_MAX_ATTEMPTS", "10"))
@@ -1978,6 +1982,7 @@ class AppHandler(BaseHTTPRequestHandler):
                 json_response(self, {"error": str(exc)}, HTTPStatus.BAD_REQUEST)
             return
 
+        users_prefix = "/api/users/"
         if path.startswith(users_prefix):
             user = require_admin(self)
             if user is None:

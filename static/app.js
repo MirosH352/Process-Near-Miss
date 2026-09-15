@@ -1473,7 +1473,7 @@ function renderActiveIncidents(items) {
       </div>
       <p class="active-incident-description"></p>
       <div class="active-incident-meta">
-        <span>Oblast: ${item.area_label}</span>
+        <span class="active-incident-area"></span>
         <span>Vytvořeno: ${formatDate(item.created_at)}</span>
         <span>Aktualizováno: ${formatDate(item.updated_at)}</span>
       </div>
@@ -1481,6 +1481,7 @@ function renderActiveIncidents(items) {
 
     article.querySelector(".active-incident-title").textContent = item.title;
     article.querySelector(".active-incident-description").textContent = item.description || "Bez popisu.";
+    article.querySelector(".active-incident-area").textContent = `Oblast: ${item.area_label}`;
     bindRecordOpen(article, item);
     activeIncidentsListEl.appendChild(article);
   }
@@ -1643,9 +1644,10 @@ function openDetailModal(item) {
   detailBadgesEl.innerHTML = `
     <span class="badge type-badge">${TYPE_LABELS[item.entry_type]}</span>
     <span class="badge priority-badge priority-${item.severity}">${SEVERITY_LABELS[item.severity]}</span>
-    <span class="badge area-badge">${item.area_label}</span>
+    <span class="badge area-badge"></span>
     <span class="badge status-badge status-${item.status}">${STATUS_META[item.status].label}</span>
   `;
+  detailBadgesEl.querySelector(".area-badge").textContent = item.area_label;
   detailModal.classList.remove("hidden");
   detailModal.setAttribute("aria-hidden", "false");
   syncBodyLock();
@@ -2033,7 +2035,7 @@ function cardTemplate(item, columnStatus = item.status) {
         <div class="badges">
           <span class="badge type-badge">${TYPE_LABELS[item.entry_type]}</span>
           <span class="badge priority-badge priority-${item.severity}">${SEVERITY_LABELS[item.severity]}</span>
-          <span class="badge area-badge">${item.area_label}</span>
+          <span class="badge area-badge"></span>
           ${statusBadge}
         </div>
         <h3 class="entry-title"></h3>
@@ -2056,6 +2058,7 @@ function cardTemplate(item, columnStatus = item.status) {
 
   article.querySelector(".entry-title").textContent = item.title;
   article.querySelector(".entry-description").textContent = item.description || "Bez popisu.";
+  article.querySelector(".area-badge").textContent = item.area_label;
   article.querySelector(".entry-title").title = item.title;
   article.querySelector(".entry-description").title = item.description || "Bez popisu.";
   const creator = item.created_by_label || "Systém";
@@ -2099,7 +2102,7 @@ function tableRowTemplate(item) {
       </div>
     </td>
     <td class="col-type"><span class="badge type-badge">${TYPE_LABELS[item.entry_type]}</span></td>
-    <td class="col-area"><span class="badge area-badge">${item.area_label}</span></td>
+    <td class="col-area"><span class="badge area-badge"></span></td>
     <td class="col-priority"><span class="badge priority-badge priority-${item.severity}">${SEVERITY_LABELS[item.severity]}</span></td>
     <td class="col-status"><span class="badge status-badge status-${item.status}">${STATUS_META[item.status].label}</span></td>
     <td class="col-created-by"><span class="placeholder-value"></span></td>
@@ -2117,6 +2120,7 @@ function tableRowTemplate(item) {
   const titleEl = row.querySelector(".record-title");
   const descriptionEl = row.querySelector(".record-description");
   const metaEl = row.querySelector(".record-meta");
+  const areaEl = row.querySelector(".area-badge");
   const createdByEl = row.querySelector(".placeholder-value");
   idEl.textContent = shortId(item.id);
   idEl.title = item.id;
@@ -2124,6 +2128,7 @@ function tableRowTemplate(item) {
   titleEl.title = item.title;
   descriptionEl.textContent = item.description || "Bez popisu.";
   descriptionEl.title = item.description || "Bez popisu.";
+  areaEl.textContent = item.area_label;
   metaEl.textContent = `Zadavatel problému: ${formatPerson(item.problem_reporter)}`;
   createdByEl.textContent = item.created_by_label || "Systém";
   createdByEl.title = item.created_by_label || "Systém";
