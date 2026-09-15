@@ -1,7 +1,7 @@
 # Process Homepage
 
 Společný rozcestník procesních nástrojů, které usnadňují každodenní práci týmu.
-Zahrnuje evidenci incidentů a Near Miss událostí, pracovní checklisty a Check APP pro kontrolu dat.
+Zahrnuje evidenci incidentů a Near Miss událostí, pracovní checklisty a Kontrolu AB pro kontrolu dat.
 Aplikace se postupně rozšiřuje o další pomocníky a nástroje podle potřeb týmu.
 Frontend a Python backend používají přihlášení emailem a heslem, serverové session a správu účtů.
 
@@ -14,7 +14,7 @@ Frontend a Python backend používají přihlášení emailem a heslem, serverov
 - Editace, mazani a zmena stavu zaznamu
 - Kanban i tabulkove zobrazeni
 - Pracovní checklisty pro AlzaBoxy, trasy a dropshipment
-- Check APP pro porovnání pořadí z Excelu a konzole s exportem výsledků do CSV
+- Kontrola AB pro porovnání pořadí z Excelu a konzole s exportem výsledků do CSV
 
 ## Lokalne
 
@@ -68,11 +68,11 @@ Po prvnim nasazeni otevri aplikaci a zaloz prvniho admina pres bootstrap formula
 
 Soubor `start.bat` spusti lokalni server a otevre aplikaci v prohlizeci.
 
-## Check APP
+## Kontrola AB
 
 Stránka `#check-app` je dostupná z rozcestníku a hlavní navigace všem přihlášeným uživatelům.
 Porovnává pořadí na trase podle kódu `AB` následovaného číslicemi. Korekce času se stejně jako
-v desktopové Check APP neporovnává. Duplicitní kódy jsou označeny k ruční kontrole.
+v desktopové Kontrole AB neporovnává. Duplicitní kódy jsou označeny k ruční kontrole.
 
 - Referenční data: XLSX, XLS, CSV, TSV nebo TXT. V Excelu se automaticky vybere nejlépe odpovídající list.
 - Druhý vstup: export ve stejných formátech nebo tabulka vložená přes Ctrl+V, včetně původního textového výpisu.

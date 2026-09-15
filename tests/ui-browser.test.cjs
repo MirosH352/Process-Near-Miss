@@ -158,7 +158,7 @@ function workbook() {
     await confirm(page);
     await page.waitForFunction(email => [...document.querySelectorAll('#usersTableBody tr')].find(row => row.textContent.includes(email))?.querySelector('.col-status').textContent === 'Ano', accountEmail);
   });
-  await step('Check APP real workbook worker, results, filters, CSV and invalidation', async () => {
+  await step('Kontrola AB real workbook worker, results, filters, CSV and invalidation', async () => {
     await navigate(page, 'check-app');
     await page.locator('#checkExpectedFile').setInputFiles({ name: 'expected.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: workbook() });
     await page.locator('#checkActualText').fill('Kód dopravce;Pořadí na trase\nAB1;1\nAB2;9\nAB4;4');
