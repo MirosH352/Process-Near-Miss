@@ -40,6 +40,7 @@ test("semicolon parser handles a pasted markdown table column", () => {
   const parseSemicolonProducts = (raw) => {
     const normalized = raw.replace(/<br\s*\/?>/gi, "\n").replace(/<\/?[^>]+>/g, " ");
     const products = [];
+    const seen = new Set();
 
     normalized.split(/\r?\n/).forEach((line) => {
       const trimmed = line.trim();
@@ -55,7 +56,8 @@ test("semicolon parser handles a pasted markdown table column", () => {
         }
 
         const value = compact.replace(/^'+|'+$/g, "");
-        if (value) {
+        if (value && !seen.has(value)) {
+          seen.add(value);
           products.push(value);
         }
       });
@@ -83,6 +85,8 @@ test("semicolon parser handles a pasted markdown table column", () => {
     "| 491 |",
     "| 3518 |",
     "| 3533 |",
+    "| 3534 |",
+    "| 520 |",
     "| 3534 |",
   ].join("\n");
 

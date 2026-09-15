@@ -181,6 +181,7 @@ class SqlFilterTool extends HTMLElement {
   parseSemicolonProducts(raw) {
     const normalized = raw.replace(/<br\s*\/?>/gi, "\n").replace(/<\/?[^>]+>/g, " ");
     const products = [];
+    const seen = new Set();
 
     normalized.split(/\r?\n/).forEach((line) => {
       const trimmed = line.trim();
@@ -196,7 +197,8 @@ class SqlFilterTool extends HTMLElement {
         }
 
         const value = compact.replace(/^'+|'+$/g, "");
-        if (value) {
+        if (value && !seen.has(value)) {
+          seen.add(value);
           products.push(value);
         }
       });
