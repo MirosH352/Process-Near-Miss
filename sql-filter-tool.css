@@ -113,6 +113,10 @@ label,
   background: #f3f6fb;
 }
 
+.sft-segmented-filter-type {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .sft-segmented input {
   position: absolute;
   opacity: 0;
@@ -248,6 +252,10 @@ textarea:focus-visible {
 
 .sft-status.sft-visible {
   display: flex;
+}
+
+.sft-hidden {
+  display: none !important;
 }
 
 .sft-status.sft-ok {

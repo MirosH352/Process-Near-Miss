@@ -29,3 +29,65 @@ test("generated SQL is cleaned before list edits run", () => {
   assert.match(source, /this\.addCodes\(this\.cleanSql\(this\.paidTemplate\.value\)/);
   assert.match(source, /this\.addCodes\(this\.cleanSql\(this\.freeTemplate\.value\)/);
 });
+
+test("semicolon product mode is present in the UI", () => {
+  assert.match(source, /value="semicolon"/);
+  assert.match(source, /Oddělení produktů středníkem/);
+  assert.match(source, /parseSemicolonProducts\(raw\)/);
+});
+
+test("semicolon parser handles a pasted markdown table column", () => {
+  const parseSemicolonProducts = (raw) => {
+    const normalized = raw.replace(/<br\s*\/?>/gi, "\n").replace(/<\/?[^>]+>/g, " ");
+    const products = [];
+
+    normalized.split(/\r?\n/).forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        return;
+      }
+
+      const cells = trimmed.includes("|") ? trimmed.split("|") : trimmed.split(/[\t,;]+/);
+      cells.forEach((cell) => {
+        const compact = cell.trim().replace(/\s+/g, "");
+        if (!compact || /^:?-{3,}:?$/.test(compact)) {
+          return;
+        }
+
+        const value = compact.replace(/^'+|'+$/g, "");
+        if (value) {
+          products.push(value);
+        }
+      });
+    });
+
+    return products;
+  };
+
+  const pasted = [
+    "| 624 |",
+    "| --- |",
+    "| 520 |",
+    "| 407 |",
+    "| 331 |",
+    "| 647 |",
+    "| 648 |",
+    "| 649 |",
+    "| 650 |",
+    "| 651 |",
+    "| 652 |",
+    "| 322 |",
+    "| 288 |",
+    "| 863 |",
+    "| 2524 |",
+    "| 491 |",
+    "| 3518 |",
+    "| 3533 |",
+    "| 3534 |",
+  ].join("\n");
+
+  assert.equal(
+    parseSemicolonProducts(pasted).join(";"),
+    "624;520;407;331;647;648;649;650;651;652;322;288;863;2524;491;3518;3533;3534"
+  );
+});

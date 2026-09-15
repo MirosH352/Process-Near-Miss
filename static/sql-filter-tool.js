@@ -24,15 +24,17 @@ class SqlFilterTool extends HTMLElement {
             <div class="sft-panel-body">
               <div class="sft-field">
                 <div class="sft-field-title">Typ filtru</div>
-                <div class="sft-segmented" role="radiogroup" aria-label="Typ filtru">
+                <div class="sft-segmented sft-segmented-filter-type" role="radiogroup" aria-label="Typ filtru">
                   <input type="radio" id="sft-type-appliances" name="sft-filter-type" value="appliances" checked>
                   <label for="sft-type-appliances">Vestavné spotřebiče</label>
                   <input type="radio" id="sft-type-tv" name="sft-filter-type" value="tv">
                   <label for="sft-type-tv">Televize</label>
+                  <input type="radio" id="sft-type-semicolon" name="sft-filter-type" value="semicolon">
+                  <label for="sft-type-semicolon">Oddělení produktů středníkem</label>
                 </div>
               </div>
 
-              <div class="sft-field">
+              <div class="sft-field" data-role="actionField">
                 <div class="sft-field-title">Akce</div>
                 <div class="sft-segmented" role="radiogroup" aria-label="Akce">
                   <input type="radio" id="sft-mode-add" name="sft-edit-mode" value="add" checked>
@@ -45,13 +47,13 @@ class SqlFilterTool extends HTMLElement {
               <div class="sft-field">
                 <label for="sft-codes">Produktové kódy</label>
                 <textarea id="sft-codes" spellcheck="false" placeholder="ABC123&#10;XYZ456&#10;Nebo: ABC123, XYZ456"></textarea>
-                <div class="sft-hint">Kódy můžou být na řádcích, oddělené čárkou, středníkem nebo mezerou. Apostrofy se doplní automaticky.</div>
+                <div class="sft-hint" data-role="codesHint">Kódy můžou být na řádcích, oddělené čárkou, středníkem nebo mezerou. Apostrofy se doplní automaticky.</div>
               </div>
 
               <div class="sft-actions">
-                <button class="sft-btn sft-btn-primary" data-action="run" type="button">Vygenerovat filtry</button>
+                <button class="sft-btn sft-btn-primary" data-action="run" type="button" data-role="runButton">Vygenerovat filtry</button>
                 <button class="sft-btn sft-btn-secondary" data-action="clear" type="button">Vymazat kódy</button>
-                <button class="sft-btn sft-btn-danger" data-action="reset" type="button">Obnovit výchozí filtry</button>
+                <button class="sft-btn sft-btn-danger" data-action="reset" type="button" data-role="resetButton">Obnovit výchozí filtry</button>
               </div>
             </div>
           </div>
@@ -63,9 +65,9 @@ class SqlFilterTool extends HTMLElement {
             <div class="sft-panel-body sft-outputs">
               <div class="sft-status" data-role="status" aria-live="polite"></div>
 
-              <div class="sft-output">
+              <div class="sft-output" data-role="paidOutputSection">
                 <div class="sft-output-head">
-                  <h4>Filtr placené služby</h4>
+                  <h4 data-role="paidOutputTitle">Filtr placené služby</h4>
                   <button class="sft-btn sft-btn-secondary" data-copy="paidOutput" type="button">Kopírovat</button>
                 </div>
                 <textarea data-role="paidOutput" readonly spellcheck="false"></textarea>
@@ -73,14 +75,14 @@ class SqlFilterTool extends HTMLElement {
 
               <div class="sft-output">
                 <div class="sft-output-head">
-                  <h4>Filtr služby zdarma</h4>
+                  <h4 data-role="freeOutputTitle">Filtr služby zdarma</h4>
                   <button class="sft-btn sft-btn-secondary" data-copy="freeOutput" type="button">Kopírovat</button>
                 </div>
                 <textarea data-role="freeOutput" readonly spellcheck="false"></textarea>
               </div>
             </div>
 
-            <details>
+            <details data-role="templatesDetails">
               <summary>Výchozí filtry, které se upravují</summary>
               <div class="sft-template-grid">
                 <div class="sft-field">
@@ -114,6 +116,13 @@ class SqlFilterTool extends HTMLElement {
     this.paidOutput = this.shadowRoot.querySelector('[data-role="paidOutput"]');
     this.freeOutput = this.shadowRoot.querySelector('[data-role="freeOutput"]');
     this.statusBox = this.shadowRoot.querySelector('[data-role="status"]');
+    this.actionField = this.shadowRoot.querySelector('[data-role="actionField"]');
+    this.codesHint = this.shadowRoot.querySelector('[data-role="codesHint"]');
+    this.runButton = this.shadowRoot.querySelector('[data-role="runButton"]');
+    this.resetButton = this.shadowRoot.querySelector('[data-role="resetButton"]');
+    this.paidOutputSection = this.shadowRoot.querySelector('[data-role="paidOutputSection"]');
+    this.freeOutputTitle = this.shadowRoot.querySelector('[data-role="freeOutputTitle"]');
+    this.templatesDetails = this.shadowRoot.querySelector('[data-role="templatesDetails"]');
 
     this.shadowRoot.querySelectorAll('input[name="sft-filter-type"]').forEach((input) => {
       input.addEventListener("change", () => this.loadTemplates(input.value));
@@ -140,11 +149,21 @@ class SqlFilterTool extends HTMLElement {
   }
 
   loadTemplates(type) {
-    this.paidTemplate.value = this.filters[type].paid;
-    this.freeTemplate.value = this.filters[type].free;
+    const isSemicolonMode = type === "semicolon";
+    this.actionField.classList.toggle("sft-hidden", isSemicolonMode);
+    this.resetButton.classList.toggle("sft-hidden", isSemicolonMode);
+    this.paidOutputSection.classList.toggle("sft-hidden", isSemicolonMode);
+    this.templatesDetails.hidden = isSemicolonMode;
+    this.freeOutputTitle.textContent = isSemicolonMode ? "Produkty oddělené středníkem" : "Filtr služby zdarma";
+    this.runButton.textContent = isSemicolonMode ? "Oddělit středníkem" : "Vygenerovat filtry";
+    this.codesHint.textContent = isSemicolonMode
+      ? "Produkty vlož na samostatné řádky nebo odděl čárkou/středníkem. Mezery uvnitř hodnot se odstraní jako ve vzorci DOSADIT(TEXTJOIN(...); \" \"; \"\")."
+      : "Kódy můžou být na řádcích, oddělené čárkou, středníkem nebo mezerou. Apostrofy se doplní automaticky.";
+    this.paidTemplate.value = isSemicolonMode ? "" : this.filters[type].paid;
+    this.freeTemplate.value = isSemicolonMode ? "" : this.filters[type].free;
     this.paidOutput.value = "";
     this.freeOutput.value = "";
-    this.setStatus("Vybraný filtr je připravený k úpravě.", "ok");
+    this.setStatus(isSemicolonMode ? "Vlož produkty a nástroj je spojí středníkem." : "Vybraný filtr je připravený k úpravě.", "ok");
   }
 
   parseCodes(raw) {
@@ -157,6 +176,33 @@ class SqlFilterTool extends HTMLElement {
 
   cleanSql(sql) {
     return sql.replace(/\*\*/g, "").replace(/&#x20;/gi, " ");
+  }
+
+  parseSemicolonProducts(raw) {
+    const normalized = raw.replace(/<br\s*\/?>/gi, "\n").replace(/<\/?[^>]+>/g, " ");
+    const products = [];
+
+    normalized.split(/\r?\n/).forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        return;
+      }
+
+      const cells = trimmed.includes("|") ? trimmed.split("|") : trimmed.split(/[\t,;]+/);
+      cells.forEach((cell) => {
+        const compact = cell.trim().replace(/\s+/g, "");
+        if (!compact || /^:?-{3,}:?$/.test(compact)) {
+          return;
+        }
+
+        const value = compact.replace(/^'+|'+$/g, "");
+        if (value) {
+          products.push(value);
+        }
+      });
+    });
+
+    return products;
   }
 
   findProductListBounds(sql, mode) {
@@ -276,8 +322,21 @@ class SqlFilterTool extends HTMLElement {
   }
 
   generate() {
-    const codes = this.parseCodes(this.shadowRoot.querySelector("#sft-codes").value);
+    const filterType = this.selectedValue("sft-filter-type");
+    const rawCodes = this.shadowRoot.querySelector("#sft-codes").value;
+    const codes = this.parseCodes(rawCodes);
     const mode = this.selectedValue("sft-edit-mode");
+
+    if (filterType === "semicolon") {
+      const products = this.parseSemicolonProducts(rawCodes);
+      this.paidOutput.value = "";
+      this.freeOutput.value = products.join(";");
+      this.setStatus(
+        products.length === 0 ? "Vlož alespoň jeden produkt." : `Hotovo: spojeno ${products.length} produktů středníkem.`,
+        products.length === 0 ? "warn" : "ok"
+      );
+      return;
+    }
 
     if (codes.length === 0) {
       this.paidOutput.value = "";
