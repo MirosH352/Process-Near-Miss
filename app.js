@@ -1253,9 +1253,19 @@ function setAvatarElement(element, avatarUrl) {
 
   const hasImage = Boolean(avatarUrl);
   element.classList.toggle("has-image", hasImage);
-  element.style.backgroundImage = hasImage ? `url("${avatarUrl}")` : "";
+  element.style.backgroundImage = "";
 
   if (hasImage) {
+    if (typeof document.createElement === "function") {
+      const image = document.createElement("img");
+      image.alt = "";
+      image.decoding = "async";
+      image.loading = "lazy";
+      image.src = avatarUrl;
+      image.addEventListener("error", () => setAvatarElement(element, null), { once: true });
+      element.replaceChildren(image);
+      return;
+    }
     element.textContent = "";
     return;
   }

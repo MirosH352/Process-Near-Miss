@@ -44,6 +44,7 @@ function loadApp() {
     URL, URLSearchParams, Intl, Date, console,
     document: {
       getElementById: element, querySelector: element, querySelectorAll() { return []; },
+      createElement: element,
       addEventListener() {}, body: element('body'),
     },
     window: browser,
@@ -64,7 +65,7 @@ function loadApp() {
       nextStatus, setAppSection, getSectionFromHash, api, apiProtected,
       checklistStorageId, createDefaultChecklistState, loadChecklistState,
       saveChecklistState, getChecklistSections, getChecklistStats,
-      getSelectedUserIds, openDetailFromUrl,
+      getSelectedUserIds, openDetailFromUrl, setAvatarElement,
     };
   `, context, { filename: 'app.js' });
   return { ...context.contracts, context, browser, storage, requests, nodes };
@@ -211,4 +212,25 @@ test('bulk user selection only includes IDs from currently loaded accounts', () 
   app.state.users = [{ id: 1 }, { id: 2 }];
   app.state.selectedUserIds = new Set([2, 999]);
   assert.deepEqual(plain(app.getSelectedUserIds()), [2]);
+});
+
+test('avatars render as images and fall back to the user icon without CSS URLs', () => {
+  const app = loadApp();
+  const avatar = app.nodes.get('.user-avatar');
+  let child;
+  avatar.replaceChildren = node => { child = node; };
+  avatar.dataset.icon = 'user';
+
+  app.setAvatarElement(avatar, 'data:image/png;base64,AA==');
+
+  assert.equal(avatar.classList.contains('has-image'), true);
+  assert.equal(avatar.style.backgroundImage, '');
+  assert.equal(child.src, 'data:image/png;base64,AA==');
+  assert.equal(child.alt, '');
+  assert.equal(child.loading, 'lazy');
+
+  app.setAvatarElement(avatar, null);
+  assert.equal(avatar.classList.contains('has-image'), false);
+  assert.equal(avatar.style.backgroundImage, '');
+  assert.match(avatar.innerHTML, /svg/);
 });

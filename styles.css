@@ -1081,11 +1081,22 @@ h3 {
 }
 
 .user-avatar.has-image {
+  background: #edf3ff;
   color: transparent;
 }
 
 .user-avatar.has-image svg {
   display: none;
+}
+
+.user-avatar img,
+.avatar-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: inherit;
 }
 
 .avatar-upload {
@@ -1122,6 +1133,7 @@ h3 {
 
 .avatar-preview.has-image {
   background-color: #dde9ff;
+  color: transparent;
 }
 
 .avatar-upload-copy {
