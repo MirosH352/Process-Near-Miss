@@ -799,7 +799,14 @@ def json_response(
     for header, value in headers or []:
         handler.send_header(header, value)
     handler.end_headers()
-    handler.wfile.write(body)
+    write_response_body(handler, body)
+
+
+def write_response_body(handler: BaseHTTPRequestHandler, body: bytes) -> None:
+    try:
+        handler.wfile.write(body)
+    except (BrokenPipeError, ConnectionAbortedError, ConnectionResetError):
+        return
 
 
 def read_body(handler: BaseHTTPRequestHandler) -> bytes:
@@ -2133,7 +2140,7 @@ class AppHandler(BaseHTTPRequestHandler):
         for header, value in security_headers(content_type):
             self.send_header(header, value)
         self.end_headers()
-        self.wfile.write(data)
+        write_response_body(self, data)
 
 
 def main() -> None:
