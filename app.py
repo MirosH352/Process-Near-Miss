@@ -1839,6 +1839,13 @@ class AppHandler(BaseHTTPRequestHandler):
             self.serve_file(STATIC_DIR / "web.png", "image/png")
             return
 
+        if path.startswith("/assets/"):
+            asset_path = (STATIC_DIR / path.lstrip("/")).resolve()
+            assets_root = (STATIC_DIR / "assets").resolve()
+            if asset_path.is_relative_to(assets_root) and asset_path.suffix.lower() == ".png":
+                self.serve_file(asset_path, "image/png")
+                return
+
         self.send_error(HTTPStatus.NOT_FOUND, "Not found")
 
     def do_POST(self) -> None:
