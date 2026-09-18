@@ -26,6 +26,7 @@ STATIC_DIR = ROOT
 DB_PATH = ROOT / "near_miss.sqlite3"
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 USE_POSTGRES = bool(DATABASE_URL)
+DB_CONNECT_TIMEOUT_SECONDS = int(os.environ.get("DB_CONNECT_TIMEOUT_SECONDS", "10"))
 SESSION_COOKIE_NAME = "near_miss_session"
 CSRF_HEADER_NAME = "X-CSRF-Token"
 PASSWORD_HASH_ITERATIONS = 210000
@@ -218,7 +219,13 @@ def connect():
         import psycopg
         from psycopg.rows import dict_row
 
-        return DatabaseConnection(psycopg.connect(DATABASE_URL, row_factory=dict_row))
+        return DatabaseConnection(
+            psycopg.connect(
+                DATABASE_URL,
+                row_factory=dict_row,
+                connect_timeout=DB_CONNECT_TIMEOUT_SECONDS,
+            )
+        )
 
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -2144,11 +2151,19 @@ class AppHandler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
+    print("Starting Process Homepage...", flush=True)
+    if USE_POSTGRES:
+        print(
+            f"Initializing Postgres database with {DB_CONNECT_TIMEOUT_SECONDS}s connect timeout...",
+            flush=True,
+        )
+    else:
+        print(f"Initializing SQLite database at {DB_PATH}...", flush=True)
     init_db()
     host = os.environ.get("HOST", "0.0.0.0")
     port = int(os.environ.get("PORT", "8000"))
     server = ThreadingHTTPServer((host, port), AppHandler)
-    print(f"Process Homepage běží na http://{host}:{port}")
+    print(f"Process Homepage běží na http://{host}:{port}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
