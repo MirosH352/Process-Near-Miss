@@ -4190,8 +4190,10 @@ h2 { font-size: 1.14rem; letter-spacing: -.025em; }
 .assistant-head { align-items: flex-start; margin: 0; padding: 18px 20px; border-bottom: 1px solid #dfe8f6; background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%); }
 .assistant-head > div, .assistant-guide-card .section-head > div { display: grid; gap: 6px; }
 .assistant-head h2, .assistant-guide-card h2 { line-height: 1.28; }
+.assistant-head h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
 .assistant-head p, .assistant-guide-card .section-head p { margin: 0; line-height: 1.65; }
 .assistant-head .section-icon { width: 24px; height: 24px; padding: 4px; border-radius: 8px; background: #eaf2ff; box-shadow: inset 0 0 0 1px #d8e5ff; }
+.assistant-beta-badge { display: inline-flex; align-items: center; min-height: 20px; padding: 3px 8px; border: 1px solid #cfe0ff; border-radius: 999px; background: #edf4ff; color: #28539d; font-size: .66rem; font-weight: 800; line-height: 1; text-transform: uppercase; letter-spacing: .06em; }
 .assistant-guide-card .section-head { margin-bottom: 0; padding-bottom: 14px; border-bottom: 1px solid #edf1f7; }
 .assistant-messages { display: flex; flex-direction: column; gap: 16px; min-height: 390px; max-height: 560px; overflow-y: auto; margin: 0 18px; padding: 18px; border: 1px solid #e3ebf6; border-radius: 10px; background: linear-gradient(180deg, #f7faff 0%, #fbfdff 100%); scrollbar-color: #9aacca transparent; scrollbar-width: thin; }
 .assistant-message { display: flex; }
