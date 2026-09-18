@@ -68,6 +68,7 @@ h2 {
 .sft-guide {
   display: grid;
   gap: 18px;
+  margin-top: 18px;
   padding: 18px 20px;
   border: 1px solid var(--sft-line);
   border-radius: var(--sft-card-radius);
