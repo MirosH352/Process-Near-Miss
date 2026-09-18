@@ -65,6 +65,131 @@ h2 {
   align-items: start;
 }
 
+.sft-guide {
+  display: grid;
+  gap: 18px;
+  padding: 18px 20px;
+  border: 1px solid var(--sft-line);
+  border-radius: var(--sft-card-radius);
+  background: #fbfcff;
+  box-shadow: var(--sft-shadow);
+}
+
+.sft-guide-copy {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.75fr) minmax(0, 1.25fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.sft-kicker {
+  margin: 0 0 6px;
+  color: var(--sft-accent);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.sft-guide h3 {
+  margin: 0;
+  color: var(--sft-text);
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.sft-guide-copy p {
+  margin: 6px 0 0;
+  color: var(--sft-muted);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.sft-guide-steps {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--sft-muted);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.sft-guide-steps li::marker {
+  color: var(--sft-accent);
+  font-weight: 800;
+}
+
+.sft-guide-steps strong {
+  color: var(--sft-text);
+  font-weight: 700;
+}
+
+.sft-guide-image {
+  margin: 0;
+}
+
+.sft-guide-image img {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--sft-line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.sft-guide-image figcaption {
+  margin-top: 7px;
+  color: var(--sft-muted);
+  font-size: 0.76rem;
+}
+
+.sft-service-map {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.sft-service-map article {
+  padding: 14px;
+  border: 1px solid var(--sft-line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.sft-service-map h4 {
+  margin: 0 0 12px;
+  color: var(--sft-text);
+  font-size: 0.92rem;
+}
+
+.sft-service-map dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.sft-service-map dt {
+  color: var(--sft-text);
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.sft-service-map dd {
+  margin: 3px 0 0;
+  color: var(--sft-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.sft-service-map code {
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: #eef3fb;
+  color: #294163;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
 .sft-panel {
   min-width: 0;
   overflow: hidden;
@@ -408,6 +533,11 @@ details[open] summary {
 
 @media (max-width: 860px) {
   .sft-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sft-guide-copy,
+  .sft-service-map {
     grid-template-columns: 1fr;
   }
 

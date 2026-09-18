@@ -16,6 +16,52 @@ class SqlFilterTool extends HTMLElement {
           </div>
         </header>
 
+        <section class="sft-guide" aria-labelledby="sft-console-guide-title">
+          <div class="sft-guide-copy">
+            <p class="sft-kicker">OBRÁZKOVÝ NÁVOD</p>
+            <h3 id="sft-console-guide-title">Kde v konzoli nastavit filtr</h3>
+            <p>Filtr na instalace se nastavuje v modulu <strong>Logistika - Administrace doprav</strong>, v záložce <strong>Dopravy a platby</strong> a podzáložce <strong>Nastavení služeb</strong>.</p>
+            <ol class="sft-guide-steps">
+              <li>Najdi dvojici služeb podle typu instalace.</li>
+              <li>Otevři službu full price nebo hlavní placenou službu a vlož filtr placené služby.</li>
+              <li>Otevři službu low price nebo testovací službu za 0 Kč a vlož filtr služby zdarma.</li>
+              <li>Změny ulož a zkontroluj, že se v katalogovém filtru zobrazí správný začátek SQL.</li>
+            </ol>
+          </div>
+          <figure class="sft-guide-image">
+            <img src="./assets/console-service-filter.png" alt="Konzole Alza v modulu Logistika - Administrace doprav, záložka Dopravy a platby a Nastavení služeb se službami Vestavné spotřebiče full price a low price">
+            <figcaption>Ukázka služeb v konzoli pro vestavné spotřebiče.</figcaption>
+          </figure>
+          <div class="sft-service-map" aria-label="Přehled služeb a filtrů">
+            <article>
+              <h4>Vestavné spotřebiče</h4>
+              <dl>
+                <div>
+                  <dt>Vestavné spotřebiče full price</dt>
+                  <dd>Vložit filtr začínající <code>([Segment 3] IN ...</code></dd>
+                </div>
+                <div>
+                  <dt>Vestavné spotřebiče low price</dt>
+                  <dd>Vložit filtr začínající <code>[Produkt] IN ...</code></dd>
+                </div>
+              </dl>
+            </article>
+            <article>
+              <h4>Montáž TV na zeď</h4>
+              <dl>
+                <div>
+                  <dt>TV na zeď</dt>
+                  <dd>Vložit filtr začínající <code>([Segment 1] = 'Televize' ...</code></dd>
+                </div>
+                <div>
+                  <dt>Test TV za 0,-</dt>
+                  <dd>Vložit filtr začínající <code>[Produkt] IN ...</code></dd>
+                </div>
+              </dl>
+            </article>
+          </div>
+        </section>
+
         <div class="sft-grid">
           <div class="sft-panel">
             <div class="sft-panel-header">
