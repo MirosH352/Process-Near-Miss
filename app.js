@@ -707,9 +707,6 @@ const priorityFilterEl = document.getElementById("priorityFilter");
 const typeFilterEl = document.getElementById("typeFilter");
 const recordsToolbarCountEl = document.getElementById("recordsToolbarCount");
 const recordsCountEl = document.getElementById("recordsCount");
-const activeIncidentCountEl = document.getElementById("activeIncidentCount");
-const activeIncidentSummaryEl = document.getElementById("activeIncidentSummary");
-const activeIncidentSummaryTextEl = document.getElementById("activeIncidentSummaryText");
 const activeIncidentsCountEl = document.getElementById("activeIncidentsCount");
 const activeIncidentsListEl = document.getElementById("activeIncidentsList");
 const activeIncidentsEmptyEl = document.getElementById("activeIncidentsEmpty");
@@ -1572,20 +1569,6 @@ function renderActiveIncidents(items) {
   const count = items.length;
   if (activeIncidentsCountEl) {
     activeIncidentsCountEl.textContent = formatActiveIncidentCount(count);
-  }
-  if (activeIncidentCountEl) {
-    activeIncidentCountEl.textContent = String(count);
-  }
-  if (activeIncidentSummaryEl) {
-    activeIncidentSummaryEl.classList.toggle("is-active", count > 0);
-  }
-  if (activeIncidentSummaryTextEl) {
-    activeIncidentSummaryTextEl.textContent =
-      count > 0
-        ? count === 1
-          ? `Nejbližší případ: ${items[0].title}`
-          : `První záznam: ${items[0].title}`
-        : "Žádný aktivní incident.";
   }
 
   if (!activeIncidentsListEl || !activeIncidentsEmptyEl) {

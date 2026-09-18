@@ -73,11 +73,11 @@ function workbook() {
   let idA, idB;
   await step('create records and global KPI/active-incident counts', async () => {
     const totalBefore = Number(await page.locator('#totalCount').textContent());
-    const activeBefore = Number(await page.locator('#activeIncidentCount').textContent());
+    const activeBefore = Number.parseInt(await page.locator('#activeIncidentsCount').textContent(), 10);
     idA = await newRecord(page, `${runId} Alpha`, 'AlzaBoxy', 'critical');
     idB = await newRecord(page, `${runId} Beta`, 'Pobočky');
     await page.waitForFunction(total => Number(document.querySelector('#totalCount').textContent) === total, totalBefore + 2);
-    assert.equal(Number(await page.locator('#activeIncidentCount').textContent()), activeBefore + 1);
+    assert.equal(Number.parseInt(await page.locator('#activeIncidentsCount').textContent(), 10), activeBefore + 1);
   });
   await step('search, area, priority and status filters combine', async () => {
     await page.locator('#searchInput').fill(runId);
