@@ -7,6 +7,7 @@ const STATUS_OPTIONS = [
   ["closed", "Uzavřeno"],
 ];
 const KANBAN_PREVIEW_LIMIT = 2;
+const MOTION_ENTER_CLASS = "motion-enter";
 
 const STATUS_META = {
   new: { label: "Nový", hint: "Nové záznamy, které čekají na zpracování." },
@@ -14,6 +15,21 @@ const STATUS_META = {
   resolved: { label: "Vyřešeno", hint: "Případy uzavřené, ale stále dohledatelné." },
   closed: { label: "Uzavřeno", hint: "Uzavřené položky bez další akce." },
 };
+
+function playMotionEntrance(element) {
+  const reducedMotion = typeof window.matchMedia === "function"
+    ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    : false;
+  if (!element || reducedMotion) return;
+  element.classList.remove(MOTION_ENTER_CLASS);
+  if (typeof requestAnimationFrame !== "function") {
+    element.classList.add(MOTION_ENTER_CLASS);
+    return;
+  }
+  requestAnimationFrame(() => {
+    element.classList.add(MOTION_ENTER_CLASS);
+  });
+}
 
 const TYPE_LABELS = {
   bug: "Chyba",
@@ -1919,6 +1935,17 @@ function setAppSection(section) {
   assistantPanel.classList.toggle("hidden", state.appSection !== "assistant");
   installationPanel.classList.toggle("hidden", state.appSection !== "instalace");
 
+  const activePanelBySection = {
+    checklist: checklistPanel,
+    "check-app": checkAppPanel,
+    assistant: assistantPanel,
+    instalace: installationPanel,
+    admin: adminPanel,
+  };
+  const activePanel = isOverview ? recordsPanel : activePanelBySection[state.appSection];
+  playMotionEntrance(dashboardHeader);
+  playMotionEntrance(activePanel);
+
   appTabButtons.forEach((button) => {
     const active = button.dataset.appTab === state.appSection || (button.dataset.appTab === "records" && isOverview);
     button.classList.toggle("is-active", active);
@@ -2147,7 +2174,9 @@ function createAssistantMessage(role, text) {
 }
 
 function appendAssistantMessage(role, text) {
-  assistantMessagesEl.appendChild(createAssistantMessage(role, text));
+  const message = createAssistantMessage(role, text);
+  assistantMessagesEl.appendChild(message);
+  playMotionEntrance(message);
   assistantMessagesEl.scrollTop = assistantMessagesEl.scrollHeight;
 }
 
@@ -2167,6 +2196,7 @@ function appendAssistantResult(matches) {
     title.textContent = primary.item.shortAnswer;
     message.appendChild(bubble);
     assistantMessagesEl.appendChild(message);
+    playMotionEntrance(message);
     assistantMessagesEl.scrollTop = assistantMessagesEl.scrollHeight;
     return;
   }
@@ -2209,6 +2239,7 @@ function appendAssistantResult(matches) {
 
   message.appendChild(bubble);
   assistantMessagesEl.appendChild(message);
+  playMotionEntrance(message);
   assistantMessagesEl.scrollTop = assistantMessagesEl.scrollHeight;
 }
 

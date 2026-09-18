@@ -16,6 +16,11 @@
   --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px rgba(15, 23, 42, 0.03);
   --shadow-elevated: 0 24px 60px rgba(15, 23, 42, 0.12);
   --shadow-hover: 0 12px 28px rgba(15, 23, 42, 0.08);
+  --motion-fast: 120ms;
+  --motion-standard: 180ms;
+  --motion-panel: 240ms;
+  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-interaction: cubic-bezier(0.2, 0, 0, 1);
   --status-new: #2f6fed;
   --status-progress: #ea8c20;
   --status-resolved: #22a35a;
@@ -1045,6 +1050,7 @@ h3 {
   grid-template-columns: 72px minmax(0, 1fr);
   gap: 0.9rem;
   align-items: start;
+  min-width: 0;
   padding: 0.9rem;
   border-radius: 18px;
   border: 1px solid var(--color-border);
@@ -1078,6 +1084,8 @@ h3 {
 }
 
 .avatar-upload-copy {
+  display: grid;
+  gap: 0.65rem;
   min-width: 0;
 }
 
@@ -1085,7 +1093,7 @@ h3 {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: 0.65rem;
+  margin-top: 0;
 }
 
 .avatar-actions .icon-button {
@@ -1100,16 +1108,22 @@ h3 {
 .file-field {
   display: grid;
   gap: 0.35rem;
+  min-width: 0;
   font-weight: 600;
 }
 
 .file-field input[type="file"] {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   width: 100%;
   padding: 0.7rem 0.8rem;
   border-radius: 12px;
   border: 1px solid var(--color-border);
   background: #fff;
   color: var(--color-text-primary);
+  white-space: normal;
 }
 
 .table-user-avatar {
@@ -3076,8 +3090,13 @@ button:focus-visible {
   display: flex;
   justify-content: space-between;
   align-items: start;
+  min-width: 0;
   gap: 1rem;
   margin-bottom: 1rem;
+}
+
+.modal-head > div {
+  min-width: 0;
 }
 
 .modal-head h2 {
@@ -3091,6 +3110,7 @@ button:focus-visible {
 
 .modal-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.75rem;
   margin-top: 0.4rem;
@@ -4250,6 +4270,16 @@ h2 { font-size: 1.14rem; letter-spacing: -.025em; }
 .drawer-form, .modal-form, .users-form { gap: 16px; }
 .drawer-form label, .modal-form label, .users-form label, .password-form label { font-size: .83rem; gap: 6px; }
 .modal-panel { border-radius: 14px; border: 1px solid var(--color-border); box-shadow: var(--shadow-elevated); padding: 24px; }
+.modal-close,
+.modal-actions .icon-button,
+.avatar-actions .icon-button {
+  width: auto;
+  min-width: max-content;
+  height: auto;
+  min-height: 38px;
+  padding: 9px 12px;
+  white-space: nowrap;
+}
 .modal-panel-detail { max-width: 900px; }
 .detail-stat, .detail-info { background: #f7faff; box-shadow: none; border-color: #e8eef7; border-radius: 9px; }
 .detail-description { font-size: .95rem; }
@@ -5128,5 +5158,211 @@ h2 { font-size: 1.14rem; letter-spacing: -.025em; }
   #checklistPanel .checklist-group-body,
   #checklistPanel .checklist-group-chevron {
     transition: none;
+  }
+}
+
+/* Shared motion polish */
+.motion-enter {
+  animation: motion-panel-enter var(--motion-panel) var(--ease-enter) both;
+}
+
+.motion-enter > .dashboard-card,
+.motion-enter > .check-card,
+.motion-enter > .assistant-layout > *,
+.motion-enter .kpi-card {
+  animation: motion-panel-enter var(--motion-panel) var(--ease-enter) both;
+}
+
+.motion-enter > .dashboard-card:nth-child(2),
+.motion-enter > .check-card:nth-child(2),
+.motion-enter > .assistant-layout > *:nth-child(2),
+.motion-enter .kpi-card:nth-child(2) {
+  animation-delay: 24ms;
+}
+
+.motion-enter > .dashboard-card:nth-child(3),
+.motion-enter .kpi-card:nth-child(3) {
+  animation-delay: 48ms;
+}
+
+.motion-enter > .dashboard-card:nth-child(4),
+.motion-enter .kpi-card:nth-child(4) {
+  animation-delay: 72ms;
+}
+
+@keyframes motion-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.global-nav .app-tab-button,
+.checklist-page-button,
+.view-button,
+.sft-segmented label {
+  transition:
+    background-color var(--motion-standard) var(--ease-interaction),
+    color var(--motion-standard) var(--ease-interaction),
+    border-color var(--motion-standard) var(--ease-interaction),
+    box-shadow var(--motion-standard) var(--ease-interaction),
+    transform var(--motion-fast) var(--ease-interaction);
+}
+
+.global-nav .app-tab-button::after {
+  transition:
+    opacity var(--motion-standard) var(--ease-enter),
+    transform var(--motion-standard) var(--ease-enter);
+}
+
+.global-nav .app-tab-button:not(.is-active)::after {
+  opacity: 0;
+  transform: scaleX(0.6);
+}
+
+button:not(:disabled),
+.icon-button:not(:disabled),
+.sft-btn:not(:disabled),
+.record-menu-trigger:not(:disabled) {
+  transition:
+    background-color var(--motion-standard) var(--ease-interaction),
+    border-color var(--motion-standard) var(--ease-interaction),
+    color var(--motion-standard) var(--ease-interaction),
+    box-shadow var(--motion-standard) var(--ease-interaction),
+    opacity var(--motion-standard) var(--ease-interaction),
+    transform var(--motion-fast) var(--ease-interaction);
+}
+
+button:not(:disabled):active,
+.icon-button:not(:disabled):active,
+.sft-btn:not(:disabled):active,
+.record-menu-trigger:not(:disabled):active {
+  transform: scale(0.985);
+}
+
+input:not([type="checkbox"]):not([type="file"]),
+select,
+textarea {
+  transition:
+    border-color var(--motion-standard) var(--ease-interaction),
+    box-shadow var(--motion-standard) var(--ease-interaction),
+    background-color var(--motion-standard) var(--ease-interaction);
+}
+
+.user-menu-panel,
+.record-menu-panel:popover-open,
+.drawer-panel,
+.modal-panel {
+  animation: motion-panel-enter var(--motion-standard) var(--ease-enter) both;
+}
+
+.drawer-backdrop,
+.modal-backdrop {
+  transition: opacity var(--motion-standard) var(--ease-enter);
+}
+
+.records-table tbody tr,
+.check-table tbody tr {
+  transition: background-color var(--motion-fast) var(--ease-interaction);
+}
+
+.kpi-card,
+.home-tile,
+.entry-card,
+.active-incident-card,
+.assistant-knowledge-item {
+  transition:
+    background-color var(--motion-standard) var(--ease-interaction),
+    border-color var(--motion-standard) var(--ease-interaction),
+    box-shadow var(--motion-standard) var(--ease-interaction),
+    transform var(--motion-standard) var(--ease-interaction);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .entry-card:hover,
+  .assistant-knowledge-item:hover {
+    transform: translateY(-2px);
+  }
+
+  .home-tile:hover,
+  .kpi-card:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.checklist-progress-bar,
+#checklistPanel .checklist-progress-bar {
+  transition: width var(--motion-standard) var(--ease-enter);
+}
+
+#checklistPanel .checklist-section-link,
+#checklistPanel .checklist-page-button,
+#checklistPanel .checklist-group-head,
+#checklistPanel .checklist-item,
+#checklistPanel .checklist-group-status,
+#checklistPanel .checklist-section-number {
+  transition:
+    background-color var(--motion-standard) var(--ease-interaction),
+    border-color var(--motion-standard) var(--ease-interaction),
+    color var(--motion-standard) var(--ease-interaction),
+    box-shadow var(--motion-standard) var(--ease-interaction),
+    transform var(--motion-fast) var(--ease-interaction),
+    opacity var(--motion-standard) var(--ease-interaction);
+}
+
+#checklistPanel .checklist-item input {
+  transition: transform var(--motion-fast) var(--ease-enter);
+}
+
+#checklistPanel .checklist-item input:checked {
+  transform: scale(1.04);
+}
+
+#checklistPanel .checklist-group-chevron {
+  transition:
+    transform var(--motion-panel) var(--ease-enter),
+    color var(--motion-standard) var(--ease-interaction);
+}
+
+#checklistPanel .checklist-group-body {
+  transition:
+    opacity var(--motion-panel) var(--ease-enter),
+    padding var(--motion-panel) var(--ease-enter);
+}
+
+.assistant-message.motion-enter {
+  animation-duration: var(--motion-standard);
+}
+
+.toast {
+  animation: motion-panel-enter var(--motion-standard) var(--ease-enter) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-enter,
+  .motion-enter > .dashboard-card,
+  .motion-enter > .check-card,
+  .motion-enter > .assistant-layout > *,
+  .motion-enter .kpi-card,
+  .assistant-message.motion-enter,
+  .toast,
+  .user-menu-panel,
+  .record-menu-panel:popover-open,
+  .drawer-panel,
+  .modal-panel {
+    animation: none !important;
+  }
+
+  button:not(:disabled):active,
+  .icon-button:not(:disabled):active,
+  .sft-btn:not(:disabled):active,
+  .record-menu-trigger:not(:disabled):active,
+  #checklistPanel .checklist-item input:checked {
+    transform: none !important;
   }
 }

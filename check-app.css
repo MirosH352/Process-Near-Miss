@@ -76,6 +76,51 @@
 .check-table tbody tr:last-child td { border-bottom: 0; }
 .check-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; color: #71809a; font-size: .76rem; }
 #checkAppPanel button:disabled { opacity: .45; cursor: default; }
+
+#checkAppPanel .check-heading,
+#checkAppPanel .check-card {
+  animation: motion-panel-enter var(--motion-panel, 240ms) var(--ease-enter, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+#checkAppPanel .check-card {
+  animation-delay: 24ms;
+}
+
+.check-workflow li,
+.check-workflow-number,
+.check-file-picker,
+.check-filename,
+.check-stat,
+.check-table-wrap,
+.check-table tbody tr,
+#checkAppPanel .secondary,
+#checkMessage {
+  transition:
+    background-color var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
+    border-color var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
+    color var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
+    box-shadow var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
+    opacity var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1));
+}
+
+.check-file-picker.has-file .check-filename,
+#checkMessage:not(:empty),
+.check-stats:not(:empty),
+.check-table-wrap {
+  animation: motion-panel-enter var(--motion-standard, 180ms) var(--ease-enter, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #checkAppPanel .check-heading,
+  #checkAppPanel .check-card,
+  .check-file-picker.has-file .check-filename,
+  #checkMessage:not(:empty),
+  .check-stats:not(:empty),
+  .check-table-wrap {
+    animation: none !important;
+  }
+}
+
 @media (max-width: 960px) {
   .check-workflow { gap: 12px; }
   .check-workflow li { gap: 7px; font-size: .72rem; }

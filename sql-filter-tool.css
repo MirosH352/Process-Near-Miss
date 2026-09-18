@@ -344,6 +344,68 @@ summary:hover {
   font-size: 13px;
 }
 
+.sft-panel,
+.sft-status.sft-visible,
+.sft-output {
+  animation: motion-panel-enter var(--motion-standard, 180ms) var(--ease-enter, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+.sft-panel:nth-child(2) {
+  animation-delay: 24ms;
+}
+
+.sft-segmented label,
+.sft-btn,
+summary,
+.sft-output textarea {
+  transition:
+    background-color var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
+    border-color var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
+    color var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
+    box-shadow var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1));
+}
+
+.sft-btn {
+  transition:
+    background-color var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
+    border-color var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
+    color var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
+    box-shadow var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
+    transform var(--motion-fast, 120ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1));
+}
+
+.sft-btn:not(:disabled):active {
+  transform: scale(0.985);
+}
+
+@keyframes motion-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+details[open] summary {
+  color: var(--sft-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sft-panel,
+  .sft-status.sft-visible,
+  .sft-output {
+    animation: none !important;
+  }
+
+  .sft-btn:not(:disabled):active {
+    transform: none !important;
+  }
+}
+
 @media (max-width: 860px) {
   .sft-grid {
     grid-template-columns: 1fr;
