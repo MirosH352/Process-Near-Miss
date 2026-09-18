@@ -75,7 +75,7 @@ const ASSISTANT_KNOWLEDGE_BASE = [
     cause:
       "Nejčastěji jde o chybně nastavené výdejní místo. U AlzaBoxu bývá špatná nebo chybějící trasa, případně trasa nemá funkční aktivní svoz. U externího boxu může jít o chybu exportu, kdy je box aktivní v konzoli, ale u dopravce už aktivní není, nebo není správně namapovaný v routech.",
     solution:
-      "Nejdřív určete typ výdejního místa. Pokud jde o AlzaBox, zkontrolujte, zda má přiřazenou skupinu výdejních míst. Pokud ano, pokračujte kontrolou svozu a přepravního směru svozu. Pokud jde o box externí firmy, ověřte, zda se zobrazuje jako dostupný na webu dopravce, zda je dostupný na webu Alza a zda je namapovaný v routech.",
+      "Nejdřív určete typ doručení. Pokud jde o doručení na adresu, zkontrolujte rozsah rout dopravce. Pokud jde o AlzaBox, zkontrolujte, zda má přiřazenou skupinu výdejních míst. Pokud ano, pokračujte kontrolou svozu a přepravního směru svozu. Pokud jde o box externí firmy, ověřte, zda se zobrazuje jako dostupný na webu dopravce, zda je dostupný na webu Alza a zda je namapovaný v routech.",
     escalation:
       "Eskalujte, pokud AlzaBox nemá jasně dohledatelnou trasu nebo aktivní svoz, případně pokud se stav externího boxu liší mezi konzolí, webem dopravce a Alza webem.",
     tags: ["Výdejní místa", "AlzaBox", "Externí boxy"],
@@ -104,6 +104,32 @@ const ASSISTANT_KNOWLEDGE_BASE = [
     escalation:
       "Eskalujte, pokud svoz v delivery matrix chybí, cílové místo nemá jasnou cestu nebo jde o objednávku s kritickým provozním dopadem.",
     tags: ["Svozy", "Expediční trasy", "Delivery matrix"],
+  },
+  {
+    id: "missing-delivery-because-gift-stock",
+    title: "U produktu se nezobrazuje žádná doprava, i když je skladem",
+    symptoms: [
+      "u produktu se nezobrazuje žádná doprava",
+      "u produktu se nezobrazuje zadna doprava",
+      "nezobrazuje se žádná doprava",
+      "nezobrazuje se zadna doprava",
+      "produkt je skladem a doprava se nezobrazuje",
+      "nastavení dopravy vypadá v pořádku",
+      "nastaveni dopravy vypada v poradku",
+      "dárek u produktu",
+      "darek u produktu",
+      "dárek zdarma",
+      "darek zdarma",
+      "promo dárek",
+      "promo darek",
+    ],
+    cause:
+      "Nejčastější příčinou je dárek u produktu. Pokud má produkt promo akci s dárkem zdarma, je potřeba zkontrolovat, kde je dárek naskladněný. Dárek je položka za 0 Kč a produkty do 1000 Kč mezi státy neCROSSujeme, takže pokud je objednávka na Alza.sk a dárek je skladem jen v CZ, doprava se nezobrazí.",
+    solution:
+      "Zkontrolujte skladovou dostupnost dárku u daného produktu. Pokud se má produkt prodávat například na Alza.sk, musí být dárek naskladněný i na slovenském skladě. Po doskladnění dárku na správný sklad by se doprava měla začít zobrazovat.",
+    escalation:
+      "Eskalujte, pokud dárek je naskladněný ve správném státě a doprava se pořád nezobrazuje, nebo pokud není jasné, který dárek či promo akce produkt blokuje.",
+    tags: ["Doprava", "Dárky", "Promo", "Sklady"],
   },
   {
     id: "missed-customer-delivery-date",
