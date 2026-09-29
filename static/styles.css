@@ -4203,6 +4203,8 @@ h2 { font-size: 1.14rem; letter-spacing: -.025em; }
 .records-empty { margin-top: 12px; padding: 22px; text-align: center; font-size: .85rem; border: 0; background: #f7faff; }
 #adminPanel { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
 .login-events-card .table-scroll { max-height: 440px; }
+.login-events-card .records-header-meta { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.login-events-card #refreshLoginEvents { min-height: 34px; padding: 0 14px; font-size: .82rem; font-weight: 700; border-radius: 10px; }
 .login-events-table .login-user-agent { max-width: 360px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .assistant-panel { min-width: 0; }
 .assistant-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 370px); gap: 22px; align-items: start; }
