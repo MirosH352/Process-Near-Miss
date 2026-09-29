@@ -231,6 +231,7 @@ label,
 
 .sft-segmented {
   display: grid;
+  position: relative;
   grid-template-columns: 1fr 1fr;
   gap: 4px;
   padding: 4px;
@@ -253,6 +254,8 @@ label,
 
 .sft-segmented label {
   display: flex;
+  position: relative;
+  z-index: 1;
   min-height: 34px;
   align-items: center;
   justify-content: center;
@@ -268,6 +271,24 @@ label,
   transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
 }
 
+.sft-shared-indicator {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  width: var(--indicator-width, 0);
+  height: var(--indicator-height, 0);
+  border-radius: 6px;
+  background: var(--sft-accent);
+  box-shadow: 0 2px 5px rgba(40, 101, 245, 0.15);
+  transform: translate3d(var(--indicator-x, 0), var(--indicator-y, 0), 0);
+  transition:
+    transform 230ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 230ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 230ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .sft-segmented-filter-type label {
   min-height: 44px;
   padding: 9px 10px;
@@ -276,9 +297,9 @@ label,
 }
 
 .sft-segmented input:checked + label {
-  background: var(--sft-accent);
+  background: transparent;
   color: #fff;
-  box-shadow: 0 2px 5px rgba(40, 101, 245, 0.15);
+  box-shadow: none;
 }
 
 textarea {
@@ -473,7 +494,7 @@ summary:hover {
 .sft-panel,
 .sft-status.sft-visible,
 .sft-output {
-  animation: motion-panel-enter var(--motion-standard, 180ms) var(--ease-enter, cubic-bezier(0.22, 1, 0.36, 1)) both;
+  animation: motion-panel-enter var(--motion-normal, 220ms) var(--ease-enter, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
 .sft-panel:nth-child(2) {
@@ -485,23 +506,40 @@ summary:hover {
 summary,
 .sft-output textarea {
   transition:
-    background-color var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
-    border-color var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
-    color var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
-    box-shadow var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1));
+    background-color var(--motion-normal, 220ms) var(--ease-interaction, cubic-bezier(0.4, 0, 0.2, 1)),
+    border-color var(--motion-normal, 220ms) var(--ease-interaction, cubic-bezier(0.4, 0, 0.2, 1)),
+    color var(--motion-normal, 220ms) var(--ease-interaction, cubic-bezier(0.4, 0, 0.2, 1)),
+    box-shadow var(--motion-normal, 220ms) var(--ease-interaction, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .sft-btn {
   transition:
-    background-color var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
-    border-color var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
-    color var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
-    box-shadow var(--motion-standard, 180ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1)),
-    transform var(--motion-fast, 120ms) var(--ease-interaction, cubic-bezier(0.2, 0, 0, 1));
+    background-color var(--motion-normal, 220ms) var(--ease-interaction, cubic-bezier(0.4, 0, 0.2, 1)),
+    border-color var(--motion-normal, 220ms) var(--ease-interaction, cubic-bezier(0.4, 0, 0.2, 1)),
+    color var(--motion-normal, 220ms) var(--ease-interaction, cubic-bezier(0.4, 0, 0.2, 1)),
+    box-shadow var(--motion-normal, 220ms) var(--ease-interaction, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--motion-fast, 150ms) var(--ease-interaction, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .sft-btn:not(:disabled):active {
-  transform: scale(0.985);
+  transform: translateY(0) scale(0.98);
+}
+
+.sft-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.sft-copied {
+  min-width: 112px;
+}
+
+.sft-output-refresh {
+  animation: sft-output-refresh 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes sft-output-refresh {
+  0% { opacity: 0.6; }
+  100% { opacity: 1; }
 }
 
 @keyframes motion-panel-enter {
@@ -523,8 +561,22 @@ details[open] summary {
 @media (prefers-reduced-motion: reduce) {
   .sft-panel,
   .sft-status.sft-visible,
-  .sft-output {
+  .sft-output,
+  .sft-output-refresh {
     animation: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .sft-btn:not(:disabled):hover,
+  .sft-btn:not(:disabled):active {
+    transform: none !important;
   }
 
   .sft-btn:not(:disabled):active {

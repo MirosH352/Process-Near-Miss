@@ -8,6 +8,8 @@ const STATUS_OPTIONS = [
 ];
 const KANBAN_PREVIEW_LIMIT = 2;
 const MOTION_ENTER_CLASS = "motion-enter";
+const MOTION_VALUE_CLASS = "motion-value-change";
+const MOTION_FILTER_CLASS = "motion-filter-refresh";
 
 const STATUS_META = {
   new: { label: "Nový", hint: "Nové záznamy, které čekají na zpracování." },
@@ -29,6 +31,101 @@ function playMotionEntrance(element) {
   requestAnimationFrame(() => {
     element.classList.add(MOTION_ENTER_CLASS);
   });
+}
+
+function prefersReducedMotion() {
+  return typeof window.matchMedia === "function"
+    ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    : false;
+}
+
+function withMotionClass(element, className) {
+  if (!element || prefersReducedMotion()) return;
+  element.classList.remove(className);
+  void element.offsetWidth;
+  element.classList.add(className);
+  element.addEventListener("animationend", () => element.classList.remove(className), { once: true });
+}
+
+function setAnimatedText(element, value) {
+  if (!element) return;
+  const nextValue = String(value);
+  if (element.textContent === nextValue) return;
+  element.textContent = nextValue;
+  withMotionClass(element, MOTION_VALUE_CLASS);
+}
+
+function markContentRefresh(element) {
+  withMotionClass(element, MOTION_FILTER_CLASS);
+}
+
+function initSharedIndicator(container, options = {}) {
+  if (!container) return null;
+  if (typeof container.insertBefore !== "function" || typeof container.getBoundingClientRect !== "function") {
+    return { update() {} };
+  }
+
+  const {
+    itemSelector,
+    activeSelector,
+    indicatorClass = "shared-active-indicator",
+    axis = "pill",
+  } = options;
+  const indicator = document.createElement("span");
+  indicator.className = `${indicatorClass} ${indicatorClass}-${axis}`;
+  indicator.setAttribute("aria-hidden", "true");
+  container.classList.add("has-shared-indicator");
+  container.insertBefore(indicator, container.firstChild || null);
+
+  let initialized = false;
+  let frame = 0;
+
+  const update = ({ immediate = false } = {}) => {
+    const schedule = typeof window.requestAnimationFrame === "function"
+      ? window.requestAnimationFrame.bind(window)
+      : (callback) => window.setTimeout(callback, 0);
+    if (typeof window.cancelAnimationFrame === "function") {
+      window.cancelAnimationFrame(frame);
+    } else {
+      window.clearTimeout(frame);
+    }
+    frame = schedule(() => {
+      const active = container.querySelector(activeSelector);
+      if (!active || active.classList.contains("hidden") || active.hidden) {
+        indicator.style.opacity = "0";
+        initialized = false;
+        return;
+      }
+
+      const containerRect = container.getBoundingClientRect();
+      const activeRect = active.getBoundingClientRect();
+      const left = activeRect.left - containerRect.left + container.scrollLeft;
+      const top = activeRect.top - containerRect.top + container.scrollTop;
+
+      indicator.style.setProperty("--indicator-x", `${left}px`);
+      indicator.style.setProperty("--indicator-y", `${top}px`);
+      indicator.style.setProperty("--indicator-width", `${activeRect.width}px`);
+      indicator.style.setProperty("--indicator-height", `${activeRect.height}px`);
+      indicator.style.opacity = "1";
+      indicator.classList.toggle("is-ready", initialized && !immediate);
+      initialized = true;
+    });
+  };
+
+  const queueUpdate = () => update();
+  container.addEventListener("click", (event) => {
+    if (!event.target.closest(itemSelector)) return;
+    queueUpdate();
+  });
+
+  window.addEventListener("resize", () => update({ immediate: true }), { passive: true });
+  if (typeof ResizeObserver === "function") {
+    const resizeObserver = new ResizeObserver(() => update({ immediate: true }));
+    resizeObserver.observe(container);
+  }
+
+  update({ immediate: true });
+  return { update };
 }
 
 const TYPE_LABELS = {
@@ -820,6 +917,26 @@ const homeTiles = document.querySelectorAll("[data-home-target]");
 const viewButtons = document.querySelectorAll(".view-button");
 const sortButtons = document.querySelectorAll(".sort-button");
 const currentUserAvatarEl = document.querySelector(".user-avatar");
+const motionIndicators = {
+  mainNav: initSharedIndicator(document.querySelector(".global-nav"), {
+    itemSelector: ".app-tab-button",
+    activeSelector: ".app-tab-button.is-active:not(.hidden)",
+    indicatorClass: "main-nav-indicator",
+    axis: "underline",
+  }),
+  checklistTabs: initSharedIndicator(document.querySelector(".checklist-page-switcher"), {
+    itemSelector: ".checklist-page-button",
+    activeSelector: ".checklist-page-button.is-active",
+    indicatorClass: "tab-pill-indicator",
+    axis: "pill",
+  }),
+  viewSwitch: initSharedIndicator(document.querySelector(".view-switch"), {
+    itemSelector: ".view-button",
+    activeSelector: ".view-button.active",
+    indicatorClass: "tab-pill-indicator",
+    axis: "pill",
+  }),
+};
 
 const ICONS = {
   document: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 12h6M9 16h6"/></svg>',
@@ -1002,7 +1119,7 @@ function setChecklistSectionExpanded(index, expanded) {
 
 function scrollToChecklistSection(index) {
   const sectionNode = document.getElementById(`checklist-section-${index}`);
-  sectionNode?.scrollIntoView({ behavior: "smooth", block: "start" });
+  sectionNode?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
 }
 
 function focusNextIncompleteChecklistItem() {
@@ -1016,8 +1133,9 @@ function focusNextIncompleteChecklistItem() {
     renderChecklist();
     requestAnimationFrame(() => {
       const itemNode = document.getElementById(`checklist-item-${sectionIndex}-${itemIndex}`);
-      itemNode?.scrollIntoView({ behavior: "smooth", block: "center" });
+      itemNode?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "center" });
       itemNode?.focus({ preventScroll: true });
+      withMotionClass(itemNode, "checklist-target-highlight");
     });
     return;
   }
@@ -1076,19 +1194,20 @@ function renderChecklist() {
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-selected", active ? "true" : "false");
   });
-  checklistPercentEl.textContent = `${stats.percent} %`;
-  checklistCounterEl.textContent = `${stats.completed} / ${stats.total} hotovo`;
+  motionIndicators.checklistTabs?.update();
+  setAnimatedText(checklistPercentEl, `${stats.percent} %`);
+  setAnimatedText(checklistCounterEl, `${stats.completed} / ${stats.total} hotovo`);
   if (checklistMainCounterEl) {
-    checklistMainCounterEl.textContent = `${stats.completed} / ${stats.total} dokončeno · ${stats.percent} %`;
+    setAnimatedText(checklistMainCounterEl, `${stats.completed} / ${stats.total} dokončeno · ${stats.percent} %`);
   }
   if (checklistCompletedStepsEl) {
-    checklistCompletedStepsEl.textContent = String(stats.completed);
+    setAnimatedText(checklistCompletedStepsEl, stats.completed);
   }
   if (checklistCompletedSectionsEl) {
-    checklistCompletedSectionsEl.textContent = `${stats.completedSections}/${stats.totalSections}`;
+    setAnimatedText(checklistCompletedSectionsEl, `${stats.completedSections}/${stats.totalSections}`);
   }
   if (checklistTotalStepsEl) {
-    checklistTotalStepsEl.textContent = String(stats.total);
+    setAnimatedText(checklistTotalStepsEl, stats.total);
   }
   checklistProgressBarEl.style.width = `${stats.percent}%`;
   if (checklistMainProgressBarEl) {
@@ -1230,6 +1349,7 @@ function switchChecklistPage(pageId) {
   saveChecklistPageId(pageId);
   state.checklist = loadChecklistState(pageId);
   renderChecklist();
+  markContentRefresh(checklistGroupsEl);
 }
 
 function resetChecklist() {
@@ -1410,7 +1530,8 @@ function showToast(message, kind = "info") {
   toast.textContent = message;
   toastRegion.appendChild(toast);
   window.setTimeout(() => {
-    toast.remove();
+    toast.classList.add("is-leaving");
+    toast.addEventListener("animationend", () => toast.remove(), { once: true });
   }, 2600);
 }
 
@@ -1625,10 +1746,10 @@ function formatActiveIncidentCount(count) {
 
 function updateStats(items) {
   const stats = computeStats(items);
-  totalCountEl.textContent = stats.total;
-  openCountEl.textContent = stats.open;
-  resolvedCountEl.textContent = stats.resolved;
-  criticalCountEl.textContent = stats.critical;
+  setAnimatedText(totalCountEl, stats.total);
+  setAnimatedText(openCountEl, stats.open);
+  setAnimatedText(resolvedCountEl, stats.resolved);
+  setAnimatedText(criticalCountEl, stats.critical);
 }
 
 function renderActiveIncidents(items) {
@@ -1689,6 +1810,7 @@ function updateViewModeUI() {
     button.classList.toggle("active", active);
     button.setAttribute("aria-pressed", active ? "true" : "false");
   });
+  motionIndicators.viewSwitch?.update();
 
   const showBoard = state.viewMode !== "table";
   const showTable = state.viewMode !== "kanban";
@@ -1975,6 +2097,7 @@ function setAppSection(section) {
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-selected", active ? "true" : "false");
   });
+  motionIndicators.mainNav?.update();
 
   syncSectionHash(state.appSection);
   if (state.appSection === "assistant") {
@@ -3280,21 +3403,25 @@ document.addEventListener("keydown", (event) => {
 searchInput.addEventListener("input", (event) => {
   state.search = event.target.value;
   render();
+  markContentRefresh(recordsPanel);
 });
 
 statusFilterEl.addEventListener("change", (event) => {
   state.filters.status = event.target.value;
   render();
+  markContentRefresh(recordsPanel);
 });
 
 priorityFilterEl.addEventListener("change", (event) => {
   state.filters.priority = event.target.value;
   render();
+  markContentRefresh(recordsPanel);
 });
 
 typeFilterEl.addEventListener("change", (event) => {
   state.filters.type = event.target.value;
   render();
+  markContentRefresh(recordsPanel);
 });
 
 viewButtons.forEach((button) => {
@@ -3313,6 +3440,7 @@ sortButtons.forEach((button) => {
       state.sort.direction = key === "title" || key === "status" ? "asc" : "desc";
     }
     render();
+    markContentRefresh(recordsSection);
   });
 });
 
@@ -3371,10 +3499,11 @@ function syncAreaFilter() {
 document.getElementById("areaFilter").addEventListener("change", event => {
   state.filters.area = event.target.value;
   render();
+  markContentRefresh(recordsPanel);
 });
 document.querySelectorAll("[data-show-all]").forEach(button => button.addEventListener("click", () => {
   setViewMode("table");
-  recordsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  recordsSection.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
 }));
 function groupEntryActions(container, item) {
   const actions = container.querySelector(".entry-actions, .table-actions");

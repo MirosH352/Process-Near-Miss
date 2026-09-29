@@ -16,11 +16,15 @@
   --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px rgba(15, 23, 42, 0.03);
   --shadow-elevated: 0 24px 60px rgba(15, 23, 42, 0.12);
   --shadow-hover: 0 12px 28px rgba(15, 23, 42, 0.08);
-  --motion-fast: 120ms;
-  --motion-standard: 180ms;
-  --motion-panel: 240ms;
+  --motion-instant: 100ms;
+  --motion-fast: 150ms;
+  --motion-normal: 220ms;
+  --motion-medium: 300ms;
+  --motion-slow: 400ms;
+  --motion-standard: var(--motion-normal);
+  --motion-panel: var(--motion-normal);
   --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-interaction: cubic-bezier(0.2, 0, 0, 1);
+  --ease-interaction: cubic-bezier(0.4, 0, 0.2, 1);
   --status-new: #2f6fed;
   --status-progress: #ea8c20;
   --status-resolved: #22a35a;
@@ -5367,6 +5371,297 @@ textarea {
   .sft-btn:not(:disabled):active,
   .record-menu-trigger:not(:disabled):active,
   #checklistPanel .checklist-item input:checked {
+    transform: none !important;
+  }
+}
+
+/* Premium motion system */
+.has-shared-indicator {
+  position: relative;
+  isolation: isolate;
+}
+
+.main-nav-indicator,
+.tab-pill-indicator {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 0;
+  transform: translate3d(var(--indicator-x, 0), var(--indicator-y, 0), 0);
+  width: var(--indicator-width, 0);
+  height: var(--indicator-height, 0);
+  transition:
+    transform 240ms var(--ease-enter),
+    width 240ms var(--ease-enter),
+    height 240ms var(--ease-enter),
+    opacity var(--motion-fast) var(--ease-interaction);
+}
+
+.main-nav-indicator-underline {
+  top: auto !important;
+  bottom: -4px;
+  height: 2px !important;
+  border-radius: 999px;
+  background: var(--color-primary);
+  transform: translate3d(calc(var(--indicator-x, 0) + 9px), 0, 0);
+  width: max(0px, calc(var(--indicator-width, 0) - 18px));
+}
+
+.tab-pill-indicator-pill {
+  border-radius: 7px;
+  background: var(--color-primary);
+  box-shadow: 0 2px 5px rgba(40, 101, 245, 0.15);
+}
+
+.global-nav .app-tab-button,
+.checklist-page-button,
+.view-button {
+  z-index: 1;
+}
+
+.global-nav .app-tab-button.is-active::after {
+  display: none;
+}
+
+.global-nav .app-tab-button.is-active {
+  background: transparent;
+}
+
+.global-nav .app-tab-button:hover:not(.is-active) {
+  transform: translateY(-1px);
+  background: rgba(37, 99, 235, 0.055);
+}
+
+.brand-link {
+  transition: transform var(--motion-fast) var(--ease-interaction);
+}
+
+.brand-link:hover {
+  transform: scale(1.03);
+}
+
+.checklist-page-button.is-active,
+#checklistPanel .checklist-page-button.is-active,
+#checklistPanel .checklist-page-button[aria-selected="true"],
+.view-button.active {
+  background: transparent;
+  box-shadow: none;
+}
+
+.checklist-page-switcher .tab-pill-indicator,
+.view-switch .tab-pill-indicator {
+  background: var(--color-primary);
+}
+
+.checklist-page-button.is-active,
+#checklistPanel .checklist-page-button.is-active,
+#checklistPanel .checklist-page-button[aria-selected="true"],
+.view-button.active {
+  color: #fff;
+}
+
+.checklist-page-button:hover:not(.is-active),
+.view-button:hover:not(.active) {
+  transform: translateY(-1px);
+  background: rgba(37, 99, 235, 0.055);
+}
+
+button:not(:disabled):hover,
+.sft-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+button:not(:disabled):active,
+.icon-button:not(:disabled):active,
+.sft-btn:not(:disabled):active,
+.record-menu-trigger:not(:disabled):active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: var(--motion-instant);
+}
+
+.primary:hover:not(:disabled) .button-icon[data-icon="plus"],
+.header-action:hover:not(:disabled) .button-icon[data-icon="plus"] {
+  transform: rotate(90deg);
+}
+
+.button-icon,
+.search-icon,
+.section-icon,
+[data-icon="arrow-right"] {
+  transition:
+    transform var(--motion-fast) var(--ease-interaction),
+    color var(--motion-fast) var(--ease-interaction),
+    opacity var(--motion-fast) var(--ease-interaction);
+}
+
+.text-button:hover [data-icon="arrow-right"] {
+  transform: translateX(3px);
+}
+
+.search-field:focus-within .search-icon {
+  color: var(--color-primary);
+  opacity: 1;
+  transform: scale(1.04);
+}
+
+.motion-value-change {
+  animation: motion-value-slide var(--motion-fast) var(--ease-enter) both;
+}
+
+.motion-filter-refresh {
+  animation: motion-filter-refresh var(--motion-normal) var(--ease-enter) both;
+}
+
+@keyframes motion-value-slide {
+  from {
+    opacity: 0.3;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes motion-filter-refresh {
+  0% { opacity: 1; }
+  45% { opacity: 0.65; }
+  100% { opacity: 1; }
+}
+
+.kpi-grid .kpi-card:nth-child(1) { animation-delay: 0ms; }
+.kpi-grid .kpi-card:nth-child(2) { animation-delay: 40ms; }
+.kpi-grid .kpi-card:nth-child(3) { animation-delay: 80ms; }
+.kpi-grid .kpi-card:nth-child(4) { animation-delay: 120ms; }
+
+.kanban-column,
+.entry-card {
+  transition:
+    border-color var(--motion-normal) var(--ease-interaction),
+    box-shadow var(--motion-normal) var(--ease-interaction),
+    background-color var(--motion-normal) var(--ease-interaction),
+    transform var(--motion-normal) var(--ease-interaction);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .entry-card:hover {
+    transform: translateY(-2px) scale(1.004);
+    box-shadow: var(--shadow-hover);
+  }
+
+  .kanban-column.drag-over {
+    transform: scale(1.005);
+  }
+
+  .assistant-knowledge-item:hover {
+    transform: translateX(2px);
+  }
+}
+
+.badge {
+  transition:
+    background-color var(--motion-fast) var(--ease-interaction),
+    color var(--motion-fast) var(--ease-interaction);
+}
+
+.record-menu-panel:popover-open {
+  transform-origin: top right;
+  animation: motion-menu-enter 170ms var(--ease-enter) both;
+}
+
+@keyframes motion-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-3px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-panel {
+  animation-duration: var(--motion-normal);
+}
+
+.modal-backdrop,
+.drawer-backdrop {
+  animation: motion-backdrop-enter 170ms var(--ease-interaction) both;
+}
+
+@keyframes motion-backdrop-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.toast {
+  transform-origin: top right;
+}
+
+.toast.is-leaving {
+  animation: motion-toast-exit var(--motion-fast) var(--ease-interaction) both;
+}
+
+@keyframes motion-toast-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+#checklistPanel .checklist-progress-bar,
+.checklist-progress-bar {
+  transition: width var(--motion-slow) var(--ease-enter);
+}
+
+#checklistPanel .checklist-group-body {
+  overflow: hidden;
+}
+
+.checklist-target-highlight {
+  animation: checklist-target-highlight 850ms var(--ease-enter) both;
+}
+
+@keyframes checklist-target-highlight {
+  0% { background-color: transparent; }
+  22% { background-color: rgba(37, 99, 235, 0.09); }
+  100% { background-color: transparent; }
+}
+
+.sort-indicator {
+  display: inline-block;
+  transition: transform var(--motion-fast) var(--ease-enter);
+}
+
+.sort-button.active .sort-indicator {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+
+  .entry-card:hover,
+  .global-nav .app-tab-button:hover,
+  .checklist-page-button:hover,
+  .view-button:hover,
+  .assistant-knowledge-item:hover,
+  .brand-link:hover,
+  button:not(:disabled):hover {
     transform: none !important;
   }
 }

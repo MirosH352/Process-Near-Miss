@@ -171,7 +171,13 @@ class SqlFilterTool extends HTMLElement {
     this.templatesDetails = this.shadowRoot.querySelector('[data-role="templatesDetails"]');
 
     this.shadowRoot.querySelectorAll('input[name="sft-filter-type"]').forEach((input) => {
-      input.addEventListener("change", () => this.loadTemplates(input.value));
+      input.addEventListener("change", () => {
+        this.loadTemplates(input.value);
+        this.updateSegmentIndicators();
+      });
+    });
+    this.shadowRoot.querySelectorAll('input[name="sft-edit-mode"]').forEach((input) => {
+      input.addEventListener("change", () => this.updateSegmentIndicators());
     });
 
     this.shadowRoot.querySelector('[data-action="run"]').addEventListener("click", () => this.generate());
@@ -183,6 +189,42 @@ class SqlFilterTool extends HTMLElement {
     });
 
     this.loadTemplates("appliances");
+    this.initSegmentIndicators();
+  }
+
+  prefersReducedMotion() {
+    return typeof window.matchMedia === "function"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      : false;
+  }
+
+  initSegmentIndicators() {
+    this.shadowRoot.querySelectorAll(".sft-segmented").forEach((group) => {
+      const indicator = document.createElement("span");
+      indicator.className = "sft-shared-indicator";
+      indicator.setAttribute("aria-hidden", "true");
+      group.classList.add("sft-has-indicator");
+      group.prepend(indicator);
+    });
+    this.updateSegmentIndicators({ immediate: true });
+    window.addEventListener("resize", () => this.updateSegmentIndicators({ immediate: true }), { passive: true });
+  }
+
+  updateSegmentIndicators({ immediate = false } = {}) {
+    this.shadowRoot.querySelectorAll(".sft-segmented").forEach((group) => {
+      const checked = group.querySelector("input:checked");
+      const label = checked ? group.querySelector(`label[for="${checked.id}"]`) : null;
+      const indicator = group.querySelector(".sft-shared-indicator");
+      if (!label || !indicator) return;
+      const groupRect = group.getBoundingClientRect();
+      const labelRect = label.getBoundingClientRect();
+      indicator.style.setProperty("--indicator-x", `${labelRect.left - groupRect.left + group.scrollLeft}px`);
+      indicator.style.setProperty("--indicator-y", `${labelRect.top - groupRect.top + group.scrollTop}px`);
+      indicator.style.setProperty("--indicator-width", `${labelRect.width}px`);
+      indicator.style.setProperty("--indicator-height", `${labelRect.height}px`);
+      indicator.style.opacity = "1";
+      indicator.classList.toggle("is-ready", !immediate && !this.prefersReducedMotion());
+    });
   }
 
   selectedValue(name) {
@@ -210,6 +252,7 @@ class SqlFilterTool extends HTMLElement {
     this.paidOutput.value = "";
     this.freeOutput.value = "";
     this.setStatus(isSemicolonMode ? "Vlož produkty a nástroj je spojí středníkem." : "Vybraný filtr je připravený k úpravě.", "ok");
+    window.requestAnimationFrame(() => this.updateSegmentIndicators());
   }
 
   parseCodes(raw) {
@@ -403,6 +446,8 @@ class SqlFilterTool extends HTMLElement {
 
       this.paidOutput.value = paidEdit.sql;
       this.freeOutput.value = freeEdit.sql;
+      this.shadowRoot.querySelector(".sft-outputs")?.classList.add("sft-output-refresh");
+      window.setTimeout(() => this.shadowRoot.querySelector(".sft-outputs")?.classList.remove("sft-output-refresh"), 220);
 
       const actionText = mode === "add" ? "přidáno" : "odebráno";
       const warning = paidEdit.changed === 0 && freeEdit.changed === 0
@@ -426,6 +471,8 @@ class SqlFilterTool extends HTMLElement {
 
   async copyTextarea(role) {
     const textarea = this.shadowRoot.querySelector(`[data-role="${role}"]`);
+    const button = this.shadowRoot.querySelector(`[data-copy="${role}"]`);
+    const originalLabel = button?.textContent || "Kopírovat";
     textarea.select();
     textarea.setSelectionRange(0, textarea.value.length);
 
@@ -435,6 +482,15 @@ class SqlFilterTool extends HTMLElement {
     } catch {
       document.execCommand("copy");
       this.setStatus("Filtr je označený a zkopírovaný pomocí záložní metody.", "ok");
+    }
+
+    if (button) {
+      button.textContent = "✓ Zkopírováno";
+      button.classList.add("sft-copied");
+      window.setTimeout(() => {
+        button.textContent = originalLabel;
+        button.classList.remove("sft-copied");
+      }, 1600);
     }
   }
 }
