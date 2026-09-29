@@ -584,6 +584,8 @@
                     <th class="col-title">Email</th>
                     <th class="col-type">Role</th>
                     <th class="col-status">Aktivní</th>
+                    <th class="col-created">Přihlášení</th>
+                    <th class="col-updated">Naposledy</th>
                     <th class="col-created">Vytvořeno</th>
                     <th class="col-updated">Aktualizováno</th>
                     <th class="col-actions">Akce</th>
@@ -593,6 +595,37 @@
               </table>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section id="loginEventsSection" class="card dashboard-card login-events-card">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">AUDIT PŘÍSTUPŮ</p>
+              <h2>Historie přihlášení</h2>
+              <p>Poslední úspěšné i neúspěšné pokusy o přihlášení do aplikace.</p>
+            </div>
+            <div class="records-header-meta">
+              <span id="loginEventsCount" class="records-count">0 událostí</span>
+            </div>
+          </div>
+
+          <div class="table-scroll login-events-table-scroll" role="region" aria-label="Historie přihlášení" tabindex="0">
+            <table class="records-table login-events-table">
+              <thead>
+                <tr>
+                  <th class="col-title">Účet</th>
+                  <th class="col-status">Výsledek</th>
+                  <th class="col-created">Čas</th>
+                  <th class="col-type">IP adresa</th>
+                  <th class="col-updated">Prohlížeč</th>
+                </tr>
+              </thead>
+              <tbody id="loginEventsTableBody"></tbody>
+            </table>
+          </div>
+          <div id="loginEventsEmpty" class="records-empty" hidden>
+            Zatím nejsou zaznamenaná žádná přihlášení.
           </div>
         </section>
       </div>

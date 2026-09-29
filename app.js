@@ -674,6 +674,8 @@ const state = {
   needsBootstrap: false,
   items: [],
   users: [],
+  loginEvents: [],
+  loginSummary: [],
   search: "",
   checklistPageId: readChecklistPageId(),
   checklist: createDefaultChecklistState(readChecklistPageId()),
@@ -720,6 +722,9 @@ const userCreateMessageEl = document.getElementById("userCreateMessage");
 const usersTableBody = document.getElementById("usersTableBody");
 const usersCountEl = document.getElementById("usersCount");
 const usersSection = document.getElementById("usersSection");
+const loginEventsTableBody = document.getElementById("loginEventsTableBody");
+const loginEventsCountEl = document.getElementById("loginEventsCount");
+const loginEventsEmptyEl = document.getElementById("loginEventsEmpty");
 const userEditModal = document.getElementById("userEditModal");
 const userEditForm = document.getElementById("userEditForm");
 const userEditMessageEl = document.getElementById("userEditMessage");
@@ -1570,6 +1575,24 @@ function formatUserCount(count) {
   });
 }
 
+function formatLoginEventCount(count) {
+  return formatCountLabel(count, {
+    one: "{count} událost",
+    few: "{count} události",
+    many: "{count} událostí",
+  });
+}
+
+function getLoginSummaryForUser(user) {
+  return state.loginSummary.find((item) => Number(item.user_id) === Number(user.id) || item.email === user.email) || null;
+}
+
+function compactUserAgent(value) {
+  const text = String(value || "").trim();
+  if (!text) return "Neuvedeno";
+  return text.length > 90 ? `${text.slice(0, 87)}...` : text;
+}
+
 function computeStats(items) {
   const total = items.length;
   const open = items.filter((item) => ["new", "in_progress"].includes(item.status)).length;
@@ -2040,6 +2063,7 @@ function renderUsers() {
   }
 
   for (const user of state.users) {
+    const loginSummary = getLoginSummaryForUser(user);
     const row = document.createElement("tr");
     const selectCell = document.createElement("td");
     selectCell.className = "col-select";
@@ -2079,6 +2103,14 @@ function renderUsers() {
     activeBadge.textContent = user.is_active ? "Ano" : "Ne";
     activeCell.appendChild(activeBadge);
 
+    const loginCountCell = document.createElement("td");
+    loginCountCell.className = "col-created";
+    loginCountCell.textContent = String(loginSummary?.success_count || 0);
+
+    const lastLoginCell = document.createElement("td");
+    lastLoginCell.className = "col-updated";
+    lastLoginCell.textContent = loginSummary?.last_success_at ? formatDate(loginSummary.last_success_at) : "Nikdy";
+
     const createdCell = document.createElement("td");
     createdCell.className = "col-created";
     createdCell.textContent = formatDate(user.created_at);
@@ -2099,7 +2131,18 @@ function renderUsers() {
     actionsWrap.appendChild(editButton);
     actionsCell.appendChild(actionsWrap);
 
-    row.append(selectCell, avatarCell, emailCell, roleCell, activeCell, createdCell, updatedCell, actionsCell);
+    row.append(
+      selectCell,
+      avatarCell,
+      emailCell,
+      roleCell,
+      activeCell,
+      loginCountCell,
+      lastLoginCell,
+      createdCell,
+      updatedCell,
+      actionsCell,
+    );
 
     selectCheckbox.addEventListener("change", () => {
       setUserSelection(user.id, selectCheckbox.checked);
@@ -2113,6 +2156,49 @@ function renderUsers() {
   }
 
   syncUserSelectionUI();
+}
+
+function renderLoginEvents() {
+  if (!loginEventsTableBody || !loginEventsCountEl || !loginEventsEmptyEl) return;
+
+  loginEventsTableBody.innerHTML = "";
+  loginEventsCountEl.textContent = formatLoginEventCount(state.loginEvents.length);
+  loginEventsEmptyEl.hidden = state.loginEvents.length > 0;
+
+  for (const event of state.loginEvents) {
+    const row = document.createElement("tr");
+
+    const emailCell = document.createElement("td");
+    emailCell.className = "col-title";
+    const emailStrong = document.createElement("strong");
+    emailStrong.textContent = event.email || "Neznámý účet";
+    emailCell.appendChild(emailStrong);
+
+    const statusCell = document.createElement("td");
+    statusCell.className = "col-status";
+    const statusBadge = document.createElement("span");
+    statusBadge.className = `badge ${event.success ? "status-resolved" : "status-closed"}`;
+    statusBadge.textContent = event.success ? "Úspěšné" : "Neúspěšné";
+    statusCell.appendChild(statusBadge);
+
+    const createdCell = document.createElement("td");
+    createdCell.className = "col-created";
+    createdCell.textContent = formatDate(event.created_at);
+
+    const ipCell = document.createElement("td");
+    ipCell.className = "col-type";
+    ipCell.textContent = event.ip_address || "Neuvedeno";
+
+    const agentCell = document.createElement("td");
+    agentCell.className = "col-updated login-user-agent";
+    agentCell.textContent = compactUserAgent(event.user_agent);
+    if (event.user_agent) {
+      agentCell.title = event.user_agent;
+    }
+
+    row.append(emailCell, statusCell, createdCell, ipCell, agentCell);
+    loginEventsTableBody.appendChild(row);
+  }
 }
 
 function normalizeAssistantText(value) {
@@ -2297,6 +2383,7 @@ function render() {
   renderChecklist();
   if (state.user?.role === "admin") {
     renderUsers();
+    renderLoginEvents();
   }
 }
 
@@ -2625,12 +2712,21 @@ async function loadUsers() {
   state.users = payload.items || [];
 }
 
+async function loadLoginEvents() {
+  const payload = await apiProtected("/api/login-events");
+  state.loginSummary = payload.summary || [];
+  state.loginEvents = payload.events || [];
+}
+
 async function loadAppData() {
   await loadEntries();
   if (state.user?.role === "admin") {
     await loadUsers();
+    await loadLoginEvents();
   } else {
     state.users = [];
+    state.loginSummary = [];
+    state.loginEvents = [];
   }
   render();
   openDetailFromUrl();
@@ -2725,10 +2821,12 @@ appTabButtons.forEach((button) => {
     const target = button.dataset.appTab;
     if (target === "admin" && state.user?.role === "admin" && state.users.length === 0) {
       await loadUsers();
+      await loadLoginEvents();
     }
     setAppSection(target);
     if (target === "admin") {
       renderUsers();
+      renderLoginEvents();
     }
   });
 });
@@ -2746,8 +2844,10 @@ homeTiles.forEach((tile) => {
     if (target === "admin" && state.user?.role === "admin" && state.users.length === 0) {
       try {
         await loadUsers();
+        await loadLoginEvents();
         setAppSection(target);
         renderUsers();
+        renderLoginEvents();
       } catch {
         // The existing UI will surface the error if the admin data cannot load.
       }
@@ -2756,6 +2856,7 @@ homeTiles.forEach((tile) => {
     setAppSection(target);
     if (target === "admin") {
       renderUsers();
+      renderLoginEvents();
     }
   });
 });
