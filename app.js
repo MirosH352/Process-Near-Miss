@@ -2713,9 +2713,15 @@ async function loadUsers() {
 }
 
 async function loadLoginEvents() {
-  const payload = await apiProtected("/api/login-events");
-  state.loginSummary = payload.summary || [];
-  state.loginEvents = payload.events || [];
+  try {
+    const payload = await apiProtected("/api/login-events");
+    state.loginSummary = payload.summary || [];
+    state.loginEvents = payload.events || [];
+  } catch (error) {
+    console.error("Login audit could not be loaded", error);
+    state.loginSummary = [];
+    state.loginEvents = [];
+  }
 }
 
 async function loadAppData() {
