@@ -896,6 +896,7 @@ const recordsPanel = document.getElementById("recordsPanel");
 const checklistPanel = document.getElementById("checklistPanel");
 const adminPanel = document.getElementById("adminPanel");
 const checkAppPanel = document.getElementById("checkAppPanel");
+const checkXlPanel = document.getElementById("checkXlPanel");
 const installationPanel = document.getElementById("installationPanel");
 const assistantPanel = document.getElementById("assistantPanel");
 const assistantForm = document.getElementById("assistantForm");
@@ -1408,12 +1409,12 @@ function writeViewMode(viewMode) {
 
 function getSectionFromHash() {
   const rawHash = window.location.hash.replace(/^#/, "").trim().toLowerCase();
-  const allowed = new Set(["home", "records", "checklist", "check-app", "assistant", "instalace", "admin"]);
+  const allowed = new Set(["home", "records", "checklist", "check-app", "check-xl", "assistant", "instalace", "admin"]);
   return allowed.has(rawHash) ? rawHash : null;
 }
 
 function syncSectionHash(section) {
-  const normalized = ["home", "records", "checklist", "check-app", "assistant", "instalace", "admin"].includes(section) ? section : "home";
+  const normalized = ["home", "records", "checklist", "check-app", "check-xl", "assistant", "instalace", "admin"].includes(section) ? section : "home";
   const nextHash = `#${normalized}`;
   if (window.location.hash === nextHash) {
     return;
@@ -2073,7 +2074,7 @@ function updateRoleVisibility() {
 
 function setAppSection(section) {
   const isAdmin = state.user?.role === "admin";
-  const allowedSections = new Set(["home", "records", "checklist", "check-app", "assistant", "instalace"]);
+  const allowedSections = new Set(["home", "records", "checklist", "check-app", "check-xl", "assistant", "instalace"]);
   if (isAdmin) {
     allowedSections.add("admin");
   }
@@ -2088,6 +2089,7 @@ function setAppSection(section) {
   checklistPanel.classList.toggle("hidden", state.appSection !== "checklist");
   adminPanel.classList.toggle("hidden", state.appSection !== "admin");
   checkAppPanel.classList.toggle("hidden", state.appSection !== "check-app");
+  checkXlPanel.classList.toggle("hidden", state.appSection !== "check-xl");
   assistantPanel.classList.toggle("hidden", state.appSection !== "assistant");
   installationPanel.classList.toggle("hidden", state.appSection !== "instalace");
   scheduleMotionRefresh();
@@ -2095,6 +2097,7 @@ function setAppSection(section) {
   const activePanelBySection = {
     checklist: checklistPanel,
     "check-app": checkAppPanel,
+    "check-xl": checkXlPanel,
     assistant: assistantPanel,
     instalace: installationPanel,
     admin: adminPanel,

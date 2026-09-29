@@ -4060,6 +4060,9 @@ h2 { font-size: 1.14rem; letter-spacing: -.025em; }
 .global-nav .app-tab-button.is-active { color: var(--color-primary); background: #f0f5ff; }
 .global-nav .app-tab-button.is-active::after { content: ''; position: absolute; bottom: -4px; left: 9px; right: 9px; height: 2px; background: var(--color-primary); border-radius: 2px; }
 .global-nav .app-tab-button:hover { color: var(--color-primary); background: #f4f7fd; }
+
+.check-xl-panel:not(.hidden) { display: flex; justify-content: center; }
+.check-xl-panel img { display: block; width: min(100%, 1200px); height: auto; border-radius: 16px; }
 .topbar-actions { gap: 12px; flex-wrap: nowrap; }
 .header-action { white-space: nowrap; }
 .user-menu-summary { border: 0; padding: 2px 0 2px 4px; gap: 9px; border-radius: 8px; background: transparent; max-width: 218px; }
@@ -4338,7 +4341,7 @@ h2 { font-size: 1.14rem; letter-spacing: -.025em; }
   .header-action { font-size: .76rem; padding: 8px 10px; }
   .user-menu-summary { padding: 0; gap: 4px; }
   .user-meta, .user-menu-caret { display: none; }
-  .global-nav { justify-content: space-between; gap: 2px; }
+  .global-nav { justify-content: flex-start; gap: 2px; overflow-x: auto; }
   .global-nav .app-tab-button { min-height: 38px; font-size: .72rem; gap: 5px; padding: 8px 6px; }
   .global-nav .app-tab-button > span:first-child { display: none; }
   .dashboard-header { padding: 0 2px; gap: 16px; }

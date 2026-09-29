@@ -150,6 +150,10 @@ test('admin navigation remains role gated and route changes preserve entry links
   assert.equal(app.state.appSection, 'home');
   app.setAppSection('check-app');
   assert.equal(app.state.appSection, 'check-app');
+  app.setAppSection('check-xl');
+  assert.equal(app.state.appSection, 'check-xl');
+  app.browser.location.hash = '#check-xl';
+  assert.equal(app.getSectionFromHash(), 'check-xl');
   app.setAppSection('instalace');
   assert.equal(app.state.appSection, 'instalace');
   app.browser.location.hash = '#instalace';
