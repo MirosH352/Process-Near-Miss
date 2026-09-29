@@ -222,8 +222,10 @@ class SqlFilterTool extends HTMLElement {
       indicator.style.setProperty("--indicator-y", `${labelRect.top - groupRect.top + group.scrollTop}px`);
       indicator.style.setProperty("--indicator-width", `${labelRect.width}px`);
       indicator.style.setProperty("--indicator-height", `${labelRect.height}px`);
-      indicator.style.opacity = "1";
-      indicator.classList.toggle("is-ready", !immediate && !this.prefersReducedMotion());
+      const measured = labelRect.width > 0 && labelRect.height > 0;
+      indicator.style.opacity = measured ? "1" : "0";
+      indicator.classList.toggle("is-ready", measured && !immediate && !this.prefersReducedMotion());
+      group.classList.toggle("sft-indicator-ready", measured);
     });
   }
 

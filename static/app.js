@@ -59,6 +59,16 @@ function markContentRefresh(element) {
   withMotionClass(element, MOTION_FILTER_CLASS);
 }
 
+function scheduleMotionRefresh() {
+  if (typeof window === "undefined" || typeof window.dispatchEvent !== "function") return;
+  const schedule = typeof window.requestAnimationFrame === "function"
+    ? window.requestAnimationFrame.bind(window)
+    : (callback) => window.setTimeout(callback, 0);
+  schedule(() => {
+    window.dispatchEvent(new Event("resize"));
+  });
+}
+
 function initSharedIndicator(container, options = {}) {
   if (!container) return null;
   if (typeof container.insertBefore !== "function" || typeof container.getBoundingClientRect !== "function") {
@@ -2080,6 +2090,7 @@ function setAppSection(section) {
   checkAppPanel.classList.toggle("hidden", state.appSection !== "check-app");
   assistantPanel.classList.toggle("hidden", state.appSection !== "assistant");
   installationPanel.classList.toggle("hidden", state.appSection !== "instalace");
+  scheduleMotionRefresh();
 
   const activePanelBySection = {
     checklist: checklistPanel,

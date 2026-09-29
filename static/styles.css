@@ -5384,6 +5384,8 @@ textarea {
 .main-nav-indicator,
 .tab-pill-indicator {
   position: absolute;
+  top: 0;
+  left: 0;
   pointer-events: none;
   opacity: 0;
   z-index: 0;
@@ -5408,6 +5410,13 @@ textarea {
 }
 
 .tab-pill-indicator-pill {
+  transform: translate3d(
+    calc(var(--indicator-x, 0) + var(--indicator-inset, 1px)),
+    calc(var(--indicator-y, 0) + var(--indicator-inset, 1px)),
+    0
+  );
+  width: max(0px, calc(var(--indicator-width, 0) - (var(--indicator-inset, 1px) * 2)));
+  height: max(0px, calc(var(--indicator-height, 0) - (var(--indicator-inset, 1px) * 2)));
   border-radius: 7px;
   background: var(--color-primary);
   box-shadow: 0 2px 5px rgba(40, 101, 245, 0.15);
@@ -5450,7 +5459,14 @@ textarea {
 
 .checklist-page-switcher .tab-pill-indicator,
 .view-switch .tab-pill-indicator {
+  --indicator-inset: 2px;
   background: var(--color-primary);
+}
+
+.checklist-page-switcher.has-shared-indicator,
+.view-switch.has-shared-indicator {
+  overflow: hidden;
+  background-clip: padding-box;
 }
 
 .checklist-page-button.is-active,

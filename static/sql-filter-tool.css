@@ -232,6 +232,7 @@ label,
 .sft-segmented {
   display: grid;
   position: relative;
+  overflow: hidden;
   grid-template-columns: 1fr 1fr;
   gap: 4px;
   padding: 4px;
@@ -273,15 +274,17 @@ label,
 
 .sft-shared-indicator {
   position: absolute;
+  top: 0;
+  left: 0;
   z-index: 0;
   pointer-events: none;
   opacity: 0;
-  width: var(--indicator-width, 0);
-  height: var(--indicator-height, 0);
+  width: max(0px, calc(var(--indicator-width, 0) - 2px));
+  height: max(0px, calc(var(--indicator-height, 0) - 2px));
   border-radius: 6px;
   background: var(--sft-accent);
   box-shadow: 0 2px 5px rgba(40, 101, 245, 0.15);
-  transform: translate3d(var(--indicator-x, 0), var(--indicator-y, 0), 0);
+  transform: translate3d(calc(var(--indicator-x, 0) + 1px), calc(var(--indicator-y, 0) + 1px), 0);
   transition:
     transform 230ms cubic-bezier(0.22, 1, 0.36, 1),
     width 230ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -297,8 +300,13 @@ label,
 }
 
 .sft-segmented input:checked + label {
-  background: transparent;
+  background: var(--sft-accent);
   color: #fff;
+  box-shadow: 0 2px 5px rgba(40, 101, 245, 0.15);
+}
+
+.sft-segmented.sft-indicator-ready input:checked + label {
+  background: transparent;
   box-shadow: none;
 }
 
