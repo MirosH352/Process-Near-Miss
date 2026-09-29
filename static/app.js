@@ -725,6 +725,7 @@ const usersSection = document.getElementById("usersSection");
 const loginEventsTableBody = document.getElementById("loginEventsTableBody");
 const loginEventsCountEl = document.getElementById("loginEventsCount");
 const loginEventsEmptyEl = document.getElementById("loginEventsEmpty");
+const refreshLoginEventsButton = document.getElementById("refreshLoginEvents");
 const userEditModal = document.getElementById("userEditModal");
 const userEditForm = document.getElementById("userEditForm");
 const userEditMessageEl = document.getElementById("userEditMessage");
@@ -2872,6 +2873,18 @@ window.addEventListener("hashchange", () => {
   const section = getSectionFromHash();
   if (section) {
     setAppSection(section);
+  }
+});
+
+refreshLoginEventsButton?.addEventListener("click", async () => {
+  if (state.user?.role !== "admin") return;
+  refreshLoginEventsButton.disabled = true;
+  try {
+    await loadLoginEvents();
+    renderUsers();
+    renderLoginEvents();
+  } finally {
+    refreshLoginEventsButton.disabled = false;
   }
 });
 
