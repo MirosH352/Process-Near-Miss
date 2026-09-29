@@ -783,6 +783,7 @@ const state = {
   users: [],
   loginEvents: [],
   loginSummary: [],
+  loginEventsError: "",
   search: "",
   checklistPageId: readChecklistPageId(),
   checklist: createDefaultChecklistState(readChecklistPageId()),
@@ -2302,6 +2303,9 @@ function renderLoginEvents() {
   loginEventsTableBody.innerHTML = "";
   loginEventsCountEl.textContent = formatLoginEventCount(state.loginEvents.length);
   loginEventsEmptyEl.hidden = state.loginEvents.length > 0;
+  loginEventsEmptyEl.textContent = state.loginEventsError
+    ? `Historii přihlášení se nepodařilo načíst: ${state.loginEventsError}`
+    : "Zatím nejsou zaznamenaná žádná přihlášení.";
 
   for (const event of state.loginEvents) {
     const row = document.createElement("tr");
@@ -2855,10 +2859,12 @@ async function loadLoginEvents() {
     const payload = await apiProtected("/api/login-events");
     state.loginSummary = payload.summary || [];
     state.loginEvents = payload.events || [];
+    state.loginEventsError = "";
   } catch (error) {
     console.error("Login audit could not be loaded", error);
     state.loginSummary = [];
     state.loginEvents = [];
+    state.loginEventsError = error?.message || "Neznámá chyba.";
   }
 }
 
@@ -2871,6 +2877,7 @@ async function loadAppData() {
     state.users = [];
     state.loginSummary = [];
     state.loginEvents = [];
+    state.loginEventsError = "";
   }
   render();
   openDetailFromUrl();

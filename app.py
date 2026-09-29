@@ -884,6 +884,13 @@ def user_to_dict(row: sqlite3.Row) -> dict:
     }
 
 
+def row_value(row, key: str, default=None):
+    try:
+        return row[key]
+    except (IndexError, KeyError, TypeError):
+        return default
+
+
 def row_to_dict(row: sqlite3.Row) -> dict:
     created_by_email = row["created_by_email"] if "created_by_email" in row.keys() else None
     area = row["area"] if "area" in row.keys() else None
@@ -1581,6 +1588,41 @@ def record_login_event(
         )
 
 
+def record_current_session_login_event(user, handler: BaseHTTPRequestHandler) -> None:
+    user_id = row_value(user, "id")
+    email = row_value(user, "email")
+    session_created_at = row_value(user, "session_created_at")
+    if user_id is None or not email or not session_created_at:
+        return
+
+    with connect() as conn:
+        ensure_login_events_table(conn)
+        existing = conn.execute(
+            """
+            SELECT id
+            FROM login_events
+            WHERE user_id = ? AND success = 1 AND created_at >= ?
+            LIMIT 1
+            """,
+            (user_id, session_created_at),
+        ).fetchone()
+        if existing is not None:
+            return
+        conn.execute(
+            """
+            INSERT INTO login_events (user_id, email, success, ip_address, user_agent, created_at)
+            VALUES (?, ?, 1, ?, ?, ?)
+            """,
+            (
+                user_id,
+                normalize_email(str(email)),
+                client_ip(handler),
+                str(handler.headers.get("User-Agent") or "Aktivní session")[:500],
+                session_created_at,
+            ),
+        )
+
+
 def list_login_events(limit: int = 100) -> dict:
     safe_limit = max(1, min(int(limit or 100), 250))
     with connect() as conn:
@@ -1701,7 +1743,12 @@ def current_user(handler: BaseHTTPRequestHandler) -> sqlite3.Row | None:
     with connect() as conn:
         row = conn.execute(
             """
-            SELECT u.*, s.csrf_token AS csrf_token
+            SELECT
+                u.*,
+                s.id AS session_id,
+                s.created_at AS session_created_at,
+                s.last_seen_at AS session_last_seen_at,
+                s.csrf_token AS csrf_token
             FROM sessions s
             JOIN users u ON u.id = s.user_id
             WHERE s.token_hash = ? AND s.expires_at > ? AND u.is_active = 1
@@ -1959,6 +2006,10 @@ class AppHandler(BaseHTTPRequestHandler):
             user = require_user(self)
             if user is None:
                 return
+            try:
+                record_current_session_login_event(user, self)
+            except Exception as exc:
+                print(f"session login audit failed: {exc}", flush=True)
             json_response(self, {"user": user_to_dict(user), "csrfToken": user["csrf_token"]})
             return
 
@@ -1980,6 +2031,10 @@ class AppHandler(BaseHTTPRequestHandler):
             user = require_admin(self)
             if user is None:
                 return
+            try:
+                record_current_session_login_event(user, self)
+            except Exception as exc:
+                print(f"session login audit failed: {exc}", flush=True)
             json_response(self, list_login_events())
             return
 
