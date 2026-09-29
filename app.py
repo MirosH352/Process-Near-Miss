@@ -1638,7 +1638,7 @@ def list_login_events(limit: int = 100) -> dict:
                 MAX(le.created_at) AS last_attempt_at
             FROM login_events le
             LEFT JOIN users u ON u.id = le.user_id
-            GROUP BY COALESCE(le.user_id, 0), COALESCE(u.email, le.email)
+            GROUP BY COALESCE(le.user_id, u.id), COALESCE(u.email, le.email)
             ORDER BY last_attempt_at DESC
             """
         ).fetchall()
@@ -2035,7 +2035,15 @@ class AppHandler(BaseHTTPRequestHandler):
                 record_current_session_login_event(user, self)
             except Exception as exc:
                 print(f"session login audit failed: {exc}", flush=True)
-            json_response(self, list_login_events())
+            try:
+                json_response(self, list_login_events())
+            except Exception as exc:
+                print(f"login audit list failed: {exc}", flush=True)
+                json_response(
+                    self,
+                    {"error": "Historii přihlášení se nepodařilo načíst. Zkontroluj prosím serverový log."},
+                    HTTPStatus.INTERNAL_SERVER_ERROR,
+                )
             return
 
         if path == "/" or path == "/index.html":
