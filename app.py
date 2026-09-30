@@ -2050,8 +2050,20 @@ class AppHandler(BaseHTTPRequestHandler):
             self.serve_file(STATIC_DIR / "index.html", "text/html; charset=utf-8")
             return
 
+        if path == "/cookies.html":
+            self.serve_file(STATIC_DIR / "cookies.html", "text/html; charset=utf-8")
+            return
+
+        if path == "/privacy.html":
+            self.serve_file(STATIC_DIR / "privacy.html", "text/html; charset=utf-8")
+            return
+
         if path == "/styles.css":
             self.serve_file(STATIC_DIR / "styles.css", "text/css; charset=utf-8")
+            return
+
+        if path == "/legal.css":
+            self.serve_file(STATIC_DIR / "legal.css", "text/css; charset=utf-8")
             return
 
         if path == "/app.js":
