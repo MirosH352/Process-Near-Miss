@@ -4062,7 +4062,14 @@ h2 { font-size: 1.14rem; letter-spacing: -.025em; }
 .global-nav .app-tab-button:hover { color: var(--color-primary); background: #f4f7fd; }
 
 .check-xl-panel:not(.hidden) { display: flex; justify-content: center; }
-.check-xl-panel img { display: block; width: min(100%, 1200px); height: auto; border-radius: 16px; }
+.check-xl-guide { width: min(100%, 1100px); display: grid; gap: 22px; }
+.check-xl-guide > p, .check-xl-step p { margin: 0; line-height: 1.6; }
+.check-xl-step { display: grid; gap: 14px; }
+.check-xl-step + .check-xl-step { padding-top: 22px; border-top: 1px solid #e4eaf3; }
+.check-xl-step h3 { margin: 0; font-size: 1.15rem; }
+.check-xl-step figure { margin: 4px 0 0; }
+.check-xl-step img { display: block; width: min(100%, 945px); height: auto; border: 1px solid #e4eaf3; border-radius: 8px; }
+.check-xl-step figcaption { margin-top: 8px; color: #657694; font-size: .85rem; }
 .topbar-actions { gap: 12px; flex-wrap: nowrap; }
 .header-action { white-space: nowrap; }
 .user-menu-summary { border: 0; padding: 2px 0 2px 4px; gap: 9px; border-radius: 8px; background: transparent; max-width: 218px; }

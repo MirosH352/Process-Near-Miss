@@ -476,8 +476,34 @@
         </div>
       </section>
 
-      <section id="checkXlPanel" class="app-panel check-xl-panel hidden" aria-label="Kontrola XL">
-        <img src="./assets/kontrola-xl-pripravujeme.png" alt="Sorry Bro, your návod is still under construction. Zelený maskot se stavební helmou veze kolečko." width="1536" height="1024" />
+      <section id="checkXlPanel" class="app-panel check-xl-panel hidden" aria-labelledby="checkXlTitle">
+        <article class="card dashboard-card check-xl-guide">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">NÁVOD</p>
+              <h2 id="checkXlTitle">Kontrola XL</h2>
+            </div>
+          </div>
+          <p>Před samotným nastavováním je potřeba mít založené <strong>depo, pobočku a rozvozy</strong>.</p>
+          <div class="check-xl-step">
+            <h3>1. Založení skupiny přepravních směrů</h3>
+            <p>Založím skupinu přepravních směrů ve tvaru <strong>název depa – alzaExpres</strong>.</p>
+            <figure>
+              <img src="./assets/kontrola-xl-skupina-prepravnich-smeru.png" alt="V administraci doprav je otevřená záložka Skupiny přepravních směrů a skupina Brno - alzaExpres." width="945" height="413" />
+              <figcaption>Příklad: Brno – alzaExpres</figcaption>
+            </figure>
+          </div>
+          <div class="check-xl-step">
+            <h3>2. Založení přepravního směru</h3>
+            <p>Založím přepravní směr ve tvaru <strong>alzaExpres – název depa</strong>.</p>
+            <p>Jako primárního dopravce vždy nastavím <strong>AlzaExpres</strong>.</p>
+            <p>Vstupní depo vyplním jen v případě, že bude rozděleno na více oblastí rozvozu.</p>
+            <figure>
+              <img src="./assets/kontrola-xl-prepravni-smer.png" alt="V administraci doprav je přepravní směr alzaExpres - Brno s primárním dopravcem AlzaExpres a přiřazenou skupinou Brno - alzaExpres." width="945" height="241" />
+              <figcaption>Příklad: alzaExpres – Brno</figcaption>
+            </figure>
+          </div>
+        </article>
       </section>
 
       <section id="assistantPanel" class="app-panel assistant-panel hidden" aria-labelledby="assistantTitle">

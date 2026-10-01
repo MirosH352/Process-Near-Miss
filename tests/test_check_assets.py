@@ -36,15 +36,15 @@ class CheckAssetsTest(unittest.TestCase):
                 urlopen(self.base + url)
             self.assertEqual(error.exception.code, status)
 
-    def test_xl_placeholder_image_is_served(self):
-        filename = "assets/kontrola-xl-pripravujeme.png"
-        with urlopen(self.base + "/" + filename) as response:
-            self.assertEqual(response.status, 200)
-            self.assertEqual(response.headers["Content-Type"], "image/png")
-            self.assertEqual(response.read(), (app.ROOT / filename).read_bytes())
+    def test_xl_guide_image_is_served(self):
+        for filename in ["assets/kontrola-xl-skupina-prepravnich-smeru.png", "assets/kontrola-xl-prepravni-smer.png"]:
+            with self.subTest(filename=filename), urlopen(self.base + "/" + filename) as response:
+                self.assertEqual(response.status, 200)
+                self.assertEqual(response.headers["Content-Type"], "image/png")
+                self.assertEqual(response.read(), (app.ROOT / filename).read_bytes())
 
     def test_static_mirror_matches_served_files(self):
-        for filename in ["index.html", "styles.css", "app.js", "check-app.css", "check-app.js", "check-core.js", "check-worker.js", "sql-filter-tool.css", "sql-filter-tool.js", "vendor/xlsx.full.min.js", "assets/kontrola-xl-pripravujeme.png"]:
+        for filename in ["index.html", "styles.css", "app.js", "check-app.css", "check-app.js", "check-core.js", "check-worker.js", "sql-filter-tool.css", "sql-filter-tool.js", "vendor/xlsx.full.min.js", "assets/kontrola-xl-skupina-prepravnich-smeru.png", "assets/kontrola-xl-prepravni-smer.png"]:
             self.assertEqual((app.ROOT / filename).read_bytes(), (app.ROOT / "static" / filename).read_bytes(), filename)
 
 
