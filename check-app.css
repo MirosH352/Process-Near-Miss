@@ -5,6 +5,26 @@
 .app-shell.check-app-mode .dashboard-intro > .eyebrow { display: none; }
 #checkAppPanel { display: grid; gap: 22px; min-width: 0; }
 #checkAppPanel.hidden { display: none; }
+.check-filter-card { min-width: 0; overflow: hidden; border: 1px solid #c9dbfa; border-radius: 16px; background: linear-gradient(135deg, #f3f7ff 0%, #f4fbff 100%); box-shadow: 0 12px 30px rgba(40, 101, 245, .07); }
+.check-filter-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 21px 24px; }
+.check-filter-header > div { max-width: 770px; }
+.check-filter-badge { display: inline-block; margin-bottom: 8px; padding: 5px 9px; border-radius: 6px; background: #dbe9ff; color: #2356bd; font-size: .65rem; font-weight: 750; letter-spacing: .09em; }
+.check-filter-header h3 { margin: 0 0 7px; color: #14213b; font-size: 1.14rem; letter-spacing: -.025em; }
+.check-filter-header p { margin: 0; color: #53637d; font-size: .81rem; line-height: 1.65; }
+.check-filter-header strong { color: #2356bd; }
+#checkAppPanel .check-filter-copy { flex: 0 0 auto; padding: 10px 15px; border: 1px solid #2865f5; border-radius: 9px; background: #2865f5; color: #fff; font: inherit; font-size: .79rem; font-weight: 650; cursor: pointer; }
+#checkAppPanel .check-filter-copy:hover { background: #174ed1; border-color: #174ed1; }
+#checkAppPanel .check-filter-copy:focus-visible { outline: 3px solid #91b4ff; outline-offset: 3px; }
+.check-filter-code-wrap { margin: 0 12px 12px; overflow-x: auto; border-radius: 10px; background: #14213b; }
+.check-filter-code { margin: 0; padding: 17px 19px; color: #e8eefb; font-size: .79rem; line-height: 1.65; tab-size: 4; }
+.check-filter-code code { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; }
+.check-sql-keyword { color: #78caff; font-weight: 650; }
+.check-sql-function { color: #d7aaff; }
+.check-sql-field { color: #b8e6db; }
+.check-sql-string { color: #ffcf8a; }
+.check-sql-meta { color: #a8b9d7; }
+.check-filter-copy-status { display: block; min-height: 1px; padding: 0 24px; color: #2356bd; font-size: .75rem; }
+.check-filter-copy-status:not(:empty) { padding-bottom: 12px; }
 .check-card { padding: 22px; min-width: 0; }
 .check-heading { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
 .check-page-heading { padding: 2px 4px 0; }
@@ -127,6 +147,9 @@
   .check-actions .check-help { flex-basis: 100%; margin-left: 0; }
 }
 @media (max-width: 760px) {
+  .check-filter-header { align-items: flex-start; flex-direction: column; padding: 18px; }
+  .check-filter-code-wrap { margin: 0 8px 8px; }
+  .check-filter-code { padding: 14px; font-size: .73rem; }
   .check-input-grid { grid-template-columns: 1fr; gap: 22px; }
   .check-source + .check-source { border-left: 0; padding: 20px 0 0; border-top: 1px solid #e4eaf3; }
   .check-workflow { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 14px; }

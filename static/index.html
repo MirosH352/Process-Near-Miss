@@ -415,6 +415,27 @@
               <p class="lead">Porovnejte pořadí na trase z Excelu s daty z konzole.</p></div>
             <span class="check-local-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8.5 12 2.3 2.3 4.7-4.6"/></svg>Soubory zůstávají ve vašem prohlížeči</span>
           </div>
+        <section class="check-filter-card" aria-labelledby="checkFilterTitle">
+          <div class="check-filter-header">
+            <div>
+              <span class="check-filter-badge">FILTR PRO KONZOLI</span>
+              <h3 id="checkFilterTitle">Kontrola přepravních směrů</h3>
+              <p>Filtr vyhledá přepravní směry AB, u kterých je vyplněný primární dopravce, ale chybí vstupní depo. Slouží ke kontrole, zda je všude, kde má být, nastavená hodnota <strong>DEFAULT</strong>.</p>
+            </div>
+            <button type="button" class="check-filter-copy" id="checkFilterCopy" aria-describedby="checkFilterCopyStatus">Kopírovat filtr</button>
+          </div>
+          <div class="check-filter-code-wrap"><pre class="check-filter-code"><code id="checkFilterCode"><span class="check-sql-field">[Skupina směrů]</span> <span class="check-sql-keyword">LIKE</span> <span class="check-sql-string">'%ab - %'</span>
+<span class="check-sql-keyword">AND</span> <span class="check-sql-function">NULLIF</span>(<span class="check-sql-field">[Vstupní depo]</span>, <span class="check-sql-string">''</span>) <span class="check-sql-keyword">IS NULL</span>
+<span class="check-sql-keyword">AND</span> <span class="check-sql-field">[ID]</span> <span class="check-sql-keyword">IN</span> (
+    <span class="check-sql-keyword">SELECT</span> XR.<span class="check-sql-field">[~TransportGroupDefinition_ID]</span>
+    <span class="check-sql-keyword">FROM</span> Data0001.dbo.ParcelShopGroupsToTransportGroupDefinitions <span class="check-sql-keyword">AS</span> XR
+    <span class="check-sql-keyword">JOIN</span> Data0001.lookups.<span class="check-sql-field">[~v_parcelshopgroups]</span> <span class="check-sql-keyword">AS</span> XV
+        <span class="check-sql-keyword">ON</span> XV.<span class="check-sql-field">[~ParcelShopGroup_ID]</span> = XR.<span class="check-sql-field">[~ParcelShopGroup_ID]</span>
+    <span class="check-sql-keyword">WHERE</span> XV.<span class="check-sql-field">[~Name]</span> &lt;&gt; <span class="check-sql-string">''</span>
+)
+<span class="check-sql-keyword">AND</span> <span class="check-sql-function">NULLIF</span>(<span class="check-sql-field">[Primární dopravce]</span>, <span class="check-sql-string">''</span>) <span class="check-sql-keyword">IS NOT NULL</span> <span class="check-sql-meta">{sorting = [Vstupní depo]}</span></code></pre></div>
+          <span class="check-filter-copy-status" id="checkFilterCopyStatus" role="status" aria-live="polite"></span>
+        </section>
         <div class="card check-card">
           <ol class="check-workflow" aria-label="Postup porovnání">
             <li id="checkWorkflowExpected" class="is-current" aria-current="step"><span class="check-workflow-number">1</span>Referenční Excel</li>

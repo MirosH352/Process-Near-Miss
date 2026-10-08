@@ -5,6 +5,28 @@
   const form = el("checkForm"), resultPanel = el("checkResults");
   let result = null, page = 0, worker = null, timer = null;
   const PAGE_SIZE = 100;
+  el("checkFilterCopy").addEventListener("click", async () => {
+    const filter = el("checkFilterCode").textContent.trim();
+    const status = el("checkFilterCopyStatus");
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(filter);
+      } else {
+        const field = document.createElement("textarea");
+        field.value = filter;
+        field.style.position = "fixed";
+        field.style.opacity = "0";
+        document.body.append(field);
+        field.select();
+        const copied = document.execCommand("copy");
+        field.remove();
+        if (!copied) throw new Error("Copy failed");
+      }
+      status.textContent = "Filtr zkopírován do schránky.";
+    } catch {
+      status.textContent = "Kopírování se nepodařilo. Označte filtr a zkopírujte jej pomocí Ctrl+C.";
+    }
+  });
   function updateWorkflow() {
     const expectedReady = Boolean(el("checkExpectedFile").files[0]);
     const actualReady = el("checkActualMode").value === "file"
