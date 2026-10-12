@@ -81,7 +81,8 @@
 .check-success-center span { color: #71809a; font-size: .65rem; }
 .check-success-copy { min-width: 0; flex: 1; }
 .check-success-copy .eyebrow { margin: 0 0 6px; }
-.check-success-copy h4 { margin: 0; color: #14213b; font-size: 1.1rem; letter-spacing: -.025em; }
+.check-success-copy h4 { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin: 0; color: #14213b; font-size: 1.1rem; letter-spacing: -.025em; }
+.check-new-badge { display: inline-flex; align-items: center; padding: 4px 8px; border: 1px solid #cfe0ff; border-radius: 999px; background: #edf4ff; color: #28539d; font-size: .62rem; font-weight: 750; line-height: 1.2; letter-spacing: .06em; white-space: nowrap; }
 .check-success-summary { margin: 8px 0 16px; color: #53637d; font-size: .82rem; line-height: 1.6; }
 .check-success-legend { display: flex; flex-wrap: wrap; gap: 12px 28px; margin: 0; padding: 0; list-style: none; }
 .check-success-legend li { display: flex; align-items: center; gap: 8px; color: #53637d; font-size: .78rem; }
