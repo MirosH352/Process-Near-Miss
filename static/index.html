@@ -487,6 +487,25 @@
         <div id="checkResults" class="card check-card hidden">
           <div class="check-heading"><div><p class="eyebrow">VÝSLEDEK KONTROLY</p><h3 id="checkResultTitle">Porovnání dokončeno</h3></div>
             <button type="button" class="secondary" id="checkExport">Stáhnout celý report CSV</button></div>
+          <section class="check-success" aria-labelledby="checkSuccessTitle">
+            <div id="checkSuccessChart" class="check-success-chart" role="img" aria-label="Úspěšnost zatím není k dispozici.">
+              <svg viewBox="0 0 160 160" aria-hidden="true" focusable="false">
+                <circle class="check-success-track" cx="80" cy="80" r="64" />
+                <circle id="checkSuccessArc" class="check-success-arc" cx="80" cy="80" r="64" pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 80 80)" />
+              </svg>
+              <div class="check-success-center" aria-hidden="true"><strong id="checkSuccessRate">—</strong><span>shodných položek</span></div>
+            </div>
+            <div class="check-success-copy">
+              <p class="eyebrow">PŘEHLED POROVNÁNÍ</p>
+              <h4 id="checkSuccessTitle">Úspěšnost výsledku</h4>
+              <p id="checkSuccessSummary" class="check-success-summary"></p>
+              <ul class="check-success-legend">
+                <li><span class="check-success-dot check-success-dot-ok" aria-hidden="true"></span>Shodné položky <strong id="checkSuccessOk">0</strong></li>
+                <li><span class="check-success-dot check-success-dot-issues" aria-hidden="true"></span>Ke kontrole <strong id="checkSuccessIssues">0</strong></li>
+              </ul>
+              <p class="check-success-note">Podíl položek OK ze všech porovnaných AB kódů. Filtr tabulky graf nemění.</p>
+            </div>
+          </section>
           <div id="checkStats" class="check-stats"></div>
           <div class="check-result-toolbar"><label for="checkFilter">Zobrazit<select id="checkFilter"><option value="all">Všechny položky</option><option value="issues">Pouze problémy</option><option value="ok">Pouze shody</option></select></label>
             <label for="checkSearch">Vyhledat AB kód<input id="checkSearch" type="search" placeholder="Např. AB1234" /></label></div>

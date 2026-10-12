@@ -110,8 +110,28 @@
     el("checkPrev").disabled = page === 0;
     el("checkNext").disabled = page >= pages - 1;
   }
+  function renderSuccessChart() {
+    const total = result.rows.length, ok = result.counts.ok, issues = total - ok;
+    const rate = total ? ok / total * 100 : 0;
+    const percent = total
+      ? (rate > 0 && rate < 0.1 ? "< 0,1" : rate < 100 && rate > 99.9 ? "> 99,9" : rate.toLocaleString("cs-CZ", { maximumFractionDigits: 1 })) + " %"
+      : "—";
+    el("checkSuccessRate").textContent = percent;
+    el("checkSuccessArc").setAttribute("stroke-dasharray", `${rate} ${100 - rate}`);
+    el("checkSuccessChart").classList.toggle("is-empty", !total);
+    el("checkSuccessOk").textContent = ok.toLocaleString("cs-CZ");
+    el("checkSuccessIssues").textContent = issues.toLocaleString("cs-CZ");
+    const summary = total
+      ? `${ok.toLocaleString("cs-CZ")} z ${total.toLocaleString("cs-CZ")} položek má shodné pořadí.`
+      : "Žádné AB kódy k vyhodnocení.";
+    el("checkSuccessSummary").textContent = summary;
+    el("checkSuccessChart").setAttribute("aria-label", total
+      ? `Úspěšnost ${percent}. ${summary} Ke kontrole: ${issues.toLocaleString("cs-CZ")}.`
+      : "Úspěšnost není k dispozici. Žádné AB kódy k vyhodnocení.");
+  }
   function showResults(payload) {
     result = payload.result;
+    renderSuccessChart();
     const problems = result.rows.length - result.counts.ok;
     el("checkResultTitle").textContent = problems ? `Položky ke kontrole: ${problems.toLocaleString("cs-CZ")}` : "Pořadí všech položek souhlasí";
     const stats = el("checkStats"); stats.replaceChildren();
