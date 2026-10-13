@@ -2018,7 +2018,6 @@ async function askConfirmation(message, confirmLabel = "Potvrdit") {
 }
 
 function handleSessionExpired() {
-  window.AlzaStatus?.stop();
   window.CheckApp.reset();
   state.user = null;
   state.csrfToken = null;
@@ -2146,7 +2145,6 @@ function renderAuthState() {
 }
 
 function enterApp(user, csrfToken = null, initialSection = getSectionFromHash() || "home") {
-  window.AlzaStatus?.start();
   state.user = user;
   if (csrfToken) {
     state.csrfToken = csrfToken;

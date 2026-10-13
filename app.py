@@ -12,7 +12,6 @@ import threading
 import unicodedata
 import urllib.error
 import urllib.request
-from alza_status import get_status as get_alza_status
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
@@ -2014,12 +2013,6 @@ class AppHandler(BaseHTTPRequestHandler):
             json_response(self, {"user": user_to_dict(user), "csrfToken": user["csrf_token"]})
             return
 
-        if path == "/api/alza-status":
-            if require_user(self) is None:
-                return
-            json_response(self, get_alza_status())
-            return
-
         if path == "/api/entries":
             user = require_user(self)
             if user is None:
@@ -2086,7 +2079,6 @@ class AppHandler(BaseHTTPRequestHandler):
             return
 
         check_scripts = {
-            "/alza-status.js": "alza-status.js",
             "/check-app.js": "check-app.js",
             "/check-core.js": "check-core.js",
             "/check-worker.js": "check-worker.js",

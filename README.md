@@ -108,13 +108,3 @@ Poznamka:
 
 - Outgoing Webhook funguje v kanalech v teamu, ne v soukromem 1:1 chatu.
 - Pokud chces opravdu soukromy bot do chatu, bude dalsi krok Azure Bot / Bot Framework. Tenhle projekt na to uz ma hotovou vyhledavaci logiku, ale samotne Teams cloud napojeni je dalsi integracni krok.
-
-## Stav služeb Alzy
-
-Po přihlášení se nad navigací zobrazí upozornění na jakýkoliv aktivní problém ze všech služeb na https://status.alza.cz/.
-Backend načítá veřejné API `https://status.alza.cz/api_status.php`, které používá i stavová stránka Alzy.
-Prohlížeč kontroluje stav každých 60 sekund; server sdílí výsledek kontroly po dobu 60 sekund.
-Stavy `warning`, `degraded`, `error` a `down` vyvolají upozornění. Zdravé služby a jejich nedávno vyřešené incidenty ani plánované RFC upozornění nevyvolávají.
-Při nedostupnosti nebo neznámém formátu zdroje se zobrazí neověřený stav, případně poslední známé incidenty a čas poslední úspěšné kontroly.
-Integrace nevyžaduje heslo, novou databázi ani proměnné prostředí. Server musí mít přístup k `status.alza.cz`.
-Po nasazení změn je potřeba restartovat Python server. Zdrojové API není verzované; při změně jeho formátu může být potřeba upravit integraci.

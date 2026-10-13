@@ -24,14 +24,14 @@ class CheckAssetsTest(unittest.TestCase):
         cls.thread.join()
 
     def test_check_assets_are_served_with_correct_content_types(self):
-        for filename in ["alza-status.js", "check-app.css", "check-app.js", "check-core.js", "check-worker.js", "sql-filter-tool.css", "sql-filter-tool.js", "vendor/xlsx.full.min.js"]:
+        for filename in ["check-app.css", "check-app.js", "check-core.js", "check-worker.js", "sql-filter-tool.css", "sql-filter-tool.js", "vendor/xlsx.full.min.js"]:
             with self.subTest(filename=filename), urlopen(self.base + "/" + filename) as response:
                 self.assertEqual(response.status, 200)
                 self.assertEqual(response.read(), (app.ROOT / filename).read_bytes())
                 self.assertIn("text/css" if filename.endswith("css") else "application/javascript", response.headers["Content-Type"])
 
     def test_assets_do_not_expose_arbitrary_files_or_protected_data(self):
-        for url, status in [("/vendor/../../app.py", 404), ("/app.py", 404), ("/near_miss.sqlite3", 404), ("/api/entries", 401), ("/api/alza-status", 401)]:
+        for url, status in [("/vendor/../../app.py", 404), ("/app.py", 404), ("/near_miss.sqlite3", 404), ("/api/entries", 401)]:
             with self.subTest(url=url), self.assertRaises(HTTPError) as error:
                 urlopen(self.base + url)
             self.assertEqual(error.exception.code, status)
@@ -44,7 +44,7 @@ class CheckAssetsTest(unittest.TestCase):
                 self.assertEqual(response.read(), (app.ROOT / filename).read_bytes())
 
     def test_static_mirror_matches_served_files(self):
-        for filename in ["index.html", "styles.css", "app.js", "alza-status.js", "check-app.css", "check-app.js", "check-core.js", "check-worker.js", "sql-filter-tool.css", "sql-filter-tool.js", "vendor/xlsx.full.min.js", "assets/kontrola-xl-skupina-prepravnich-smeru.png", "assets/kontrola-xl-prepravni-smer.png", "assets/kontrola-xl-docasne-nedostupna.png"]:
+        for filename in ["index.html", "styles.css", "app.js", "check-app.css", "check-app.js", "check-core.js", "check-worker.js", "sql-filter-tool.css", "sql-filter-tool.js", "vendor/xlsx.full.min.js", "assets/kontrola-xl-skupina-prepravnich-smeru.png", "assets/kontrola-xl-prepravni-smer.png", "assets/kontrola-xl-docasne-nedostupna.png"]:
             self.assertEqual((app.ROOT / filename).read_bytes(), (app.ROOT / "static" / filename).read_bytes(), filename)
 
 
