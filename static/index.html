@@ -76,6 +76,10 @@
 
     <main id="appView" class="shell app-shell hidden">
       <div class="app-content">
+        <section id="alzaStatusBanner" class="alza-status-banner hidden" role="status" aria-live="polite">
+          <div><strong id="alzaStatusTitle"></strong><p id="alzaStatusMessage"></p><ul id="alzaStatusServices"></ul></div>
+          <a href="https://status.alza.cz/" target="_blank" rel="noopener noreferrer">Podrobnosti na Alza Status ↗</a>
+        </section>
         <header class="app-topbar card">
           <button type="button" class="brand-link" id="homeButton" aria-label="Process Tools – přejít na úvodní stránku">
             <div class="brand-mark" aria-hidden="true">
@@ -1131,6 +1135,7 @@
     <script src="./check-core.js" defer></script>
     <script src="./check-app.js" defer></script>
     <script src="./sql-filter-tool.js" defer></script>
+    <script src="./alza-status.js" defer></script>
     <script src="./app.js" defer></script>
   </body>
 </html>

@@ -5686,3 +5686,24 @@ button:not(:disabled):active,
     transform: none !important;
   }
 }
+
+.alza-status-banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 22px;
+  margin-bottom: 16px;
+  border: 1px solid #f5b6af;
+  border-left: 4px solid #c53030;
+  border-radius: 16px;
+  background: #fff4f2;
+  color: #862626;
+}
+.alza-status-banner.hidden { display: none; }
+.alza-status-banner p { margin: 6px 0; font-size: 14px; }
+.alza-status-banner ul { margin: 8px 0 0; padding-left: 20px; }
+.alza-status-banner ul:empty { display: none; }
+.alza-status-banner a { color: inherit; font-weight: 600; flex-shrink: 0; }
+.alza-status-banner.is-unavailable { background: #fff9e8; border-color: #e7ca7b; color: #75561b; }
+@media (max-width: 720px) { .alza-status-banner { flex-direction: column; gap: 10px; } }
